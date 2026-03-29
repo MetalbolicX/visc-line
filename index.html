@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="styles.css" />
   <body>
     <figure id="viz-container"></figure>
-    <script type="module" lang="js">
-      import { main } from "./src/main.mjs";
+    <script type="module" lang="ts">
+      import { main } from "./src/main.mts";
       const container = document.getElementById("viz-container");
       if (!container) {
         throw new Error("Container element not found");

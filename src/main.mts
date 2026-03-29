@@ -1,0 +1,151 @@
+import { chartConfig } from "./data.mjs";
+import {
+  createScales,
+  getDimensions,
+  getMultiSeriesExtents,
+  observeResize,
+  processAllSeries,
+} from "./utils/index.mjs";
+import {
+  renderBoundsGroup,
+  renderLegend,
+  renderLine,
+  renderPoints,
+  renderSVG,
+  renderTitle,
+  renderXAxis,
+  renderXAxisLabel,
+  renderYAxis,
+  renderYAxisLabel,
+} from "./components/index.mjs";
+import { addTooltip, addZoomPan } from "./interactivity/index.mjs";
+import type { DataRecord } from "./data.mjs";
+
+const MARGINS = { top: 50, right: 60, bottom: 70, left: 55 };
+
+const { data: rawData, xSerie, ySeries } = chartConfig;
+
+// Data processing is pure — run once, outside the render cycle.
+const processedSeries = processAllSeries<DataRecord>(
+  rawData,
+  xSerie.accessor,
+  ySeries,
+);
+
+/**
+ * Initialize and render a multi-series Cartesian line chart inside the given container.
+ *
+ * Sets up dimensions and scales, renders static SVG structure (background, bounds),
+ * draws axes, lines and points for each series, attaches title/labels/legend, and
+ * wires interactivity (tooltip, zoom & pan). Also observes the container for resize
+ * events and re-renders on change.
+ *
+ * @param container - DOM element to mount the chart into.
+ *
+ * @remarks
+ * The `onZoom` handler updates axes and re-renders lines/points with the new scales.
+ *
+ * @example
+ * ```ts
+ * import { main } from './main.js';
+ * const container = document.querySelector('#chart') as HTMLElement;
+ * main(container);
+ * ```
+ */
+export const main = (container: HTMLElement): void => {
+  const render = (): void => {
+    const dims = getDimensions(container, MARGINS);
+    const { xDomain, yDomain } = getMultiSeriesExtents(
+      processedSeries,
+      xSerie.accessor,
+    );
+    const { xScale, yScale } = createScales({
+      xDomain,
+      yDomain,
+      innerWidth: dims.innerWidth,
+      innerHeight: dims.innerHeight,
+      xType: "time",
+    });
+
+    // Static structure
+    const svg = renderSVG(container, { background: "#fafafa" });
+    const bounds = renderBoundsGroup(svg, MARGINS);
+
+    // Axes
+    renderXAxis(bounds, xScale, dims.innerHeight);
+    renderYAxis(bounds, yScale);
+
+    // Visuals
+    renderLine<DataRecord>(
+      bounds,
+      processedSeries,
+      xScale,
+      yScale,
+      xSerie.accessor,
+    );
+    renderPoints<DataRecord>(
+      bounds,
+      processedSeries,
+      xScale,
+      yScale,
+      xSerie.accessor,
+    );
+
+    // Labels, title, legend
+    renderTitle(svg, { ...dims, title: "Revenue & Cost Over Time" });
+    renderXAxisLabel(svg, { ...dims, label: xSerie.label });
+    renderYAxisLabel(svg, { ...dims, label: "Value" });
+    renderLegend(svg, {
+      items: processedSeries.map(({ label, stroke }) => ({
+        label,
+        color: stroke,
+      })),
+      x: MARGINS.left + dims.innerWidth - 90,
+      y: MARGINS.top + 12,
+      fontSize: 12,
+      swatchSize: 12,
+      gap: 6,
+    });
+
+    // Interactivity
+    addTooltip<DataRecord>(
+      bounds,
+      processedSeries,
+      xScale,
+      yScale,
+      xSerie.accessor,
+      {
+        innerWidth: dims.innerWidth,
+        innerHeight: dims.innerHeight,
+      },
+    );
+
+    addZoomPan(svg, {
+      xScale,
+      yScale,
+      innerWidth: dims.innerWidth,
+      innerHeight: dims.innerHeight,
+      onZoom: (newX, newY) => {
+        renderXAxis(bounds, newX, dims.innerHeight);
+        renderYAxis(bounds, newY);
+        renderLine<DataRecord>(
+          bounds,
+          processedSeries,
+          newX,
+          newY,
+          xSerie.accessor,
+        );
+        renderPoints<DataRecord>(
+          bounds,
+          processedSeries,
+          newX,
+          newY,
+          xSerie.accessor,
+        );
+      },
+    });
+  };
+
+  render();
+  observeResize(container, render);
+};

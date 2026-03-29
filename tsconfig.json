@@ -1,7 +1,16 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024", "DOM", "DOM.Iterable", "ESNext.Array", "ESNext.Collection", "ESNext.Error", "ESNext.Iterator", "ESNext.Promise"],
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Error",
+      "ESNext.Iterator",
+      "ESNext.Promise"
+    ],
     "module": "nodenext",
     "skipLibCheck": true,
     "moduleResolution": "nodenext",
@@ -22,6 +31,7 @@
     "noImplicitAny": false,
     "outDir": "./dist",
     "rootDir": "./src",
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
