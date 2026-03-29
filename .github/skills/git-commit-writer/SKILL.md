@@ -27,31 +27,13 @@ Allowed types: feat, fix, docs, style, refactor, test, chore, perf, ci, build. F
 Run the next command:
 
 ```sh
-#!/usr/bin/env bash
-# Outputs the git diff for LLM analysis.
+git diff --staged
+```
 
-# Ensure we are inside a git repository
-if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-  echo "Error: Not a git repository. Please run this command from within a git repository."
-  exit 1
-fi
+If not is staged, you can also run:
 
-STAGED_DIFF=$(git diff --staged)
-
-if [ -n "$STAGED_DIFF" ]; then
-  echo "--- STAGED CHANGES ---"
-  echo "$STAGED_DIFF"
-else
-  UNSTAGED_DIFF=$(git diff)
-  if [ -n "$UNSTAGED_DIFF" ]; then
-    echo "--- UNSTAGED CHANGES ---"
-    echo "Note: These changes are not yet staged for commit."
-    echo "$UNSTAGED_DIFF"
-  else
-    echo "No changes found. The working tree is clean."
-  fi
-fi
-
+```sh
+git diff HEAD
 ```
 
 Read the output carefully. If the output states "No changes found" or "Not a git repository", halt the process and inform the user.
