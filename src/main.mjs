@@ -47,10 +47,12 @@ const processedSeries = processAllSeries(rawData, xSerie.accessor, ySeries);
  * - The onZoom handler updates axes and re-renders lines/points with the new scales.
  *
  * @example
+ * ```ts
  * // Mount chart
  * import { main } from './line/main.mjs';
  * const container = document.querySelector('#chart');
  * main(container);
+ * ```
  *
  * @note Regarding circular dependencies:
  * Based on this snippet, renderLine is invoked as a standalone render helper and there
