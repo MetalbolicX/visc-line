@@ -1,0 +1,50 @@
+/* 1. Reset */
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* 2. Center body */
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 3. @property — one per variable */
+@property --var-one {
+  syntax: "<transform-function>";
+  inherits: true;
+  initial-value: translateY(16px);
+}
+
+@property --var-opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/* 4. Static selectors */
+.animation-container {
+  animation: story 2s forwards ease-out;
+}
+
+#wrapper {
+  transform-box: fill-box;
+  transform-origin: center center;
+  transform: var(--var-one);
+  opacity: var(--var-opacity);
+}
+
+/* 5. @keyframes */
+@keyframes story {
+  0% {
+    --var-one: translateY(16px);
+    --var-opacity: 0;
+  }
+  100% {
+    --var-one: translateY(0px);
+    --var-opacity: 1;
+  }
+}
