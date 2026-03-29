@@ -27,13 +27,7 @@ Allowed types: feat, fix, docs, style, refactor, test, chore, perf, ci, build. F
 Run the next command:
 
 ```sh
-git diff --staged
-```
-
-If not is staged, you can also run:
-
-```sh
-git diff HEAD
+bash ./.github/skills/git-commit-writer/scripts/get-git-diff.sh
 ```
 
 Read the output carefully. If the output states "No changes found" or "Not a git repository", halt the process and inform the user.
