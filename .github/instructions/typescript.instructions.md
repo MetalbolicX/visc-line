@@ -1,7 +1,6 @@
 ---
 description: 'Strict JS/TS conventions for ES2024+ environments.'
-paths:
-  - '**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx}'
+applyTo: '**/*.ts, **/*.tsx, **/*.mts, **/*.cts, **/*.js, **/*.mjs, **/*.cjs, **/.*jsx'
 ---
 # JS/TS Coding Standards
 

@@ -20,6 +20,10 @@ type(scope): short description
 
 Allowed types: feat, fix, docs, style, refactor, test, chore, perf, ci, build. For further details on types and formatting, see the [Conventional Commits Specification](references/git-conventions.md).
 
+## Available Scripts
+
+- [get-git-diff.sh](scripts/get-git-diff.sh): A script to retrieve the current staged git diff for analysis. This is the primary tool for understanding what changes are being committed.
+
 ## Instructions
 
 ### Step 1: Get the diff

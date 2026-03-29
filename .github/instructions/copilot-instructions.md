@@ -1,7 +1,6 @@
 ---
 description: 'Source-specific clean code conventions for clarity, safety, and maintainability.'
-paths:
-  - 'src/**/*'
+applyTo: 'src/**/*'
 ---
 
 # Source Clean Code Practices

@@ -8,9 +8,7 @@ tools:
     "read/problems",
     "search/searchResults",
     "search/usages",
-    "edit/editFiles",
-    "Write",
-    "Edit",
+    "edit/editFiles"
   ]
 ---
 

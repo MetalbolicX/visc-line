@@ -1,7 +1,6 @@
 ---
 description: 'Guidelines for high-performance, functional, and clean Python code.'
-paths:
-  - '**/*.py'
+applyTo: '**/*.py'
 ---
 # Python Coding Standards
 

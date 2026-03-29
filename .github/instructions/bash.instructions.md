@@ -1,7 +1,6 @@
 ---
 description: 'General guide lines to write bash code.'
-paths:
-  - '**/*.{.sh,.bash}'
+appyTo: '**/*..sh, **/*.bash'
 ---
 # Bash Guide Lines
 
