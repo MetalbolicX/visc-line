@@ -1,5 +1,5 @@
-import { line, select } from "d3";
-import type { Selection } from "d3";
+import { curveLinear, line, select } from "d3";
+import type { CurveFactory, Selection } from "d3";
 import type {
   AnyScale,
   BoundsSelection,
@@ -8,6 +8,8 @@ import type {
 
 /** Options for {@link renderLine}. */
 interface RenderLineOptions {
+  /** D3 curve factory used by the line generator. Defaults to {@link curveLinear}. */
+  curve?: CurveFactory;
   strokeWidth?: number;
   transitionDuration?: number;
 }
@@ -42,10 +44,15 @@ export const renderLine = <T,>(
   xScale: AnyScale,
   yScale: AnyScale,
   xAccessor: (d: T) => unknown,
-  { strokeWidth = 2, transitionDuration = 1000 }: RenderLineOptions = {},
+  {
+    curve = curveLinear,
+    strokeWidth = 2,
+    transitionDuration = 1000,
+  }: RenderLineOptions = {},
 ): Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null> => {
   const buildPath = (serie: ProcessedSeries<T>): string | null =>
     line<T>()
+      .curve(curve)
       .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))
       .y((d) => (yScale as (v: unknown) => number)(serie.accessor(d)))(
       serie.data,

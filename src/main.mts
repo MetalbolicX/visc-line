@@ -1,3 +1,4 @@
+import { curveCatmullRom } from "d3";
 import { chartConfig } from "./data.mjs";
 import {
   createScales,
@@ -82,6 +83,9 @@ export const main = (container: HTMLElement): void => {
       xScale,
       yScale,
       xSerie.accessor,
+      {
+        curve: curveCatmullRom,
+      },
     );
     renderPoints<DataRecord>(
       bounds,
@@ -134,6 +138,9 @@ export const main = (container: HTMLElement): void => {
           newX,
           newY,
           xSerie.accessor,
+          {
+            curve: curveCatmullRom,
+          },
         );
         renderPoints<DataRecord>(
           bounds,
