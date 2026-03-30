@@ -55,8 +55,7 @@ export const createScales = ({
   )
     .domain(xDomain as number[])
     .range([0, innerWidth])
-    .nice() as unknown as AnyScale;
-
+    .nice() as AnyScale;
   const yScale = (
     (SCALE_FACTORIES[yType] ?? SCALE_FACTORIES.linear)(
       yExponent,
@@ -64,7 +63,6 @@ export const createScales = ({
   )
     .domain((yDomain as number[]).map(Number))
     .range([innerHeight, 0])
-    .nice() as unknown as AnyScale;
-
+    .nice() as AnyScale;
   return { xScale, yScale };
 };

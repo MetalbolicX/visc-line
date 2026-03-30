@@ -23,6 +23,8 @@ import { addTooltip, addZoomPan } from "./interactivity/index.mjs";
 import type { DataRecord } from "./data.mjs";
 
 const MARGINS = { top: 50, right: 60, bottom: 70, left: 55 };
+const LEGEND_WIDTH = 90;
+const LEGEND_TOP_OFFSET = 12;
 
 const { data: rawData, xSerie, ySeries } = chartConfig;
 
@@ -54,6 +56,10 @@ const processedSeries = processAllSeries<DataRecord>(
  * ```
  */
 export const main = (container: HTMLElement): void => {
+  // SVG structure is stable across renders — create once.
+  const svg = renderSVG(container, { background: "#fafafa" });
+  const bounds = renderBoundsGroup(svg, MARGINS);
+
   const render = (): void => {
     const dims = getDimensions(container, MARGINS);
     const { xDomain, yDomain } = getMultiSeriesExtents(
@@ -67,10 +73,6 @@ export const main = (container: HTMLElement): void => {
       innerHeight: dims.innerHeight,
       xType: "time",
     });
-
-    // Static structure
-    const svg = renderSVG(container, { background: "#fafafa" });
-    const bounds = renderBoundsGroup(svg, MARGINS);
 
     // Axes
     renderXAxis(bounds, xScale, dims.innerHeight);
@@ -104,8 +106,8 @@ export const main = (container: HTMLElement): void => {
         label,
         color: stroke,
       })),
-      x: MARGINS.left + dims.innerWidth - 90,
-      y: MARGINS.top + 12,
+      x: MARGINS.left + dims.innerWidth - LEGEND_WIDTH,
+      y: MARGINS.top + LEGEND_TOP_OFFSET,
       fontSize: 12,
       swatchSize: 12,
       gap: 6,

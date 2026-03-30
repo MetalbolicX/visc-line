@@ -1,5 +1,5 @@
 import { zoom } from "d3";
-import type { ZoomBehavior } from "d3";
+import type { ZoomBehavior, ZoomScale } from "d3";
 import type { SVGSelection, AnyScale } from "@/types/index.mjs";
 
 /** Options for {@link addZoomPan}. */
@@ -43,8 +43,8 @@ export const addZoomPan = (
     .on("zoom", (event) => {
       const { transform: t } = event;
       onZoom(
-        t.rescaleX(xScale as never) as unknown as AnyScale,
-        t.rescaleY(yScale as never) as unknown as AnyScale,
+        t.rescaleX(xScale as ZoomScale) as AnyScale,
+        t.rescaleY(yScale as ZoomScale) as AnyScale,
       );
     });
 
