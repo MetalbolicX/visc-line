@@ -1,4 +1,4 @@
-import type { SeriesDescriptor } from "@/types/index.mjs";
+import type { ChartConfig } from "@/types/index.mjs";
 
 /** A single data record for the chart. */
 export interface DataRecord {
@@ -18,15 +18,6 @@ export const data: DataRecord[] = [
 ];
 
 /** Configuration for the chart including data, x-series, and y-series definitions. */
-export interface ChartConfig<T> {
-  data: T[];
-  xSerie: {
-    accessor: (d: T) => unknown;
-    label: string;
-  };
-  ySeries: SeriesDescriptor<T>[];
-}
-
 export const chartConfig: ChartConfig<DataRecord> = {
   data,
   xSerie: {

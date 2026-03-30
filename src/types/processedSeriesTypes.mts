@@ -10,3 +10,12 @@ export interface SeriesDescriptor<T> {
 export interface ProcessedSeries<T> extends SeriesDescriptor<T> {
   data: T[];
 }
+
+export interface ChartConfig<T> {
+  data: T[];
+  xSerie: {
+    accessor: (d: T) => unknown;
+    label: string;
+  };
+  ySeries: SeriesDescriptor<T>[];
+}

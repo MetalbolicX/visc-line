@@ -24,4 +24,4 @@ export const renderSVG = (
     .attr("width", container.clientWidth)
     .attr("height", container.clientHeight)
     .style("background", background)
-    .style("overflow", "visible") as unknown as SVGSelection;
+    .style("overflow", "visible") as SVGSelection;

@@ -24,4 +24,4 @@ export const renderBoundsGroup = (
     .attr(
       "transform",
       `translate(${margins.left},${margins.top})`,
-    ) as unknown as BoundsSelection;
+    ) as BoundsSelection;
