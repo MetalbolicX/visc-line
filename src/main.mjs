@@ -1,4 +1,5 @@
 "use strict";
+import { curveCatmullRom } from "d3";
 import { chartConfig } from "./data.mjs";
 import {
   createScales,
@@ -87,7 +88,9 @@ export const main = (container) => {
 
     // Visuals
     bounds
-      .call(renderLine, processedSeries, xScale, yScale, xSerie.accessor)
+      .call(renderLine, processedSeries, xScale, yScale, xSerie.accessor, {
+        curve: curveCatmullRom,
+      })
       .call(renderPoints, processedSeries, xScale, yScale, xSerie.accessor);
 
     // Labels, title, legend
@@ -123,7 +126,9 @@ export const main = (container) => {
           .call(renderXAxis, newX, dims.innerHeight)
           .call(renderYAxis, newY, dims.innerWidth);
         bounds
-          .call(renderLine, processedSeries, newX, newY, xSerie.accessor)
+          .call(renderLine, processedSeries, newX, newY, xSerie.accessor, {
+            curve: curveCatmullRom,
+          })
           .call(renderPoints, processedSeries, newX, newY, xSerie.accessor);
       },
     });

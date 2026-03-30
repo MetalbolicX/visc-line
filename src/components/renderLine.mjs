@@ -1,5 +1,5 @@
 "use strict";
-import { line, select } from "d3";
+import { curveLinear, line, select } from "d3";
 
 /**
  * Render multiple line series into a bounds group.
@@ -15,6 +15,7 @@ import { line, select } from "d3";
  * @param {Function} yScale
  * @param {Function} xAccessor  Shared x-accessor applied to every series row.
  * @param {Object}  [options]
+ * @param {import('d3-shape').CurveFactory} [options.curve=curveLinear]
  * @param {number}  [options.strokeWidth=2]
  * @param {number}  [options.transitionDuration=1000]
  */
@@ -24,10 +25,11 @@ export const renderLine = (
   xScale,
   yScale,
   xAccessor,
-  { strokeWidth = 2, transitionDuration = 1000 } = {},
+  { curve = curveLinear, strokeWidth = 2, transitionDuration = 1000 } = {},
 ) => {
   const buildPath = (serie) =>
     line()
+      .curve(curve)
       .x((d) => xScale(xAccessor(d)))
       .y((d) => yScale(serie.accessor(d)))(serie.data);
 
