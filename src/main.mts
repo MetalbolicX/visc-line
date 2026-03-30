@@ -16,8 +16,10 @@ import {
   renderTitle,
   renderXAxis,
   renderXAxisLabel,
+  renderXGrid,
   renderYAxis,
   renderYAxisLabel,
+  renderYGrid,
 } from "./components/index.mjs";
 import { addTooltip, addZoomPan } from "./interactivity/index.mjs";
 import type { DataRecord } from "./data.mjs";
@@ -96,6 +98,9 @@ export const main = (container: HTMLElement): void => {
       yScale,
       xSerie.accessor,
     );
+
+    renderXGrid(bounds, xScale, yScale);
+    renderYGrid(bounds, xScale, yScale);
 
     // Labels, title, legend
     renderTitle(svg, { ...dims, title: "Revenue & Cost Over Time" });

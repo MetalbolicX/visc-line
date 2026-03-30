@@ -1,5 +1,6 @@
 export * from "./renderAxisLabel.mjs";
 export * from "./renderBoundsGroup.mjs";
+export * from "./renderGrid.mjs";
 export * from "./renderLegend.mjs";
 export * from "./renderLine.mjs";
 export * from "./renderPoints.mjs";
