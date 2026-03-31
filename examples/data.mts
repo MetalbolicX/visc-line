@@ -1,4 +1,4 @@
-import type { ChartConfig } from "@/types/index.mjs";
+import type { ChartConfig } from "../src/index.mjs";
 
 /** A single data record for the chart. */
 export interface DataRecord {

@@ -1,13 +1,13 @@
 import { curveCatmullRom } from "d3";
-import { chartConfig } from "./data.mjs";
+import { chartConfig, type DataRecord } from "./data.mjs";
 import {
+  addTooltip,
+  addZoomPan,
   createScales,
   getDimensions,
   getMultiSeriesExtents,
   observeResize,
   processAllSeries,
-} from "./utils/index.mjs";
-import {
   renderBoundsGroup,
   renderLegend,
   renderLine,
@@ -20,9 +20,7 @@ import {
   renderYAxis,
   renderYAxisLabel,
   renderYGrid,
-} from "./components/index.mjs";
-import { addTooltip, addZoomPan } from "./interactivity/index.mjs";
-import type { DataRecord } from "./data.mjs";
+} from "../src/index.mjs";
 
 const MARGINS = { top: 50, right: 60, bottom: 70, left: 55 };
 const LEGEND_WIDTH = 90;

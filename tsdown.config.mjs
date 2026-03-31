@@ -1,3 +1,4 @@
+"use strict";
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
@@ -6,12 +7,14 @@ export default defineConfig({
   platform: "browser",
   minify: true,
   dts: true,
-  noExternal: "tipviz",
+  deps: {
+    alwaysBundle: ["tipviz"],
+  },
   tsconfig: true,
   outDir: "./dist",
   fixedExtension: true,
   outputOptions: {
-    name: "TimeViz",
+    name: "ViscLine",
     globals: {
       d3: "d3",
     },
