@@ -1,5 +1,5 @@
 ---
-description: "Source-specific clean code conventions for clarity, safety, and maintainability."
+description: "Describes the coding style and best practices for the visc-line project, a D3.js library for rendering line charts."
 applyTo: "src/**/*"
 ---
 
