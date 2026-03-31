@@ -73,11 +73,11 @@ export const addTooltip = <T,>(
   // ── One dot per series ───────────────────────────────────────────────────
   const cursorDots = tooltipLayer
     .selectAll<SVGCircleElement, ProcessedSeries<T>>("circle.cursor-dot")
-    .data(series, (d) => d.label)
+    .data(series, ({ label }) => label)
     .join("circle")
-    .attr("class", (d) => `cursor-dot cursor-dot--${d.label}`)
+    .attr("class", ({ label }) => `cursor-dot cursor-dot--${label}`)
     .attr("r", 5)
-    .attr("fill", (d) => d.stroke ?? "steelblue")
+    .attr("fill", ({ stroke }) => stroke ?? "steelblue")
     .attr("stroke", "white")
     .attr("stroke-width", 2)
     .attr("pointer-events", "none")
@@ -120,9 +120,9 @@ export const addTooltip = <T,>(
   // One row per series
   const seriesRows = tooltipGroup
     .selectAll<SVGGElement, ProcessedSeries<T>>("g.tip-series-row")
-    .data(series, (d) => d.label)
+    .data(series, ({ label }) => label)
     .join("g")
-    .attr("class", (d) => `tip-series-row tip-series-row--${d.label}`)
+    .attr("class", ({ label }) => `tip-series-row tip-series-row--${label}`)
     .attr("transform", (_, i) => `translate(0,${HEADER_H + i * ROW_H})`);
 
   seriesRows
@@ -133,7 +133,7 @@ export const addTooltip = <T,>(
     .attr("cx", PAD + 4)
     .attr("cy", ROW_H / 2)
     .attr("r", 4)
-    .attr("fill", (d) => d.stroke ?? "steelblue");
+    .attr("fill", ({ stroke }) => stroke ?? "steelblue");
 
   const seriesValueTexts = seriesRows
     .selectAll<SVGTextElement, ProcessedSeries<T>>("text.tip-value")

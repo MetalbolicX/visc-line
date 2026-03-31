@@ -4,112 +4,70 @@
   <img src="./images/logo.png" alt="visc-line Logo" width="200" height="200" />
 </div>
 
-> `visc-line` small slogan.
+A small, composable D3-based line chart renderer written in modern ES modules.
 
-**Supported Versions:**
-
-![Something](https://img.shields.io/badge/something->=1.5.5-blue)
-
-
-## Features
-
-1.
-2.
+**Supported Versions:** >= 7.9.0
 
 ## 🚀 Quick Installation
 
-### 1. Create a ReScript Application
-
-First, create a new ReScript application using one of the following commands:
+Install from npm or your package manager of choice:
 
 ```sh
-npm create rescript-app@latest
+npm install visc-line
+# or
+pnpm add visc-line
 ```
 
-> 📝**Note:** For more information on setting up a ReScript project, refer to the [official ReScript documentation](https://rescript-lang.org/docs/manual/latest/installation).
+## Basic Usage
 
-### 2. Install Dependencies
+Use the library's entry `main` to mount a chart into an existing container. The implementation used below is the source entry: [src/main.mts](src/main.mts).
 
-Add the required dependencies to your project:
+From a local development HTML page (ES module):
+
+```html
+<div id="chart" style="width:800px;height:400px"></div>
+<script type="module">
+  import { main } from "./src/main.mts";
+
+  const container = document.getElementById("chart");
+  if (container) main(container);
+</script>
+```
+
+If you're using the published package (bundled by your app):
+
+```js
+import { main } from "visc-line";
+
+const container = document.getElementById("chart");
+if (container) main(container);
+```
+
+The `main` function signature is `main(container: HTMLElement): void` and the example used here is implemented in [src/main.mts](src/main.mts).
+
+## API / Source Reference
+
+Core entry points and helper groups live in the `src/` folder. Use these files as a quick reference to the available renderers and utilities:
+
+- **Main entry:** [src/main.mts](src/main.mts) — bootstraps rendering and wiring of interactivity.
+- **Data & config:** [src/data.mts](src/data.mts) — example data and chart configuration.
+- **Components:** [src/components/index.mts](src/components/index.mts) — `renderSVG`, `renderBoundsGroup`, `renderLegend`, `renderLine`, `renderPoints`, `renderTitle`, `renderXAxis`, `renderYAxis`, etc.
+- **Utilities:** [src/utils/index.mts](src/utils/index.mts) — `createScales`, `getDimensions`, `getMultiSeriesExtents`, `processAllSeries`, `observeResize`, and helpers.
+- **Interactivity:** [src/interactivity/index.mts](src/interactivity/index.mts) — `addTooltip`, `addZoomPan`.
+- **Types:** [src/types/index.mts](src/types/index.mts) — shared TypeScript types used across the library.
+
+## Development
+
+Run the dev server and build using the included scripts (requires Node.js and pnpm/npm):
 
 ```sh
-npm i vanjs-core visc-line
+pnpm install
+pnpm dev
 ```
-
-### 3. Update Configuration `rescript.json` file
-
-In your `rescript.json` file, add the following dependency:
-
-```json
-{
-  "bs-dependencies": ["visc-line"]
-}
-```
-
-## 🙌 Hello World Example
-
-Here's a simple example of how to use `visc-line` to create a reactive UI component:
-
-1. Create a file named `Main.res` in your `src` folder.
-2. Add the following code to `Main.res`:
-
-```rescript
-@val @scope("document") @return(nullable)
-external getElementById: string => option<Dom.element> = "getElementById"
-
-let root = switch getElementById("root") {
-| Some(el) => el
-| None => Exn.raiseError("Root element not found")
-}
-
-let hello: unit => Dom.element = () => {
-  Van.Tag.make("div")
-  ->Van.Tags.addChild(Text("Hello, World!"))
-  ->Van.Tags.build
-}
-
-Van.add(root, [Dom(hello())])->ignore
-```
-
-## 🛠 Build and Run
-
-To build and run your ReScript application, see the [Compile and Run](https://metalbolicx.github.io/visc-line/#/compile-run) section.
-
-## 📚 Documentation
-
-<div align="center">
-
-  [![view - Documentation](https://img.shields.io/badge/view-Documentation-blue?style=for-the-badge)](https://metalbolicx.github.io/visc-line/#/api-reference)
-
-</div>
-
-## ✍ Do you want to learn more?
-
-1.
-2.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Technologies used
-
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://vanjs.org/" target="_blank">
-        <img src="./images/vanjs-logo.png" alt="VanJS" width="42" height="42" /><br/>
-        <b>VanJS</b><br/>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://rescript-lang.org/" target="_blank">
-        <img src="./images/rescript-logo.png" alt="ReScript" width="42" height="42" /><br/>
-        <b>ReScript</b><br/>
-      </a>
-    </td>
-  </tr>
-</table>
+Contributions are welcome. Please open issues or submit pull requests.
 
 ## License
 
