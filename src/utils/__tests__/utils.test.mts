@@ -146,6 +146,7 @@ describe("responsiveness utils", () => {
       }
 
       observe = vi.fn((target: Element) => target);
+      unobserve = vi.fn((target: Element) => target);
       disconnect = vi.fn();
 
       trigger() {
@@ -153,7 +154,8 @@ describe("responsiveness utils", () => {
       }
     }
 
-    globalThis.ResizeObserver = MockResizeObserver as typeof ResizeObserver;
+    globalThis.ResizeObserver =
+      MockResizeObserver as unknown as typeof ResizeObserver;
     const container = document.createElement("div");
     const renderCallback = vi.fn();
     const cleanup = observeResize(container, renderCallback);
