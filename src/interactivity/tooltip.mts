@@ -1,3 +1,5 @@
+import "tipviz";
+import type { TipVizTooltip } from "tipviz";
 import { bisector, pointer, select } from "d3";
 import type {
   AnyScale,
@@ -5,10 +7,54 @@ import type {
   ProcessedSeries,
 } from "@/types/index.mjs";
 
-const PAD = 10;
-const ROW_H = 18;
-const HEADER_H = 22;
-const BOX_W = 155;
+// ── Per-chart tooltip instances ───────────────────────────────────────────────
+interface TooltipEntry {
+  tooltip: TipVizTooltip;
+  loadedStylesheet: string | undefined;
+}
+
+const tooltipRegistry = new WeakMap<SVGGElement, TooltipEntry>();
+
+// ── Public data types ─────────────────────────────────────────────────────────
+
+/** One value row in the tooltip body. */
+export interface TooltipRow {
+  label: string;
+  color: string;
+  value: string;
+}
+
+/** Data passed to tipviz and to the custom {@link AddTooltipOptions.tooltipHtml} renderer. */
+export interface TooltipData {
+  xLabel: string;
+  rows: TooltipRow[];
+}
+
+// ── Default HTML template ─────────────────────────────────────────────────────
+const esc = (s: string): string =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const defaultTooltipHtml = ({ xLabel, rows }: TooltipData): string => {
+  const rowsHtml = rows
+    .map(
+      ({ label, color, value }) => /*html*/ `
+        <div style="display:flex;align-items:center;gap:6px;height:18px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${esc(color)};flex-shrink:0"></span>
+        <span style="font-size:11px;color:#222">${esc(label)}: ${esc(value)}</span>
+        </div>`,
+    )
+    .join("");
+
+  return /*html*/ `
+    <div style="font-family:sans-serif;padding:8px 10px;min-width:140px;background:#fff;border:1px solid #ddd;border-radius:4px;filter:drop-shadow(0 1px 4px rgba(0,0,0,.12))">
+    <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:4px">${esc(xLabel)}</div>
+    ${rowsHtml}
+    </div>`;
+};
 
 /** Options for {@link addTooltip}. */
 interface AddTooltipOptions<T> {
@@ -16,21 +62,26 @@ interface AddTooltipOptions<T> {
   innerHeight: number;
   formatX?: (v: unknown) => string;
   formatY?: (v: unknown) => string;
+  /** Custom HTML renderer. Receives resolved {@link TooltipData}. Defaults to an inline-styled template. */
+  tooltipHtml?: (data: TooltipData) => string;
+  /** URL of an external stylesheet to load into the tooltip shadow root via `loadStylesheet`. */
+  stylesheetUrl?: string;
 }
 
 /**
  * Attach a multi-series tooltip to a bounds group.
  *
- * Renders one cursor dot per series, a vertical cursor line, and a tooltip box
- * with one value row per series. All elements are built idempotently so this
- * function is safe to call on every render cycle.
+ * Renders one cursor dot per series and a vertical cursor line. The tooltip
+ * UI is delegated to a `<tip-viz-tooltip>` element (tipviz web component)
+ * appended once to `document.body` per chart and reused across re-renders.
  *
  * @param boundsGroup - D3 selection of the bounds group.
  * @param series - Processed series array.
  * @param xScale - D3 scale for the x axis.
  * @param yScale - D3 scale for the y axis.
  * @param xAccessor - Shared x-accessor function.
- * @param options - Optional configuration including dimensions and formatters.
+ * @param options - Optional configuration including dimensions, formatters, and tooltip customisation.
+ * @returns The `TipVizTooltip` instance for further customisation (e.g. `setDirection`, `setOffset`).
  */
 export const addTooltip = <T,>(
   boundsGroup: BoundsSelection,
@@ -43,11 +94,32 @@ export const addTooltip = <T,>(
     innerHeight,
     formatX = (v) => (v instanceof Date ? v.toLocaleDateString() : String(v)),
     formatY = (v) => (typeof v === "number" ? v.toLocaleString() : String(v)),
+    tooltipHtml = defaultTooltipHtml,
+    stylesheetUrl,
   }: AddTooltipOptions<T> = { innerWidth: 0, innerHeight: 0 },
-): void => {
+): TipVizTooltip => {
+  const boundsEl = boundsGroup.node()!;
   const referenceData = series[0]?.data ?? [];
   const bisect = bisector(xAccessor).center;
-  const BOX_H = HEADER_H + series.length * ROW_H + PAD;
+
+  // ── Tooltip instance (one per chart) ────────────────────────────────────
+  let entry = tooltipRegistry.get(boundsEl);
+
+  if (!entry) {
+    const el = document.createElement("tip-viz-tooltip") as TipVizTooltip;
+    document.body.appendChild(el);
+    entry = { tooltip: el, loadedStylesheet: undefined };
+    tooltipRegistry.set(boundsEl, entry);
+  }
+
+  const { tooltip } = entry;
+
+  tooltip.setHtml((d) => tooltipHtml(d as TooltipData));
+
+  if (stylesheetUrl !== undefined && stylesheetUrl !== entry.loadedStylesheet) {
+    tooltip.loadStylesheet(stylesheetUrl);
+    entry.loadedStylesheet = stylesheetUrl;
+  }
 
   // ── Layer ────────────────────────────────────────────────────────────────
   const tooltipLayer = boundsGroup
@@ -83,69 +155,6 @@ export const addTooltip = <T,>(
     .attr("pointer-events", "none")
     .attr("display", "none");
 
-  // ── Tooltip box ──────────────────────────────────────────────────────────
-  const tooltipGroup = tooltipLayer
-    .selectAll<SVGGElement, null>("g.tooltip-box")
-    .data([null])
-    .join("g")
-    .attr("class", "tooltip-box")
-    .attr("pointer-events", "none")
-    .attr("display", "none");
-
-  tooltipGroup
-    .selectAll<SVGRectElement, null>("rect.tooltip-bg")
-    .data([null])
-    .join("rect")
-    .attr("class", "tooltip-bg")
-    .attr("width", BOX_W)
-    .attr("height", BOX_H)
-    .attr("rx", 4)
-    .attr("fill", "white")
-    .attr("stroke", "#ddd")
-    .attr("stroke-width", 1)
-    .style("filter", "drop-shadow(0 1px 4px rgba(0,0,0,0.12))");
-
-  // Header: x value
-  const headerText = tooltipGroup
-    .selectAll<SVGTextElement, null>("text.tip-header")
-    .data([null])
-    .join("text")
-    .attr("class", "tip-header")
-    .attr("x", PAD)
-    .attr("y", HEADER_H - 6)
-    .attr("font-size", 11)
-    .attr("font-weight", "bold")
-    .attr("fill", "#555");
-
-  // One row per series
-  const seriesRows = tooltipGroup
-    .selectAll<SVGGElement, ProcessedSeries<T>>("g.tip-series-row")
-    .data(series, ({ label }) => label)
-    .join("g")
-    .attr("class", ({ label }) => `tip-series-row tip-series-row--${label}`)
-    .attr("transform", (_, i) => `translate(0,${HEADER_H + i * ROW_H})`);
-
-  seriesRows
-    .selectAll<SVGCircleElement, ProcessedSeries<T>>("circle.tip-swatch")
-    .data((d) => [d])
-    .join("circle")
-    .attr("class", "tip-swatch")
-    .attr("cx", PAD + 4)
-    .attr("cy", ROW_H / 2)
-    .attr("r", 4)
-    .attr("fill", ({ stroke }) => stroke ?? "steelblue");
-
-  const seriesValueTexts = seriesRows
-    .selectAll<SVGTextElement, ProcessedSeries<T>>("text.tip-value")
-    .data((d) => [d])
-    .join("text")
-    .attr("class", "tip-value")
-    .attr("x", PAD + 14)
-    .attr("y", ROW_H / 2 + 1)
-    .attr("dominant-baseline", "middle")
-    .attr("font-size", 11)
-    .attr("fill", "#222");
-
   // ── Mouse capture ────────────────────────────────────────────────────────
   boundsGroup
     .selectAll<SVGRectElement, null>("rect.mouse-capture")
@@ -173,8 +182,19 @@ export const addTooltip = <T,>(
       const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
+      const rows: TooltipRow[] = [];
+      let anchorEl: Element | null = null;
+
       cursorDots.each(function (serie) {
-        if (!serie.data.length) return;
+        if (!serie.data.length) {
+          rows.push({
+            label: serie.label,
+            color: serie.stroke ?? "steelblue",
+            value: "—",
+          });
+          return;
+        }
+
         const si = Math.max(
           0,
           Math.min(
@@ -182,6 +202,7 @@ export const addTooltip = <T,>(
             serie.data.length - 1,
           ),
         );
+
         select(this)
           .attr(
             "cx",
@@ -192,36 +213,26 @@ export const addTooltip = <T,>(
             (yScale as (v: unknown) => number)(serie.accessor(serie.data[si]!)),
           )
           .attr("display", null);
+
+        rows.push({
+          label: serie.label,
+          color: serie.stroke ?? "steelblue",
+          value: formatY(serie.accessor(serie.data[si]!)),
+        });
+
+        anchorEl ??= this;
       });
 
-      headerText.text(formatX(xAccessor(refDatum)));
-
-      seriesValueTexts.each(function (serie) {
-        if (!serie.data.length) {
-          select(this).text(`${serie.label}: —`);
-          return;
-        }
-        const si = Math.max(
-          0,
-          Math.min(
-            bisect(serie.data as never[], xVal as never),
-            serie.data.length - 1,
-          ),
-        );
-        select(this).text(
-          `${serie.label}: ${formatY(serie.accessor(serie.data[si]!))}`,
-        );
-      });
-
-      const bx = cx + 10 + BOX_W > innerWidth ? cx - BOX_W - 10 : cx + 10;
-      const by = Math.max(0, Math.min(20, innerHeight - BOX_H));
-      tooltipGroup
-        .attr("transform", `translate(${bx},${by})`)
-        .attr("display", null);
+      tooltip.show(
+        { xLabel: formatX(xAccessor(refDatum)), rows } satisfies TooltipData,
+        anchorEl ?? (event.currentTarget as Element),
+      );
     })
     .on("mouseleave", () => {
       cursorLine.attr("display", "none");
       cursorDots.attr("display", "none");
-      tooltipGroup.attr("display", "none");
+      tooltip.hide();
     });
+
+  return tooltip;
 };
