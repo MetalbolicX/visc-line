@@ -59,7 +59,7 @@ import {
 
 ## API / Source Reference
 
-Below are the primary modules and exported helpers in `visc-line` package. Use these as a quick reference — each item links to the source implementation.
+Below are the primary modules and exported helpers in `visc-line` package. Use these as a quick reference for each item links to the source implementation.
 
 ### Chart Components
 
