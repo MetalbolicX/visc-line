@@ -51,9 +51,9 @@ export const renderPoints = <T,>(
 ): Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null> =>
   boundsGroup
     .selectAll<SVGGElement, ProcessedSeries<T>>("g.point-series")
-    .data(series, (d) => d.label)
+    .data(series, ({ label }) => label)
     .join("g")
-    .attr("class", (d) => `point-series point-series--${d.label}`)
+    .attr("class", ({ label }) => `point-series point-series--${label}`)
     .each(function (serie) {
       select(this)
         .selectAll<SVGCircleElement, T>("circle.point")
