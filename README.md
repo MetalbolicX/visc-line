@@ -6,7 +6,7 @@
 
 A small, composable D3-based line chart renderer written in TypeScript.
 
-**Supported Versions:** >= 7.9.0
+![D3.js version](https://img.shields.io/badge/D3.js-%3E%3D7.9.0-blue)
 
 ## 🚀 Quick Installation
 
