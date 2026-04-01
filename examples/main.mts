@@ -75,8 +75,9 @@ export const main = (container: HTMLElement): void => {
     });
 
     // Axes
-    renderXAxis(bounds, xScale, dims.innerHeight);
-    renderYAxis(bounds, yScale);
+    bounds
+      .call(renderXAxis, xScale, dims.innerHeight)
+      .call(renderYAxis, yScale);
 
     // Visuals
     renderLine<DataRecord>(
@@ -97,24 +98,25 @@ export const main = (container: HTMLElement): void => {
       xSerie.accessor,
     );
 
-    renderXGrid(bounds, xScale, yScale);
-    renderYGrid(bounds, xScale, yScale);
+    // Gridlines
+    bounds.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
 
     // Labels, title, legend
-    renderTitle(svg, { ...dims, title: "Revenue & Cost Over Time" });
-    renderXAxisLabel(svg, { ...dims, label: xSerie.label });
-    renderYAxisLabel(svg, { ...dims, label: "Value" });
-    renderLegend(svg, {
-      items: processedSeries.map(({ label, stroke }) => ({
-        label,
-        color: stroke,
-      })),
-      x: MARGINS.left + dims.innerWidth - LEGEND_WIDTH,
-      y: MARGINS.top + LEGEND_TOP_OFFSET,
-      fontSize: 12,
-      swatchSize: 12,
-      gap: 6,
-    });
+    svg
+      .call(renderTitle, { ...dims, title: "Revenue & Cost Over Time" })
+      .call(renderXAxisLabel, { ...dims, label: xSerie.label })
+      .call(renderYAxisLabel, { ...dims, label: "Value" })
+      .call(renderLegend, {
+        items: processedSeries.map(({ label, stroke }) => ({
+          label,
+          color: stroke,
+        })),
+        x: MARGINS.left + dims.innerWidth - LEGEND_WIDTH,
+        y: MARGINS.top + LEGEND_TOP_OFFSET,
+        fontSize: 12,
+        swatchSize: 12,
+        gap: 6,
+      });
 
     // Interactivity
     addTooltip<DataRecord>(
