@@ -182,16 +182,19 @@ export const addTooltip = <T,>(
       const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
-      const rows: TooltipRow[] = [];
+      let rows: TooltipRow[] = [];
       let anchorEl: Element | null = null;
 
       cursorDots.each(function (serie) {
         if (!serie.data.length) {
-          rows.push({
-            label: serie.label,
-            color: serie.stroke ?? "steelblue",
-            value: "—",
-          });
+          rows = [
+            ...rows,
+            {
+              label: serie.label,
+              color: serie.stroke ?? "steelblue",
+              value: "—",
+            },
+          ];
           return;
         }
 
@@ -214,11 +217,14 @@ export const addTooltip = <T,>(
           )
           .attr("display", null);
 
-        rows.push({
-          label: serie.label,
-          color: serie.stroke ?? "steelblue",
-          value: formatY(serie.accessor(serie.data[si]!)),
-        });
+        rows = [
+          ...rows,
+          {
+            label: serie.label,
+            color: serie.stroke ?? "steelblue",
+            value: formatY(serie.accessor(serie.data[si]!)),
+          },
+        ];
 
         anchorEl ??= this;
       });
