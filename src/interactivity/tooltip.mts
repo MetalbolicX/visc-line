@@ -30,14 +30,44 @@ export interface TooltipData {
   rows: TooltipRow[];
 }
 
-// ── Default HTML template ─────────────────────────────────────────────────────
-const esc = (s: string): string =>
-  s
+/**
+ * Escapes a string for safe insertion into HTML by replacing characters
+ * that have special meaning in HTML with their corresponding entities.
+ *
+ * Replacements performed (in order):
+ * - '&' → '&amp;'
+ * - '<' → '&lt;'
+ * - '>' → '&gt;'
+ * - '"' → '&quot;'
+ *
+ * Note: Ampersands are replaced first to avoid double-escaping existing entities.
+ *
+ * @param text - The input string to escape.
+ * @returns The escaped string safe for use in HTML text content or within double-quoted attributes.
+ */
+const esc = (text: string): string =>
+  text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/**
+ * Generates the default HTML string for a tooltip given tooltip data.
+ *
+ * The function produces a small, styled HTML fragment containing a header
+ * (derived from xLabel) and a vertical list of rows. Each row displays a
+ * colored dot, a label, and a value. All interpolated values are escaped
+ * (via the internal esc function) to prevent injection when inserted into the DOM.
+ *
+ * @param tooltipData - Object containing data used to render the tooltip.
+ * @param tooltipData.xLabel - Header label shown at the top of the tooltip.
+ * @param tooltipData.rows - Array of row objects to render. Each row should have:
+ *   - label: display text for the row
+ *   - color: CSS color used for the row's dot indicator
+ *   - value: display value for the row
+ * @returns A string of HTML representing the fully-formed tooltip, ready for insertion into the document.
+ */
 const defaultTooltipHtml = ({ xLabel, rows }: TooltipData): string => {
   const rowsHtml = rows
     .map(
@@ -69,19 +99,94 @@ interface AddTooltipOptions<T> {
 }
 
 /**
- * Attach a multi-series tooltip to a bounds group.
+ * Adds an interactive tooltip layer to a chart bounds group. The function
+ * creates (or reuses) a single DOM tooltip element per chart bounds element,
+ * sets up a cursor vertical line, per-series cursor dots, and a transparent
+ * mouse-capture rectangle that drives tooltip show/hide and positioning.
  *
- * Renders one cursor dot per series and a vertical cursor line. The tooltip
- * UI is delegated to a `<tip-viz-tooltip>` element (tipviz web component)
- * appended once to `document.body` per chart and reused across re-renders.
+ * Behavior:
+ * - Reuses a tooltip instance registered for the bounds element, creating one
+ *   if missing.
+ * - Applies the provided tooltipHtml renderer and optionally loads a
+ *   stylesheetUrl into the tooltip element.
+ * - Renders a "tooltip-layer" <g> containing:
+ *   - A vertical dashed cursor line that spans the inner chart height,
+ *   - One cursor dot per series positioned at the nearest datum for the
+ *     hovered x,
+ *   - A transparent rect sized to innerWidth/innerHeight that captures mouse
+ *     events.
+ * - On mousemove:
+ *   - Converts the mouse x position to a data x via xScale.invert,
+ *   - Finds the nearest index in the reference series using a bisector,
+ *   - Positions the cursor line at the corresponding x value,
+ *   - For each series finds the closest datum and positions the series' dot
+ *     and builds the tooltip rows with formatY,
+ *   - Calls tooltip.show with { xLabel, rows } where xLabel is produced via
+ *     formatX and rows include label/color/value for each series. The tooltip
+ *     is anchored to the first visible series dot (if any) or the event
+ *     target.
+ * - On mouseleave, hides the cursor line/dots and calls tooltip.hide().
  *
- * @param boundsGroup - D3 selection of the bounds group.
- * @param series - Processed series array.
- * @param xScale - D3 scale for the x axis.
- * @param yScale - D3 scale for the y axis.
- * @param xAccessor - Shared x-accessor function.
- * @param options - Optional configuration including dimensions, formatters, and tooltip customisation.
- * @returns The `TipVizTooltip` instance for further customisation (e.g. `setDirection`, `setOffset`).
+ * @template T - Datum type for the series data arrays.
+ *
+ * @param boundsGroup - D3 selection wrapping the chart bounds <g> element to
+ *   receive the tooltip layer and mouse-capture rectangle.
+ * @param series - Array of processed series metadata and data. Each series'
+ *   `label` is used as the key for binding dots; `accessor` is used to obtain
+ *   the y value for positioning and formatting.
+ * @param xScale - X scale used for pixel positioning and inversion. The scale
+ *   is expected to support calling `(v) => number` for forward mapping and
+ *   have an `invert(number) => unknown` method for mapping pixels back to
+ *   data space.
+ * @param yScale - Y scale used for forward mapping of y values to pixel
+ *   positions via `(v) => number`.
+ * @param xAccessor - Function that returns the x value for a datum (used for
+ *   positioning and formatting).
+ * @param options - Optional configuration object.
+ * @param options.innerWidth - Inner chart width (pixels) to size the mouse
+ *   capture rect. Defaults to 0 when not provided.
+ * @param options.innerHeight - Inner chart height (pixels) to size the cursor
+ *   line and mouse capture rect. Defaults to 0 when not provided.
+ * @param options.formatX - Formatter for the x label shown in the tooltip;
+ *   default converts Date to locale date string and otherwise stringifies.
+ * @param options.formatY - Formatter for series values shown in rows;
+ *   default formats numbers with toLocaleString and otherwise stringifies.
+ * @param options.tooltipHtml - Function that receives TooltipData and returns
+ *   HTML string (or similar) for the tooltip content. Defaults to
+ *   `defaultTooltipHtml`.
+ * @param options.stylesheetUrl - Optional URL to a stylesheet to load into the
+ *   tooltip element. If provided and different from the previously loaded
+ *   stylesheet for the bounds element, the stylesheet will be loaded.
+ *
+ * @returns The TipVizTooltip instance used to show/hide tooltip content.
+ *
+ * @remarks
+ * - The function relies on a bisector built from the provided xAccessor to
+ *   locate nearest indices; it clamps indices within array bounds.
+ * - Cursor dots are bound by series label and given classes
+ *   `cursor-dot cursor-dot--${label}` so they can be styled per-series.
+ * - The tooltip anchor will be the first visible cursor dot or the mouse
+ *   capture element if no dot is visible.
+ *
+ * @example
+ * ```ts
+ * addTooltip(boundsGroup, processedSeries, xScale, yScale, xAccessor, {
+ *   innerWidth: dims.innerWidth,
+ *   innerHeight: dims.innerHeight,
+ *   formatX: (v) => v instanceof Date ? v.toLocaleDateString() : String(v),
+ *   formatY: (v) => typeof v === "number" ? v.toLocaleString() : String(v),
+ *   tooltipHtml: ({ xLabel, rows }) => `
+ *     <div class="my-tooltip">
+ *       <div class="my-tooltip-header">${xLabel}</div>
+ *       ${rows.map(r => `
+ *         <div class="my-tooltip-row">
+ *           <span class="dot" style="background:${r.color}"></span>
+ *           <span class="label">${r.label}: ${r.value}</span>
+ *         </div>`).join("")}
+ *     </div>`,
+ *   stylesheetUrl: "path/to/tooltip-styles.css",
+ * });
+ * ```
  */
 export const addTooltip = <T,>(
   boundsGroup: BoundsSelection,
