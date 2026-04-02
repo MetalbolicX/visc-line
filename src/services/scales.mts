@@ -33,10 +33,25 @@ export interface ChartScales {
 }
 
 /**
- * Create and configure x and y scales for a cartesian line chart.
+ * Creates and returns x and y scales configured for a chart's inner drawing area.
  *
- * @param options - Configuration options including domains, inner dimensions, and scale types.
- * @returns An object containing configured `xScale` and `yScale`.
+ * The function selects scale factories by the provided `xType` / `yType` (falling back to a linear
+ * factory if an unknown type is supplied), configures each scale with the provided domain,
+ * maps them to pixel ranges based on `innerWidth` / `innerHeight`, and applies `.nice()` for
+ * rounded tick-friendly domains.
+ *
+ * @param options - Configuration options for scale creation.
+ * @param options.xDomain - Domain for the x scale (expected as a two-element array, coerced to numbers).
+ * @param options.yDomain - Domain for the y scale (values will be converted via `Number`).
+ * @param options.innerWidth - Width in pixels of the chart's inner drawing area; x range is [0, innerWidth].
+ * @param options.innerHeight - Height in pixels of the chart's inner drawing area; y range is [innerHeight, 0]
+ *   (inverted to match screen coordinates).
+ * @param options.xType - Identifier for the x scale factory to use (defaults to `"linear"`).
+ * @param options.yType - Identifier for the y scale factory to use (defaults to `"linear"`).
+ * @param options.xExponent - Exponent passed to the x scale factory when applicable (default: 2).
+ * @param options.yExponent - Exponent passed to the y scale factory when applicable (default: 2).
+ *
+ * @returns ChartScales — an object containing `xScale` and `yScale`, each configured with domain, range and `.nice()`.
  */
 export const createScales = ({
   xDomain,
