@@ -1,18 +1,74 @@
-import { curveLinear, line, select } from "d3";
 import type { CurveFactory, Selection } from "d3";
+
+import {
+  curveBasis,
+  curveBasisClosed,
+  curveBasisOpen,
+  curveBumpX,
+  curveBumpY,
+  curveCardinal,
+  curveCardinalClosed,
+  curveCardinalOpen,
+  curveCatmullRom,
+  curveCatmullRomClosed,
+  curveCatmullRomOpen,
+  curveLinear,
+  curveMonotoneX,
+  curveMonotoneY,
+  curveNatural,
+  curveStep,
+  curveStepAfter,
+  curveStepBefore,
+  line,
+  select,
+} from "d3";
+
 import type {
   AnyScale,
   BoundsSelection,
+  CurvePreset,
   ProcessedSeries,
 } from "@/types/index.mjs";
 
 /** Options for {@link renderLine}. */
 interface RenderLineOptions {
   /** D3 curve factory used by the line generator. Defaults to {@link curveLinear}. */
-  curve?: CurveFactory;
-  strokeWidth?: number;
+  curve?: CurveFactory | CurvePreset;
+  opacity?: number | string;
+  strokeWidth?: number | string;
   transitionDuration?: number;
 }
+
+/**
+ *
+ */
+const CURVE_BY_NAME: Record<CurvePreset, CurveFactory> = {
+  basis: curveBasis,
+  basisClosed: curveBasisClosed,
+  basisOpen: curveBasisOpen,
+  bumpX: curveBumpX,
+  bumpY: curveBumpY,
+  cardinal: curveCardinal,
+  cardinalClosed: curveCardinalClosed,
+  cardinalOpen: curveCardinalOpen,
+  catmullRom: curveCatmullRom,
+  catmullRomClosed: curveCatmullRomClosed,
+  catmullRomOpen: curveCatmullRomOpen,
+  linear: curveLinear,
+  monotoneX: curveMonotoneX,
+  monotoneY: curveMonotoneY,
+  natural: curveNatural,
+  step: curveStep,
+  stepAfter: curveStepAfter,
+  stepBefore: curveStepBefore,
+};
+
+/**
+ *
+ */
+const resolveCurveFactory = (
+  curve: CurveFactory | CurvePreset,
+): CurveFactory => (typeof curve === "string" ? CURVE_BY_NAME[curve] : curve);
 
 /**
  * Renders and updates line series within a given bounds group using D3.
@@ -38,7 +94,10 @@ interface RenderLineOptions {
  *
  * @returns A D3 Selection of the rendered SVGPathElement(s) bound to the provided ProcessedSeries<T> data.
  */
-export const renderLine = <T,>(
+export /**
+        *
+        */
+const renderLine = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
@@ -46,13 +105,22 @@ export const renderLine = <T,>(
   xAccessor: (d: T) => unknown,
   {
     curve = curveLinear,
-    strokeWidth = 2,
+    opacity = "var(--vl-line-opacity, 1)",
+    strokeWidth = "var(--vl-line-stroke-width, 2)",
     transitionDuration = 1000,
   }: RenderLineOptions = {},
 ): Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null> => {
-  const buildPath = (serie: ProcessedSeries<T>): string | null =>
+  /**
+   *
+   */
+  const curveFactory = resolveCurveFactory(curve);
+
+  /**
+   *
+   */
+  const buildPath = (serie: ProcessedSeries<T>): null | string =>
     line<T>()
-      .curve(curve)
+      .curve(curveFactory)
       .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))
       .y((d) => (yScale as (v: unknown) => number)(serie.accessor(d)))(
       serie.data,
@@ -67,16 +135,23 @@ export const renderLine = <T,>(
           .append("path")
           .attr("class", (d) => `chart-line chart-line--${d.label}`)
           .attr("fill", "none")
-          .attr("stroke", (d) => d.stroke ?? "steelblue")
+          .attr("stroke", (d) => d.stroke ?? "var(--vl-palette-0, steelblue)")
           .attr(
             "stroke-width",
-            (d) => (d.strokeWidth as number | undefined) ?? strokeWidth,
+            (d) => (d.strokeWidth as number | string | undefined) ?? strokeWidth,
           )
+          .attr("opacity", (d) => (d.opacity as number | string | undefined) ?? opacity)
           .attr("stroke-linejoin", "round")
           .attr("stroke-linecap", "round")
           .attr("d", (d) => buildPath(d))
           .each(function () {
+            /**
+             *
+             */
             const path = select(this);
+            /**
+             *
+             */
             const totalLength = this.getTotalLength();
             path
               .attr("stroke-dasharray", totalLength)
@@ -87,8 +162,17 @@ export const renderLine = <T,>(
           }),
       (update) =>
         update.each(function (d) {
+          /**
+           *
+           */
           const path = select(this);
+          /**
+           *
+           */
           const newPathD = buildPath(d);
+          /**
+           *
+           */
           const totalLength = this.getTotalLength();
           path
             .attr("stroke-dasharray", totalLength)
@@ -96,7 +180,8 @@ export const renderLine = <T,>(
             .transition()
             .duration(transitionDuration)
             .attr("d", newPathD)
-            .attr("stroke", d.stroke ?? "steelblue")
+            .attr("stroke", d.stroke ?? "var(--vl-palette-0, steelblue)")
+            .attr("opacity", (d.opacity as number | string | undefined) ?? opacity)
             .attr("stroke-dashoffset", 0);
         }),
       (exit) => exit.remove(),

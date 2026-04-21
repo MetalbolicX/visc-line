@@ -1,5 +1,6 @@
 import { axisLeft } from "d3";
-import type { BoundsSelection, AnyScale } from "@/types/index.mjs";
+
+import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderYAxis}. */
 interface RenderYAxisOptions {
@@ -18,12 +19,18 @@ interface RenderYAxisOptions {
  * @param yScale - D3 scale used to generate the axis.
  * @param options - Optional configuration object.
  */
-export const renderYAxis = (
+export /**
+        *
+        */
+const renderYAxis = (
   boundsGroup: BoundsSelection,
   yScale: AnyScale,
   { tickCount = 5, tickFormat }: RenderYAxisOptions = {},
 ): void => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
+  /**
+   *
+   */
   const axis = axisLeft(yScale as any).ticks(tickCount);
   if (tickFormat) axis.tickFormat(tickFormat as never);
 

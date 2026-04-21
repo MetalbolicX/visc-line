@@ -62,16 +62,16 @@ const processedSeries = processAllSeries<DataRecord>(
  */
 export const main = (container: HTMLElement): void => {
   // Create and apply a lightweight theme override (CSS variables)
-  const customTheme = mergeTheme(defaultTheme, {
-    colors: {
-      palette: ["#E24A33", "#348ABD", "#988ED5"],
-      background: "#fafafa",
-    },
-    line: { strokeWidth: 3, curve: "monotoneX" },
-    axis: { fontSize: 13 },
-    points: { radius: 2 },
-  });
-  applyThemeCssVars(container, customTheme);
+  // const customTheme = mergeTheme(defaultTheme, {
+  //   colors: {
+  //     palette: ["#E24A33", "#348ABD", "#988ED5"],
+  //     background: "#fafafa",
+  //   },
+  //   line: { strokeWidth: 10, curve: "monotoneX" },
+  //   axis: { fontSize: 13 },
+  //   points: { radius: 2 },
+  // });
+  // applyThemeCssVars(container, customTheme);
 
   // SVG structure is stable across renders — create once.
   const svg = renderSVG(container, { background: "#fafafa" });
@@ -178,10 +178,10 @@ export const main = (container: HTMLElement): void => {
   };
 
   // Optional: per-series override — make first series thicker and red
-  if (processedSeries && processedSeries.length > 0) {
-    processedSeries[0].stroke = "#d62728";
-    (processedSeries[0] as any).strokeWidth = 4;
-  }
+  // if (processedSeries && processedSeries.length > 0) {
+  //   processedSeries[0].stroke = "#d62728";
+  //   (processedSeries[0] as any).strokeWidth = 4;
+  // }
 
   render();
   observeResize(container, render);

@@ -1,4 +1,4 @@
-import type { SVGSelection, BoundsSelection, Margins } from "@/types/index.mjs";
+import type { BoundsSelection, Margins, SVGSelection } from "@/types/index.mjs";
 
 /**
  * Selects or creates a single <g> element with class "bounds" inside the given SVG selection,
@@ -12,7 +12,10 @@ import type { SVGSelection, BoundsSelection, Margins } from "@/types/index.mjs";
  * @param margins - Margins object providing left and top offsets for the translation.
  * @returns The selected or created group element cast to BoundsSelection.
  */
-export const renderBoundsGroup = (
+export /**
+        *
+        */
+const renderBoundsGroup = (
   svg: SVGSelection,
   margins: Margins,
 ): BoundsSelection =>

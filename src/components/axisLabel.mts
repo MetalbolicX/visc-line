@@ -1,12 +1,13 @@
-import type { SVGSelection, Margins } from "@/types/index.mjs";
+import type { Margins, SVGSelection } from "@/types/index.mjs";
 
 /** Options shared between X and Y axis label renderers. */
 interface AxisLabelOptions {
-  innerWidth: number;
+  fill?: string;
+  fontSize?: number | string;
   innerHeight: number;
-  margins: Margins;
+  innerWidth: number;
   label?: string;
-  fontSize?: number;
+  margins: Margins;
 }
 
 /**
@@ -26,14 +27,18 @@ interface AxisLabelOptions {
  *
  * @returns void
  */
-export const renderXAxisLabel = (
+export /**
+        *
+        */
+const renderXAxisLabel = (
   svg: SVGSelection,
   {
-    innerWidth,
+    fill = "var(--vl-axis-color, #333)",
+    fontSize = "var(--vl-axis-font-size, 12px)",
     innerHeight,
-    margins,
+    innerWidth,
     label,
-    fontSize = 12,
+    margins,
   }: AxisLabelOptions = {} as AxisLabelOptions,
 ): void => {
   svg
@@ -45,7 +50,7 @@ export const renderXAxisLabel = (
     .attr("y", margins.top + innerHeight + 40)
     .attr("text-anchor", "middle")
     .attr("font-size", fontSize)
-    .attr("fill", "#333")
+    .attr("fill", fill)
     .text(label ?? "");
 };
 
@@ -69,14 +74,18 @@ export const renderXAxisLabel = (
  * - Created/used element will have class "y-axis-label".
  * - Function mutates the DOM and is idempotent (reuses the same element via D3's join).
  */
-export const renderYAxisLabel = (
+export /**
+        *
+        */
+const renderYAxisLabel = (
   svg: SVGSelection,
   {
-    innerWidth,
+    fill = "var(--vl-axis-color, #333)",
+    fontSize = "var(--vl-axis-font-size, 12px)",
     innerHeight,
-    margins,
+    innerWidth,
     label,
-    fontSize = 12,
+    margins,
   }: AxisLabelOptions = {} as AxisLabelOptions,
 ): void => {
   svg
@@ -90,6 +99,6 @@ export const renderYAxisLabel = (
     )
     .attr("text-anchor", "middle")
     .attr("font-size", fontSize)
-    .attr("fill", "#333")
+    .attr("fill", fill)
     .text(label ?? "");
 };

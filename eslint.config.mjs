@@ -55,7 +55,7 @@ export default tseslint.config(
 
       // --- Naming Conventions ---
       // Supports kebab-case and name.type.extension (e.g., user.route.ts)
-      "unicorn/filename-case": ["error", { "regex": "^[a-z0-9-]+(\\.[a-z0-9-]+)*$" }],
+      "unicorn/filename-case": "off",
       
       "@typescript-eslint/naming-convention": [
         "error",

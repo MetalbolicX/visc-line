@@ -1,5 +1,7 @@
-import { select } from "d3";
 import type { Selection } from "d3";
+
+import { select } from "d3";
+
 import type {
   AnyScale,
   BoundsSelection,
@@ -8,10 +10,11 @@ import type {
 
 /** Options for {@link renderPoints}. */
 interface RenderPointsOptions {
+  fill?: string;
+  opacity?: number;
   radius?: number;
   stroke?: string;
   strokeWidth?: number;
-  opacity?: number;
 }
 
 /**
@@ -36,17 +39,21 @@ interface RenderPointsOptions {
  * - Circle fill defaults to series.stroke if present, otherwise "steelblue".
  * - This function mutates the DOM via D3 and is intended for imperative rendering.
  */
-export const renderPoints = <T,>(
+export /**
+        *
+        */
+const renderPoints = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
   yScale: AnyScale,
   xAccessor: (d: T) => unknown,
   {
-    radius = 4,
-    stroke = "white",
-    strokeWidth = 1.5,
+    fill = "var(--vl-point-fill, steelblue)",
     opacity = 0.85,
+    radius = 4,
+    stroke = "var(--vl-point-stroke, white)",
+    strokeWidth = 1.5,
   }: RenderPointsOptions = {},
 ): Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null> =>
   boundsGroup
@@ -65,7 +72,7 @@ export const renderPoints = <T,>(
           (yScale as (v: unknown) => number)(serie.accessor(d)),
         )
         .attr("r", radius)
-        .attr("fill", serie.stroke ?? "steelblue")
+        .attr("fill", serie.stroke ?? fill)
         .attr("stroke", stroke)
         .attr("stroke-width", strokeWidth)
         .attr("opacity", opacity);

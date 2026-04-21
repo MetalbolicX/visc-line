@@ -1,35 +1,51 @@
 import {
   scaleLinear,
-  scalePow,
-  scaleLog,
-  scaleTime,
   type ScaleLinear,
+  scaleLog,
+  scalePow,
+  scaleTime,
 } from "d3";
-import type { ScaleType, AnyScale } from "@/types/index.mjs";
 
+import type { AnyScale, ScaleType } from "@/types/index.mjs";
+
+/**
+ *
+ */
 const SCALE_FACTORIES: Record<ScaleType, (exp?: number) => AnyScale> = {
+  /**
+   *
+   */
   linear: () => scaleLinear(),
-  pow: (exp = 2) => scalePow().exponent(exp),
+  /**
+   *
+   */
   log: () => scaleLog(),
+  /**
+   *
+   */
+  pow: (exp = 2) => scalePow().exponent(exp),
+  /**
+   *
+   */
   time: () => scaleTime(),
 };
-
-/** Options for {@link createScales}. */
-export interface CreateScalesOptions {
-  xDomain: [unknown, unknown] | [undefined, undefined];
-  yDomain: [number, number] | [undefined, undefined];
-  innerWidth: number;
-  innerHeight: number;
-  xType?: ScaleType;
-  yType?: ScaleType;
-  xExponent?: number;
-  yExponent?: number;
-}
 
 /** The pair of configured D3 scales returned by {@link createScales}. */
 export interface ChartScales {
   xScale: AnyScale;
   yScale: AnyScale;
+}
+
+/** Options for {@link createScales}. */
+export interface CreateScalesOptions {
+  innerHeight: number;
+  innerWidth: number;
+  xDomain: [undefined, undefined] | [unknown, unknown];
+  xExponent?: number;
+  xType?: ScaleType;
+  yDomain: [number, number] | [undefined, undefined];
+  yExponent?: number;
+  yType?: ScaleType;
 }
 
 /**
@@ -53,16 +69,22 @@ export interface ChartScales {
  *
  * @returns ChartScales — an object containing `xScale` and `yScale`, each configured with domain, range and `.nice()`.
  */
-export const createScales = ({
-  xDomain,
-  yDomain,
-  innerWidth,
+export /**
+        *
+        */
+const createScales = ({
   innerHeight,
-  xType = "linear",
-  yType = "linear",
+  innerWidth,
+  xDomain,
   xExponent = 2,
+  xType = "linear",
+  yDomain,
   yExponent = 2,
+  yType = "linear",
 }: CreateScalesOptions): ChartScales => {
+  /**
+   *
+   */
   const xScale = (
     (SCALE_FACTORIES[xType] ?? SCALE_FACTORIES.linear)(
       xExponent,
@@ -71,6 +93,9 @@ export const createScales = ({
     .domain(xDomain as number[])
     .range([0, innerWidth])
     .nice() as AnyScale;
+  /**
+   *
+   */
   const yScale = (
     (SCALE_FACTORIES[yType] ?? SCALE_FACTORIES.linear)(
       yExponent,

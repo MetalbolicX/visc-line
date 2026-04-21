@@ -1,4 +1,4 @@
-export * from "./accesability/index.mjs";
+export * from "./accessibility/index.mjs";
 export * from "./components/index.mjs";
 export * from "./interactivity/index.mjs";
 export * from "./services/index.mjs";

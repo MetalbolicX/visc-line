@@ -1,6 +1,8 @@
 import "tipviz";
 import type { TipVizTooltip } from "tipviz";
+
 import { bisector, pointer, select } from "d3";
+
 import type {
   AnyScale,
   BoundsSelection,
@@ -8,42 +10,87 @@ import type {
 } from "@/types/index.mjs";
 
 // ── Per-chart tooltip instances ───────────────────────────────────────────────
+
 interface TooltipEntry {
-  tooltip: TipVizTooltip;
   loadedStylesheet: string | undefined;
-}
-
-const tooltipRegistry = new WeakMap<SVGGElement, TooltipEntry>();
-
-// ── Public data types ─────────────────────────────────────────────────────────
-
-/** One value row in the tooltip body. */
-export interface TooltipRow {
-  label: string;
-  color: string;
-  value: string;
-}
-
-/** Data passed to tipviz and to the custom {@link AddTooltipOptions.tooltipHtml} renderer. */
-export interface TooltipData {
-  xLabel: string;
-  rows: TooltipRow[];
+  tooltip: TipVizTooltip;
 }
 
 /**
- * Escapes a string for safe insertion into HTML by replacing characters
- * that have special meaning in HTML with their corresponding entities.
  *
- * Replacements performed (in order):
- * - '&' → '&amp;'
- * - '<' → '&lt;'
- * - '>' → '&gt;'
- * - '"' → '&quot;'
+ */
+const tooltipRegistry = new WeakMap<SVGGElement, TooltipEntry>();
+
+// ── Sorting utilities ─────────────────────────────────────────────────────────
+
+type ComparableX = number | string;
+
+/**
+ * Normalizes any x-axis value into a comparison-friendly form.
+ * Dates become Unix timestamps, numbers stay as-is, bigints become numbers,
+ * and everything else becomes a string.
  *
- * Note: Ampersands are replaced first to avoid double-escaping existing entities.
+ * @param value - Any x-axis value.
+ * @returns A number or string that can be compared with localeCompare or numeric subtraction.
+ */
+const toComparableX = (value: unknown): ComparableX => {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+  if (typeof value === "bigint") return Number(value);
+  return String(value);
+};
+
+/**
+ * Compares two ComparableX values for ascending sort order.
  *
- * @param text - The input string to escape.
- * @returns The escaped string safe for use in HTML text content or within double-quoted attributes.
+ * @param a - Left-hand side of the comparison.
+ * @param b - Right-hand side of the comparison.
+ * @returns A negative number if a < b, positive if a > b, 0 if equal.
+ */
+const compareComparableX = (a: ComparableX, b: ComparableX): number => {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b));
+};
+
+/**
+ * Returns a new array sorted in ascending order by the x-accessor.
+ * Does not mutate the original array.
+ *
+ * @param data - Array of data items.
+ * @param xAccessor - Function returning the x value for each item.
+ * @returns A new sorted copy.
+ */
+const sortDataByX = <T,>(
+  data: T[],
+  xAccessor: (d: T) => unknown,
+): T[] =>
+  [...data].sort((a, b) =>
+    compareComparableX(toComparableX(xAccessor(a)), toComparableX(xAccessor(b))),
+  );
+
+// ── Public data types ─────────────────────────────────────────────────────────
+
+/** Data passed to the tooltip renderer. */
+export interface TooltipData {
+  rows: TooltipRow[];
+  xLabel: string;
+}
+
+/** One value row in the tooltip body. */
+export interface TooltipRow {
+  color: string;
+  label: string;
+  value: string;
+}
+
+// ── HTML utilities ────────────────────────────────────────────────────────────
+
+/**
+ * Escapes HTML special characters in a string for safe interpolation into
+ * HTML text content or double-quoted attributes.
+ *
+ * @param text - The raw string to escape.
+ * @returns A string safe for HTML insertion.
  */
 const esc = (text: string): string =>
   text
@@ -53,27 +100,39 @@ const esc = (text: string): string =>
     .replace(/"/g, "&quot;");
 
 /**
- * Generates the default HTML string for a tooltip given tooltip data.
  *
- * The function produces a small, styled HTML fragment containing a header
- * (derived from xLabel) and a vertical list of rows. Each row displays a
- * colored dot, a label, and a value. All interpolated values are escaped
- * (via the internal esc function) to prevent injection when inserted into the DOM.
- *
- * @param tooltipData - Object containing data used to render the tooltip.
- * @param tooltipData.xLabel - Header label shown at the top of the tooltip.
- * @param tooltipData.rows - Array of row objects to render. Each row should have:
- *   - label: display text for the row
- *   - color: CSS color used for the row's dot indicator
- *   - value: display value for the row
- * @returns A string of HTML representing the fully-formed tooltip, ready for insertion into the document.
  */
-const defaultTooltipHtml = ({ xLabel, rows }: TooltipData): string => {
+const safeColorPattern =
+  /^(#[0-9a-fA-F]{3,8}|(rgb|hsl)a?\([0-9.%\s,/-]+\)|var\(--[a-zA-Z0-9-_]+\)|[a-zA-Z]+)$/;
+
+/**
+ * Validates and sanitizes a CSS color string for safe inline style use.
+ * Returns the trimmed value if it matches a recognized CSS color pattern,
+ * otherwise falls back to `#999`.
+ *
+ * @param text - A color value to sanitize.
+ * @returns A safe color string.
+ */
+const safeColor = (text: string): string =>
+  safeColorPattern.test(text.trim()) ? text.trim() : "#999";
+
+/**
+ * Generates the default tooltip HTML from a TooltipData object.
+ *
+ * @param data - Object containing xLabel and rows for the tooltip.
+ * @param data.xLabel - Header text for the tooltip.
+ * @param data.rows - Array of color/label/value rows to display.
+ * @returns An HTML string safe for tooltip insertion.
+ */
+const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
+  /**
+   *
+   */
   const rowsHtml = rows
     .map(
-      ({ label, color, value }) => /*html*/ `
+      ({ color, label, value }) => /*html*/ `
         <div style="display:flex;align-items:center;gap:6px;height:18px">
-        <span style="width:8px;height:8px;border-radius:50%;background:${esc(color)};flex-shrink:0"></span>
+        <span style="width:8px;height:8px;border-radius:50%;background:${safeColor(color)};flex-shrink:0"></span>
         <span style="font-size:11px;color:#222">${esc(label)}: ${esc(value)}</span>
         </div>`,
     )
@@ -86,137 +145,96 @@ const defaultTooltipHtml = ({ xLabel, rows }: TooltipData): string => {
     </div>`;
 };
 
-/** Options for {@link addTooltip}. */
-interface AddTooltipOptions<T> {
-  innerWidth: number;
-  innerHeight: number;
+// ── Options ─────────────────────────────────────────────────────────────────
+
+/** Options for the {@link addTooltip} function. */
+interface AddTooltipOptions<_T> {
   formatX?: (v: unknown) => string;
   formatY?: (v: unknown) => string;
-  /** Custom HTML renderer. Receives resolved {@link TooltipData}. Defaults to an inline-styled template. */
-  tooltipHtml?: (data: TooltipData) => string;
-  /** URL of an external stylesheet to load into the tooltip shadow root via `loadStylesheet`. */
+  innerHeight: number;
+  innerWidth: number;
   stylesheetUrl?: string;
+  tooltipHtml?: (data: TooltipData) => string;
 }
 
+// ── Main export ──────────────────────────────────────────────────────────────
+
 /**
- * Adds an interactive tooltip layer to a chart bounds group. The function
- * creates (or reuses) a single DOM tooltip element per chart bounds element,
- * sets up a cursor vertical line, per-series cursor dots, and a transparent
- * mouse-capture rectangle that drives tooltip show/hide and positioning.
+ * Adds a reactive tooltip layer over a chart's bounds group.
  *
- * Behavior:
- * - Reuses a tooltip instance registered for the bounds element, creating one
- *   if missing.
- * - Applies the provided tooltipHtml renderer and optionally loads a
- *   stylesheetUrl into the tooltip element.
- * - Renders a "tooltip-layer" <g> containing:
- *   - A vertical dashed cursor line that spans the inner chart height,
- *   - One cursor dot per series positioned at the nearest datum for the
- *     hovered x,
- *   - A transparent rect sized to innerWidth/innerHeight that captures mouse
- *     events.
- * - On mousemove:
- *   - Converts the mouse x position to a data x via xScale.invert,
- *   - Finds the nearest index in the reference series using a bisector,
- *   - Positions the cursor line at the corresponding x value,
- *   - For each series finds the closest datum and positions the series' dot
- *     and builds the tooltip rows with formatY,
- *   - Calls tooltip.show with { xLabel, rows } where xLabel is produced via
- *     formatX and rows include label/color/value for each series. The tooltip
- *     is anchored to the first visible series dot (if any) or the event
- *     target.
- * - On mouseleave, hides the cursor line/dots and calls tooltip.hide().
+ * Creates (or reuses) one TipVizTooltip instance per bounds element, renders
+ * a cursor line and per-series dots, and responds to mouse hover by showing
+ * a tooltip anchored to the nearest data point.
  *
- * @template T - Datum type for the series data arrays.
+ * Data series are sorted by x-value before bisecting so unsorted input works.
+ * Color values in tooltips are sanitized via {@link safeColor}.
  *
- * @param boundsGroup - D3 selection wrapping the chart bounds <g> element to
- *   receive the tooltip layer and mouse-capture rectangle.
- * @param series - Array of processed series metadata and data. Each series'
- *   `label` is used as the key for binding dots; `accessor` is used to obtain
- *   the y value for positioning and formatting.
- * @param xScale - X scale used for pixel positioning and inversion. The scale
- *   is expected to support calling `(v) => number` for forward mapping and
- *   have an `invert(number) => unknown` method for mapping pixels back to
- *   data space.
- * @param yScale - Y scale used for forward mapping of y values to pixel
- *   positions via `(v) => number`.
- * @param xAccessor - Function that returns the x value for a datum (used for
- *   positioning and formatting).
- * @param options - Optional configuration object.
- * @param options.innerWidth - Inner chart width (pixels) to size the mouse
- *   capture rect. Defaults to 0 when not provided.
- * @param options.innerHeight - Inner chart height (pixels) to size the cursor
- *   line and mouse capture rect. Defaults to 0 when not provided.
- * @param options.formatX - Formatter for the x label shown in the tooltip;
- *   default converts Date to locale date string and otherwise stringifies.
- * @param options.formatY - Formatter for series values shown in rows;
- *   default formats numbers with toLocaleString and otherwise stringifies.
- * @param options.tooltipHtml - Function that receives TooltipData and returns
- *   HTML string (or similar) for the tooltip content. Defaults to
- *   `defaultTooltipHtml`.
- * @param options.stylesheetUrl - Optional URL to a stylesheet to load into the
- *   tooltip element. If provided and different from the previously loaded
- *   stylesheet for the bounds element, the stylesheet will be loaded.
+ * @template T - The data point type.
  *
- * @returns The TipVizTooltip instance used to show/hide tooltip content.
- *
- * @remarks
- * - The function relies on a bisector built from the provided xAccessor to
- *   locate nearest indices; it clamps indices within array bounds.
- * - Cursor dots are bound by series label and given classes
- *   `cursor-dot cursor-dot--${label}` so they can be styled per-series.
- * - The tooltip anchor will be the first visible cursor dot or the mouse
- *   capture element if no dot is visible.
- *
- * @example
- * ```ts
- * addTooltip(boundsGroup, processedSeries, xScale, yScale, xAccessor, {
- *   innerWidth: dims.innerWidth,
- *   innerHeight: dims.innerHeight,
- *   formatX: (v) => v instanceof Date ? v.toLocaleDateString() : String(v),
- *   formatY: (v) => typeof v === "number" ? v.toLocaleString() : String(v),
- *   tooltipHtml: ({ xLabel, rows }) => `
- *     <div class="my-tooltip">
- *       <div class="my-tooltip-header">${xLabel}</div>
- *       ${rows.map(r => `
- *         <div class="my-tooltip-row">
- *           <span class="dot" style="background:${r.color}"></span>
- *           <span class="label">${r.label}: ${r.value}</span>
- *         </div>`).join("")}
- *     </div>`,
- *   stylesheetUrl: "path/to/tooltip-styles.css",
- * });
- * ```
+ * @param boundsGroup - D3 selection of the chart's bounds `<g>` element.
+ * @param series - All series (labels, accessors, data) to display.
+ * @param xScale - X scale used for pixel ↔ data inversion.
+ * @param yScale - Y scale used for cursor dot positioning.
+ * @param xAccessor - Returns the x value from a data point.
+ * @param options - innerWidth, innerHeight, and optional formatters / renderer.
+ * @returns The TipVizTooltip instance for this bounds element.
  */
-export const addTooltip = <T,>(
+export /**
+        *
+        */
+const addTooltip = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
   yScale: AnyScale,
   xAccessor: (d: T) => unknown,
   {
-    innerWidth,
-    innerHeight,
     formatX = (v) => (v instanceof Date ? v.toLocaleDateString() : String(v)),
     formatY = (v) => (typeof v === "number" ? v.toLocaleString() : String(v)),
-    tooltipHtml = defaultTooltipHtml,
+    innerHeight,
+    innerWidth,
     stylesheetUrl,
-  }: AddTooltipOptions<T> = { innerWidth: 0, innerHeight: 0 },
+    tooltipHtml = defaultTooltipHtml,
+  }: AddTooltipOptions<T> = { innerHeight: 0, innerWidth: 0 },
 ): TipVizTooltip => {
+  /**
+   *
+   */
   const boundsEl = boundsGroup.node()!;
-  const referenceData = series[0]?.data ?? [];
-  const bisect = bisector(xAccessor).center;
+  /**
+   *
+   */
+  const referenceData = sortDataByX(series[0]?.data ?? [], xAccessor);
+  /**
+   *
+   */
+  const sortedSeriesByLabel = new Map(
+    series.map((serie) => [serie.label, sortDataByX(serie.data, xAccessor)]),
+  );
+  /**
+   *
+   */
+  const bisect = bisector((d: T) => toComparableX(xAccessor(d))).center;
 
-  // ── Tooltip instance (one per chart) ────────────────────────────────────
+  // ── Per-chart tooltip instance ─────────────────────────────────────────
+  /**
+   *
+   */
   let entry = tooltipRegistry.get(boundsEl);
 
   if (!entry) {
+    /**
+     *
+     */
     const el = document.createElement("tip-viz-tooltip") as TipVizTooltip;
     document.body.appendChild(el);
-    entry = { tooltip: el, loadedStylesheet: undefined };
+    entry = { loadedStylesheet: undefined, tooltip: el };
     tooltipRegistry.set(boundsEl, entry);
   }
 
+  /**
+   *
+   */
   const { tooltip } = entry;
 
   tooltip.setHtml((d) => tooltipHtml(d as TooltipData));
@@ -226,14 +244,19 @@ export const addTooltip = <T,>(
     entry.loadedStylesheet = stylesheetUrl;
   }
 
-  // ── Layer ────────────────────────────────────────────────────────────────
+  // ── Cursor layer ─────────────────────────────────────────────────────────
+  /**
+   *
+   */
   const tooltipLayer = boundsGroup
     .selectAll<SVGGElement, null>("g.tooltip-layer")
     .data([null])
     .join("g")
     .attr("class", "tooltip-layer");
 
-  // ── Cursor line ──────────────────────────────────────────────────────────
+  /**
+   *
+   */
   const cursorLine = tooltipLayer
     .selectAll<SVGLineElement, null>("line.cursor-line")
     .data([null])
@@ -247,7 +270,9 @@ export const addTooltip = <T,>(
     .attr("pointer-events", "none")
     .attr("display", "none");
 
-  // ── One dot per series ───────────────────────────────────────────────────
+  /**
+   *
+   */
   const cursorDots = tooltipLayer
     .selectAll<SVGCircleElement, ProcessedSeries<T>>("circle.cursor-dot")
     .data(series, ({ label }) => label)
@@ -260,7 +285,7 @@ export const addTooltip = <T,>(
     .attr("pointer-events", "none")
     .attr("display", "none");
 
-  // ── Mouse capture ────────────────────────────────────────────────────────
+  // ── Mouse capture rectangle ──────────────────────────────────────────────
   boundsGroup
     .selectAll<SVGRectElement, null>("rect.mouse-capture")
     .data([null])
@@ -270,73 +295,107 @@ export const addTooltip = <T,>(
     .attr("height", innerHeight)
     .attr("fill", "transparent")
     .on("mousemove", (event: MouseEvent) => {
+      /**
+       *
+       */
       const [mx] = pointer(event);
+      /**
+       *
+       */
       const xVal = (
         xScale as unknown as { invert: (v: number) => unknown }
       ).invert(mx);
+      /**
+       *
+       */
+      const comparableXVal = toComparableX(xVal);
+      /**
+       *
+       */
       const idx = Math.max(
         0,
-        Math.min(
-          bisect(referenceData as never[], xVal as never),
-          referenceData.length - 1,
-        ),
+        Math.min(bisect(referenceData, comparableXVal), referenceData.length - 1),
       );
+      /**
+       *
+       */
       const refDatum = referenceData[idx];
       if (!refDatum) return;
 
+      /**
+       *
+       */
       const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
-      let rows: TooltipRow[] = [];
-      let anchorEl: Element | null = null;
+      /**
+       *
+       */
+      const rows: TooltipRow[] = [];
+      /**
+       *
+       */
+      let firstDot: null | SVGCircleElement = null;
 
       cursorDots.each(function (serie) {
-        if (!serie.data.length) {
-          rows = [
-            ...rows,
-            {
-              label: serie.label,
-              color: serie.stroke ?? "steelblue",
-              value: "—",
-            },
-          ];
+        /**
+         *
+         */
+        const sortedSeries = sortedSeriesByLabel.get(serie.label) ?? [];
+
+        if (!sortedSeries.length) {
+          rows.push({
+            color: serie.stroke ?? "steelblue",
+            label: serie.label,
+            value: "—",
+          });
           return;
         }
 
+        /**
+         *
+         */
         const si = Math.max(
           0,
           Math.min(
-            bisect(serie.data as never[], xVal as never),
-            serie.data.length - 1,
+            bisect(sortedSeries, comparableXVal),
+            sortedSeries.length - 1,
           ),
         );
 
-        select(this)
+        /**
+         *
+         */
+        const datum = sortedSeries[si];
+        if (!datum) return;
+
+        /**
+         *
+         */
+        const dot = select(this)
           .attr(
             "cx",
-            (xScale as (v: unknown) => number)(xAccessor(serie.data[si]!)),
+            (xScale as (v: unknown) => number)(xAccessor(datum)),
           )
           .attr(
             "cy",
-            (yScale as (v: unknown) => number)(serie.accessor(serie.data[si]!)),
+            (yScale as (v: unknown) => number)(serie.accessor(datum)),
           )
-          .attr("display", null);
+          .attr("display", null)
+          .node();
 
-        rows = [
-          ...rows,
-          {
-            label: serie.label,
-            color: serie.stroke ?? "steelblue",
-            value: formatY(serie.accessor(serie.data[si]!)),
-          },
-        ];
+        rows.push({
+          color: serie.stroke ?? "steelblue",
+          label: serie.label,
+          value: formatY(serie.accessor(datum)),
+        });
 
-        anchorEl ??= this;
+        if (!firstDot) firstDot = dot;
       });
 
       tooltip.show(
-        { xLabel: formatX(xAccessor(refDatum)), rows } satisfies TooltipData,
-        anchorEl ?? (event.currentTarget as Element),
+        { rows, xLabel: formatX(xAccessor(refDatum)) } satisfies TooltipData,
+        firstDot ?? (event.currentTarget as Element),
       );
     })
     .on("mouseleave", () => {
@@ -347,3 +406,8 @@ export const addTooltip = <T,>(
 
   return tooltip;
 };
+
+// ── Exported for testing ──────────────────────────────────────────────────────
+
+/** @internal */
+export { safeColor, sortDataByX, toComparableX };

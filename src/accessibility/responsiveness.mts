@@ -9,11 +9,21 @@
  * This utility uses the browser's ResizeObserver API. Call the returned cleanup function to release resources
  * and stop listening for resize events.
  */
-export const observeResize = (
+export /**
+        *
+        */
+const observeResize = (
   container: Element,
   renderCallback: () => void,
 ): (() => void) => {
-  const observer = new ResizeObserver(() => renderCallback());
+  /**
+   *
+   */
+  const observer = new ResizeObserver(() => {
+    renderCallback();
+  });
   observer.observe(container);
-  return () => observer.disconnect();
+  return () => {
+    observer.disconnect();
+  };
 };

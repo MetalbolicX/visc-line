@@ -1,13 +1,13 @@
-import type { SVGSelection, Margins } from "@/types/index.mjs";
+import type { Margins, SVGSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderTitle}. */
 interface RenderTitleOptions {
-  width: number;
+  fill?: string;
+  fontSize?: number | string;
+  fontWeight?: number | string;
   margins: Margins;
   title: string;
-  fontSize?: number;
-  fill?: string;
-  fontWeight?: string | number;
+  width: number;
 }
 
 /**
@@ -28,15 +28,18 @@ interface RenderTitleOptions {
  * @param options.fontWeight - Font weight for the title (default: "bold").
  * @returns void
  */
-export const renderTitle = (
+export /**
+        *
+        */
+const renderTitle = (
   svg: SVGSelection,
   {
-    width,
+    fill = "var(--vl-title-color, #222)",
+    fontSize = "var(--vl-title-font-size, 16px)",
+    fontWeight = "var(--vl-title-font-weight, 600)",
     margins,
     title,
-    fontSize = 16,
-    fill = "#222",
-    fontWeight = "bold",
+    width,
   }: RenderTitleOptions,
 ): void => {
   svg

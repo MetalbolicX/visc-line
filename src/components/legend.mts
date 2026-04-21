@@ -2,18 +2,19 @@ import type { SVGSelection } from "@/types/index.mjs";
 
 /** A single entry in the legend. */
 export interface LegendItem {
-  label: string;
   color: string;
+  label: string;
 }
 
 /** Options for {@link renderLegend}. */
 interface RenderLegendOptions {
+  fontSize?: number | string;
+  gap?: number;
   items: LegendItem[];
+  labelColor?: string;
+  swatchSize?: number;
   x?: number;
   y?: number;
-  fontSize?: number;
-  swatchSize?: number;
-  gap?: number;
 }
 
 /**
@@ -36,17 +37,24 @@ interface RenderLegendOptions {
  *
  * @returns void
  */
-export const renderLegend = (
+export /**
+        *
+        */
+const renderLegend = (
   svg: SVGSelection,
   {
+    fontSize = "var(--vl-legend-font-size, 12px)",
+    gap = 6,
     items,
+    labelColor = "var(--vl-text, #333)",
+    swatchSize = 12,
     x = 0,
     y = 0,
-    fontSize = 12,
-    swatchSize = 12,
-    gap = 6,
   }: RenderLegendOptions,
 ): void => {
+  /**
+   *
+   */
   const legendGroup = svg
     .selectAll<SVGGElement, null>("g.legend")
     .data([null])
@@ -54,8 +62,14 @@ export const renderLegend = (
     .attr("class", "legend")
     .attr("transform", `translate(${x},${y})`);
 
+  /**
+   *
+   */
   const rowHeight = swatchSize + gap;
 
+  /**
+   *
+   */
   const entries = legendGroup
     .selectAll<SVGGElement, LegendItem>("g.legend-entry")
     .data(items)
@@ -82,6 +96,6 @@ export const renderLegend = (
     .attr("y", swatchSize / 2)
     .attr("dominant-baseline", "middle")
     .attr("font-size", fontSize)
-    .attr("fill", "#333")
+    .attr("fill", labelColor)
     .text((d) => d.label);
 };

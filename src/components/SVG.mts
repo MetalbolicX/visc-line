@@ -1,4 +1,5 @@
 import { select } from "d3";
+
 import type { SVGSelection } from "@/types/index.mjs";
 
 /**
@@ -13,9 +14,12 @@ import type { SVGSelection } from "@/types/index.mjs";
  * @param options.background - Background color for the SVG. Defaults to `"white"`.
  * @returns D3 selection for the created or updated `<svg>` element.
  */
-export const renderSVG = (
+export /**
+        *
+        */
+const renderSVG = (
   container: HTMLElement,
-  { background = "white" }: { background?: string } = {},
+  { background = "var(--vl-background, white)" }: { background?: string } = {},
 ): SVGSelection =>
   select(container)
     .selectAll<SVGSVGElement, null>("svg")

@@ -1,5 +1,6 @@
 import { axisBottom } from "d3";
-import type { BoundsSelection, AnyScale } from "@/types/index.mjs";
+
+import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderXAxis}. */
 interface RenderXAxisOptions {
@@ -18,13 +19,19 @@ interface RenderXAxisOptions {
  * @param innerHeight - Vertical offset (pixels) to position the x-axis.
  * @param options - Optional configuration.
  */
-export const renderXAxis = (
+export /**
+        *
+        */
+const renderXAxis = (
   boundsGroup: BoundsSelection,
   xScale: AnyScale,
   innerHeight: number,
   { tickCount = 5, tickFormat }: RenderXAxisOptions = {},
 ): void => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
+  /**
+   *
+   */
   const axis = axisBottom(xScale as any).ticks(tickCount);
   if (tickFormat) axis.tickFormat(tickFormat as never);
 

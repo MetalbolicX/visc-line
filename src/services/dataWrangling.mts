@@ -1,7 +1,15 @@
 import { extent } from "d3";
-import type { SeriesDescriptor, ProcessedSeries } from "@/types/index.mjs";
 
-/** @internal */
+import type { ProcessedSeries, SeriesDescriptor } from "@/types/index.mjs";
+
+/**
+ * @internal
+ * Determines whether a value is a valid, finite number.
+ * Treats null, undefined, NaN, and Infinity as invalid.
+ *
+ * @param v - Any value to validate.
+ * @returns True if v is a usable numeric value, false otherwise.
+ */
 const isValidNumber = (v: unknown): boolean =>
   v !== null &&
   v !== undefined &&
@@ -20,7 +28,10 @@ const isValidNumber = (v: unknown): boolean =>
  * @param yAccessor - Function that returns the y value for an item.
  * @returns Array of data items for which both xAccessor(item) and yAccessor(item) are valid numbers.
  */
-export const processNumericData = <T,>(
+export /**
+        *
+        */
+const processNumericData = <T,>(
   rawData: T[],
   xAccessor: (d: T) => unknown,
   yAccessor: (d: T) => unknown,
@@ -41,7 +52,10 @@ export const processNumericData = <T,>(
  * @param ySeries - Array of series descriptors.
  * @returns New array of series descriptors where each descriptor includes a `data` array.
  */
-export const processAllSeries = <T,>(
+export /**
+        *
+        */
+const processAllSeries = <T,>(
   rawData: T[],
   xAccessor: (d: T) => unknown,
   ySeries: SeriesDescriptor<T>[],
@@ -58,20 +72,23 @@ export const processAllSeries = <T,>(
  * @param xAccessor - Function that extracts the x value from a datum.
  * @returns An object with xDomain and yDomain two-element extent arrays.
  */
-export const getMultiSeriesExtents = <T,>(
+export /**
+        *
+        */
+const getMultiSeriesExtents = <T,>(
   processedSeries: ProcessedSeries<T>[],
   xAccessor: (d: T) => unknown,
 ): {
-  xDomain: [unknown, unknown] | [undefined, undefined];
+  xDomain: [undefined, undefined] | [unknown, unknown];
   yDomain: [number, number] | [undefined, undefined];
 } => ({
   xDomain: extent(
     processedSeries.flatMap(({ data }) => data),
     xAccessor as (d: T) => number,
-  ) as [unknown, unknown] | [undefined, undefined],
+  ) as [undefined, undefined] | [unknown, unknown],
   yDomain: extent(
-    processedSeries.flatMap(({ data, accessor }) =>
+    processedSeries.flatMap(({ accessor, data }) =>
       data.map(accessor),
-    ) as number[],
-  ) as [number, number] | [undefined, undefined],
+    ),
+  ),
 });

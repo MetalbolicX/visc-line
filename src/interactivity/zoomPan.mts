@@ -1,20 +1,22 @@
-import { zoom } from "d3";
 import type { ZoomBehavior, ZoomScale } from "d3";
-import type { SVGSelection, AnyScale } from "@/types/index.mjs";
 
-/** Options for {@link addZoomPan}. */
-interface AddZoomPanOptions {
-  xScale: AnyScale;
-  yScale: AnyScale;
-  innerWidth: number;
-  innerHeight: number;
-  onZoom: (newX: AnyScale, newY: AnyScale) => void;
-}
+import { zoom } from "d3";
+
+import type { AnyScale, SVGSelection } from "@/types/index.mjs";
 
 /** The D3 zoom behavior augmented with a `reset()` helper. */
 export type ZoomBehaviorWithReset = ZoomBehavior<SVGSVGElement, unknown> & {
   reset: () => void;
 };
+
+/** Options for {@link addZoomPan}. */
+interface AddZoomPanOptions {
+  innerHeight: number;
+  innerWidth: number;
+  onZoom: (newX: AnyScale, newY: AnyScale) => void;
+  xScale: AnyScale;
+  yScale: AnyScale;
+}
 
 /**
  * Attach pan and zoom behavior to an SVG selection using D3's zoom.
@@ -30,10 +32,16 @@ export type ZoomBehaviorWithReset = ZoomBehavior<SVGSVGElement, unknown> & {
  * @param options - Configuration options.
  * @returns The configured D3 zoom behavior augmented with a `reset()` method.
  */
-export const addZoomPan = (
+export /**
+        *
+        */
+const addZoomPan = (
   svg: SVGSelection,
-  { xScale, yScale, innerWidth, innerHeight, onZoom }: AddZoomPanOptions,
+  { innerHeight, innerWidth, onZoom, xScale, yScale }: AddZoomPanOptions,
 ): ZoomBehaviorWithReset => {
+  /**
+   *
+   */
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.5, 32])
     .extent([
@@ -41,6 +49,9 @@ export const addZoomPan = (
       [innerWidth, innerHeight],
     ])
     .on("zoom", (event) => {
+      /**
+       *
+       */
       const { transform: t } = event;
       onZoom(
         t.rescaleX(xScale as ZoomScale) as AnyScale,
@@ -50,7 +61,13 @@ export const addZoomPan = (
 
   svg.call(zoomBehavior as never);
 
+  /**
+   *
+   */
   const augmented = zoomBehavior as ZoomBehaviorWithReset;
+  /**
+   *
+   */
   augmented.reset = () =>
     svg.call(
       zoomBehavior.transform as never,
