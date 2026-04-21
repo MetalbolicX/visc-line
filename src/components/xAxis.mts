@@ -1,11 +1,12 @@
 import { axisBottom } from "d3";
+import type { AxisDomain } from "d3";
 
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderXAxis}. */
 interface RenderXAxisOptions {
   tickCount?: number;
-  tickFormat?: (domainValue: unknown, index: number) => string;
+  tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
 /**
@@ -19,27 +20,28 @@ interface RenderXAxisOptions {
  * @param innerHeight - Vertical offset (pixels) to position the x-axis.
  * @param options - Optional configuration.
  */
-export /**
-        *
-        */
-const renderXAxis = (
+type AxisCompatibleScale = AnyScale & {
+  range: () => number[];
+  copy: () => unknown;
+};
+
+const asAxisScale = (scale: AnyScale): AxisCompatibleScale =>
+  scale as unknown as AxisCompatibleScale;
+
+export const renderXAxis = (
   boundsGroup: BoundsSelection,
   xScale: AnyScale,
   innerHeight: number,
   { tickCount = 5, tickFormat }: RenderXAxisOptions = {},
 ): void => {
-   
-  /**
-   *
-   */
-  const axis = axisBottom(xScale as any).ticks(tickCount);
-  if (tickFormat) axis.tickFormat(tickFormat as never);
+  const axis = axisBottom(asAxisScale(xScale)).ticks(tickCount);
+  if (tickFormat) axis.tickFormat(tickFormat as (d: AxisDomain, i: number) => string);
 
   boundsGroup
     .selectAll<SVGGElement, null>("g.x-axis")
     .data([null])
     .join("g")
     .attr("class", "x-axis")
-    .attr("transform", `translate(0,${innerHeight})`)
-    .call(axis as never);
+    .attr("transform", `translate(0,${String(innerHeight)})`)
+    .call(axis);
 };

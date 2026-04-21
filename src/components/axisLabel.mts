@@ -27,10 +27,7 @@ interface AxisLabelOptions {
  *
  * @returns void
  */
-export /**
-        *
-        */
-const renderXAxisLabel = (
+export const renderXAxisLabel = (
   svg: SVGSelection,
   {
     fill = "var(--vl-axis-color, #333)",
@@ -74,16 +71,12 @@ const renderXAxisLabel = (
  * - Created/used element will have class "y-axis-label".
  * - Function mutates the DOM and is idempotent (reuses the same element via D3's join).
  */
-export /**
-        *
-        */
-const renderYAxisLabel = (
+export const renderYAxisLabel = (
   svg: SVGSelection,
   {
     fill = "var(--vl-axis-color, #333)",
     fontSize = "var(--vl-axis-font-size, 12px)",
     innerHeight,
-    innerWidth,
     label,
     margins,
   }: AxisLabelOptions = {} as AxisLabelOptions,

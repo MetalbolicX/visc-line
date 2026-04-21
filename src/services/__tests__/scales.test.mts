@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createScales } from "../../services/scales.mts";
+import { createScales } from "../../services/scales.mjs";
 
 describe("createScales", () => {
   it("creates linear x and y scales by default", () => {

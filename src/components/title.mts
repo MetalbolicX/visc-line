@@ -28,10 +28,7 @@ interface RenderTitleOptions {
  * @param options.fontWeight - Font weight for the title (default: "bold").
  * @returns void
  */
-export /**
-        *
-        */
-const renderTitle = (
+export const renderTitle = (
   svg: SVGSelection,
   {
     fill = "var(--vl-title-color, #222)",

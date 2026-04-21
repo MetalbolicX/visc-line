@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { ProcessedSeries } from "../../types/index.mts";
+import type { ProcessedSeries } from "../../types/index.mjs";
 
-import { getMultiSeriesExtents, processNumericData } from "../../services/dataWrangling.mts";
+import { getMultiSeriesExtents, processNumericData } from "../../services/dataWrangling.mjs";
 
 describe("processNumericData", () => {
   it("keeps rows where both x and y are valid finite numbers", () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { CurvePreset } from "../../types/index.mts";
+import type { CurvePreset } from "../../types/index.mjs";
 
-import { defaultTheme } from "../../themes/defaultTheme.mts";
+import { defaultTheme } from "../../themes/defaultTheme.mjs";
 
 describe("CurvePreset", () => {
   /**

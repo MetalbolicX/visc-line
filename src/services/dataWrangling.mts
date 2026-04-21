@@ -72,23 +72,39 @@ const processAllSeries = <T,>(
  * @param xAccessor - Function that extracts the x value from a datum.
  * @returns An object with xDomain and yDomain two-element extent arrays.
  */
-export /**
-        *
-        */
-const getMultiSeriesExtents = <T,>(
+const extentCache = new Map<string, { xDomain: [undefined, undefined] | [unknown, unknown]; yDomain: [number, number] | [undefined, undefined] }>();
+
+const extentCacheKey = (
+  processedSeries: ProcessedSeries<T>[],
+  xAccessor: (d: T) => unknown,
+): string =>
+  processedSeries
+    .map((s) => `${s.label}:${s.data.length}`)
+    .join("|");
+
+export const getMultiSeriesExtents = <T,>(
   processedSeries: ProcessedSeries<T>[],
   xAccessor: (d: T) => unknown,
 ): {
   xDomain: [undefined, undefined] | [unknown, unknown];
   yDomain: [number, number] | [undefined, undefined];
-} => ({
-  xDomain: extent(
-    processedSeries.flatMap(({ data }) => data),
-    xAccessor as (d: T) => number,
-  ) as [undefined, undefined] | [unknown, unknown],
-  yDomain: extent(
-    processedSeries.flatMap(({ accessor, data }) =>
-      data.map(accessor),
+} => {
+  const cacheKey = extentCacheKey(processedSeries, xAccessor);
+  const cached = extentCache.get(cacheKey);
+  if (cached) return cached;
+
+  const result = {
+    xDomain: extent(
+      processedSeries.flatMap(({ data }) => data),
+      xAccessor as (d: T) => number,
+    ) as [undefined, undefined] | [unknown, unknown],
+    yDomain: extent(
+      processedSeries.flatMap(({ accessor, data }) =>
+        data.map(accessor),
+      ),
     ),
-  ),
-});
+  };
+
+  extentCache.set(cacheKey, result);
+  return result;
+};

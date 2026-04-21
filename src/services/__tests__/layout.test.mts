@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getDimensions } from "../../services/layout.mts";
+import { getDimensions } from "../../services/layout.mjs";
 
 describe("getDimensions", () => {
   it("computes correct outer dimensions from container", () => {

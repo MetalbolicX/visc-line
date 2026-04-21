@@ -39,10 +39,7 @@ interface RenderPointsOptions {
  * - Circle fill defaults to series.stroke if present, otherwise "steelblue".
  * - This function mutates the DOM via D3 and is intended for imperative rendering.
  */
-export /**
-        *
-        */
-const renderPoints = <T,>(
+export const renderPoints = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,

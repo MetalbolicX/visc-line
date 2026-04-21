@@ -35,6 +35,7 @@ interface RenderLineOptions {
   /** D3 curve factory used by the line generator. Defaults to {@link curveLinear}. */
   curve?: CurveFactory | CurvePreset;
   opacity?: number | string;
+  reducedMotion?: boolean;
   strokeWidth?: number | string;
   transitionDuration?: number;
 }
@@ -42,7 +43,7 @@ interface RenderLineOptions {
 /**
  *
  */
-const CURVE_BY_NAME: Record<CurvePreset, CurveFactory> = {
+const curveByName: Record<CurvePreset, CurveFactory> = {
   basis: curveBasis,
   basisClosed: curveBasisClosed,
   basisOpen: curveBasisOpen,
@@ -68,7 +69,7 @@ const CURVE_BY_NAME: Record<CurvePreset, CurveFactory> = {
  */
 const resolveCurveFactory = (
   curve: CurveFactory | CurvePreset,
-): CurveFactory => (typeof curve === "string" ? CURVE_BY_NAME[curve] : curve);
+): CurveFactory => (typeof curve === "string" ? curveByName[curve] : curve);
 
 /**
  * Renders and updates line series within a given bounds group using D3.
@@ -94,10 +95,7 @@ const resolveCurveFactory = (
  *
  * @returns A D3 Selection of the rendered SVGPathElement(s) bound to the provided ProcessedSeries<T> data.
  */
-export /**
-        *
-        */
-const renderLine = <T,>(
+export const renderLine = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
@@ -106,25 +104,24 @@ const renderLine = <T,>(
   {
     curve = curveLinear,
     opacity = "var(--vl-line-opacity, 1)",
+    reducedMotion: reducedMotionOption = false,
     strokeWidth = "var(--vl-line-stroke-width, 2)",
     transitionDuration = 1000,
   }: RenderLineOptions = {},
 ): Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null> => {
-  /**
-   *
-   */
   const curveFactory = resolveCurveFactory(curve);
 
-  /**
-   *
-   */
-  const buildPath = (serie: ProcessedSeries<T>): null | string =>
+  const buildPath = (serie: ProcessedSeries<T>): string | null =>
     line<T>()
       .curve(curveFactory)
       .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))
       .y((d) => (yScale as (v: unknown) => number)(serie.accessor(d)))(
       serie.data,
     );
+
+  const reducedMotion =
+    reducedMotionOption ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return boundsGroup
     .selectAll<SVGPathElement, ProcessedSeries<T>>("path.chart-line")
@@ -138,20 +135,15 @@ const renderLine = <T,>(
           .attr("stroke", (d) => d.stroke ?? "var(--vl-palette-0, steelblue)")
           .attr(
             "stroke-width",
-            (d) => (d.strokeWidth as number | string | undefined) ?? strokeWidth,
+            (d) => d.strokeWidth ?? strokeWidth,
           )
-          .attr("opacity", (d) => (d.opacity as number | string | undefined) ?? opacity)
+          .attr("opacity", (d) => d.opacity ?? opacity)
           .attr("stroke-linejoin", "round")
           .attr("stroke-linecap", "round")
           .attr("d", (d) => buildPath(d))
           .each(function () {
-            /**
-             *
-             */
+            if (reducedMotion) return;
             const path = select(this);
-            /**
-             *
-             */
             const totalLength = this.getTotalLength();
             path
               .attr("stroke-dasharray", totalLength)
@@ -162,26 +154,17 @@ const renderLine = <T,>(
           }),
       (update) =>
         update.each(function (d) {
-          /**
-           *
-           */
           const path = select(this);
-          /**
-           *
-           */
           const newPathD = buildPath(d);
-          /**
-           *
-           */
           const totalLength = this.getTotalLength();
           path
             .attr("stroke-dasharray", totalLength)
             .attr("stroke-dashoffset", totalLength)
-            .transition()
-            .duration(transitionDuration)
             .attr("d", newPathD)
             .attr("stroke", d.stroke ?? "var(--vl-palette-0, steelblue)")
-            .attr("opacity", (d.opacity as number | string | undefined) ?? opacity)
+            .attr("opacity", d.opacity ?? opacity)
+            .transition()
+            .duration(reducedMotion ? 0 : transitionDuration)
             .attr("stroke-dashoffset", 0);
         }),
       (exit) => exit.remove(),

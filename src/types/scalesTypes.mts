@@ -9,3 +9,10 @@ export type AnyScale =
 
 /** Supported scale type identifiers. */
 export type ScaleType = "linear" | "log" | "pow" | "time";
+
+/** Minimal contract for scales used by axis and grid renderers. */
+export interface TickableScale {
+  (value: unknown): number;
+  domain: () => unknown[];
+  ticks: (count?: number) => unknown[];
+}

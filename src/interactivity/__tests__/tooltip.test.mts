@@ -4,7 +4,7 @@ import {
   safeColor,
   sortDataByX,
   toComparableX,
-} from "../../interactivity/tooltip.mts";
+} from "../../interactivity/tooltip.mjs";
 
 describe("toComparableX", () => {
   it("converts Date to Unix timestamp (number)", () => {

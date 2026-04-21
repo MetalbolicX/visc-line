@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { defaultTheme } from "../../themes/defaultTheme.mts";
-import { mergeTheme } from "../../utils/mergeTheme.mts";
+import { defaultTheme } from "../../themes/defaultTheme.mjs";
+import { mergeTheme } from "../../utils/mergeTheme.mjs";
 
 describe("mergeTheme", () => {
   it("returns the base theme when no override is provided", () => {

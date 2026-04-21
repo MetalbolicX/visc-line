@@ -1,11 +1,12 @@
 import { axisLeft } from "d3";
+import type { AxisDomain } from "d3";
 
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderYAxis}. */
 interface RenderYAxisOptions {
   tickCount?: number;
-  tickFormat?: (domainValue: unknown, index: number) => string;
+  tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
 /**
@@ -19,25 +20,26 @@ interface RenderYAxisOptions {
  * @param yScale - D3 scale used to generate the axis.
  * @param options - Optional configuration object.
  */
-export /**
-        *
-        */
-const renderYAxis = (
+type AxisCompatibleScale = AnyScale & {
+  range: () => number[];
+  copy: () => unknown;
+};
+
+const asAxisScale = (scale: AnyScale): AxisCompatibleScale =>
+  scale as unknown as AxisCompatibleScale;
+
+export const renderYAxis = (
   boundsGroup: BoundsSelection,
   yScale: AnyScale,
   { tickCount = 5, tickFormat }: RenderYAxisOptions = {},
 ): void => {
-   
-  /**
-   *
-   */
-  const axis = axisLeft(yScale as any).ticks(tickCount);
-  if (tickFormat) axis.tickFormat(tickFormat as never);
+  const axis = axisLeft(asAxisScale(yScale)).ticks(tickCount);
+  if (tickFormat) axis.tickFormat(tickFormat as (d: AxisDomain, i: number) => string);
 
   boundsGroup
     .selectAll<SVGGElement, null>("g.y-axis")
     .data([null])
     .join("g")
     .attr("class", "y-axis")
-    .call(axis as never);
+    .call(axis);
 };

@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { defaultTheme } from "../../themes/defaultTheme.mts";
+import { defaultTheme } from "../../themes/defaultTheme.mjs";
 import {
   applyThemeCssVars,
-} from "../../utils/cssVariables.mts";
+} from "../../utils/cssVariables.mjs";
 
 describe("applyThemeCssVars", () => {
   /**

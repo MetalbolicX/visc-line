@@ -16,9 +16,6 @@ interface TooltipEntry {
   tooltip: TipVizTooltip;
 }
 
-/**
- *
- */
 const tooltipRegistry = new WeakMap<SVGGElement, TooltipEntry>();
 
 // ── Sorting utilities ─────────────────────────────────────────────────────────
@@ -99,9 +96,6 @@ const esc = (text: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-/**
- *
- */
 const safeColorPattern =
   /^(#[0-9a-fA-F]{3,8}|(rgb|hsl)a?\([0-9.%\s,/-]+\)|var\(--[a-zA-Z0-9-_]+\)|[a-zA-Z]+)$/;
 
@@ -125,9 +119,6 @@ const safeColor = (text: string): string =>
  * @returns An HTML string safe for tooltip insertion.
  */
 const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
-  /**
-   *
-   */
   const rowsHtml = rows
     .map(
       ({ color, label, value }) => /*html*/ `
@@ -148,7 +139,7 @@ const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
 // ── Options ─────────────────────────────────────────────────────────────────
 
 /** Options for the {@link addTooltip} function. */
-interface AddTooltipOptions<_T> {
+interface AddTooltipOptions {
   formatX?: (v: unknown) => string;
   formatY?: (v: unknown) => string;
   innerHeight: number;
@@ -179,9 +170,6 @@ interface AddTooltipOptions<_T> {
  * @param options - innerWidth, innerHeight, and optional formatters / renderer.
  * @returns The TipVizTooltip instance for this bounds element.
  */
-export /**
-        *
-        */
 const addTooltip = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
@@ -195,46 +183,25 @@ const addTooltip = <T,>(
     innerWidth,
     stylesheetUrl,
     tooltipHtml = defaultTooltipHtml,
-  }: AddTooltipOptions<T> = { innerHeight: 0, innerWidth: 0 },
+  }: AddTooltipOptions = { innerHeight: 0, innerWidth: 0 },
 ): TipVizTooltip => {
-  /**
-   *
-   */
-  const boundsEl = boundsGroup.node()!;
-  /**
-   *
-   */
+  const boundsEl = boundsGroup.node() as SVGGElement;
   const referenceData = sortDataByX(series[0]?.data ?? [], xAccessor);
-  /**
-   *
-   */
   const sortedSeriesByLabel = new Map(
     series.map((serie) => [serie.label, sortDataByX(serie.data, xAccessor)]),
   );
-  /**
-   *
-   */
   const bisect = bisector((d: T) => toComparableX(xAccessor(d))).center;
 
   // ── Per-chart tooltip instance ─────────────────────────────────────────
-  /**
-   *
-   */
   let entry = tooltipRegistry.get(boundsEl);
 
   if (!entry) {
-    /**
-     *
-     */
     const el = document.createElement("tip-viz-tooltip") as TipVizTooltip;
     document.body.appendChild(el);
     entry = { loadedStylesheet: undefined, tooltip: el };
     tooltipRegistry.set(boundsEl, entry);
   }
 
-  /**
-   *
-   */
   const { tooltip } = entry;
 
   tooltip.setHtml((d) => tooltipHtml(d as TooltipData));
@@ -245,18 +212,12 @@ const addTooltip = <T,>(
   }
 
   // ── Cursor layer ─────────────────────────────────────────────────────────
-  /**
-   *
-   */
   const tooltipLayer = boundsGroup
     .selectAll<SVGGElement, null>("g.tooltip-layer")
     .data([null])
     .join("g")
     .attr("class", "tooltip-layer");
 
-  /**
-   *
-   */
   const cursorLine = tooltipLayer
     .selectAll<SVGLineElement, null>("line.cursor-line")
     .data([null])
@@ -270,9 +231,6 @@ const addTooltip = <T,>(
     .attr("pointer-events", "none")
     .attr("display", "none");
 
-  /**
-   *
-   */
   const cursorDots = tooltipLayer
     .selectAll<SVGCircleElement, ProcessedSeries<T>>("circle.cursor-dot")
     .data(series, ({ label }) => label)
@@ -295,52 +253,25 @@ const addTooltip = <T,>(
     .attr("height", innerHeight)
     .attr("fill", "transparent")
     .on("mousemove", (event: MouseEvent) => {
-      /**
-       *
-       */
       const [mx] = pointer(event);
-      /**
-       *
-       */
       const xVal = (
         xScale as unknown as { invert: (v: number) => unknown }
       ).invert(mx);
-      /**
-       *
-       */
       const comparableXVal = toComparableX(xVal);
-      /**
-       *
-       */
       const idx = Math.max(
         0,
         Math.min(bisect(referenceData, comparableXVal), referenceData.length - 1),
       );
-      /**
-       *
-       */
       const refDatum = referenceData[idx];
       if (!refDatum) return;
 
-      /**
-       *
-       */
       const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
-      /**
-       *
-       */
       const rows: TooltipRow[] = [];
-      /**
-       *
-       */
       let firstDot: null | SVGCircleElement = null;
 
       cursorDots.each(function (serie) {
-        /**
-         *
-         */
         const sortedSeries = sortedSeriesByLabel.get(serie.label) ?? [];
 
         if (!sortedSeries.length) {
@@ -352,9 +283,6 @@ const addTooltip = <T,>(
           return;
         }
 
-        /**
-         *
-         */
         const si = Math.max(
           0,
           Math.min(
@@ -363,16 +291,10 @@ const addTooltip = <T,>(
           ),
         );
 
-        /**
-         *
-         */
         const datum = sortedSeries[si];
         if (!datum) return;
 
-        /**
-         *
-         */
-        const dot = select(this)
+        const dot = select(this as SVGCircleElement)
           .attr(
             "cx",
             (xScale as (v: unknown) => number)(xAccessor(datum)),

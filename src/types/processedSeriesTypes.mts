@@ -14,8 +14,12 @@ export interface ProcessedSeries<T> extends SeriesDescriptor<T> {
 
 /** Describes a single data series with its accessor and rendering properties. */
 export interface SeriesDescriptor<T> {
-  [key: string]: unknown;
   accessor: (d: T) => number;
   label: string;
-  stroke: string;
+  opacity?: number | string;
+  pointFill?: string;
+  pointRadius?: number;
+  pointStroke?: string;
+  stroke?: string;
+  strokeWidth?: number | string;
 }
