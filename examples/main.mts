@@ -28,28 +28,18 @@ import {
 import { applyThemeCssVars, defaultTheme, mergeTheme } from "../src/index.mjs";
 import { chartConfig, type DataRecord } from "./data.mjs";
 
-/**
- *
- */
+/** Chart margins used to compute inner drawing area. */
 const margins = { bottom: 70, left: 55, right: 60, top: 50 };
-/**
- *
- */
+/** Width reserved for the legend panel in pixels. */
 const legendWidth = 90;
-/**
- *
- */
+/** Vertical offset for the legend from the top margin. */
 const legendTopOffset = 12;
 
-/**
- *
- */
+/** Destructure the example chart configuration for use in rendering. */
 const { data: rawData, xSerie, ySeries } = chartConfig;
 
 // Data processing is pure — run once, outside the render cycle.
-/**
- *
- */
+/** Process and validate raw data into processed series ready for rendering. */
 const processedSeries = processAllSeries<DataRecord>(
   rawData,
   xSerie.accessor,

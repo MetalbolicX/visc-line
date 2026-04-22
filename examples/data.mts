@@ -7,10 +7,8 @@ export interface DataRecord {
   revenue: number;
 }
 
-export /**
-        *
-        */
-const data: DataRecord[] = [
+/** Sample dataset used by the example. */
+export const data: DataRecord[] = [
   { cost: 10, date: new Date("2023-01-01"), revenue: 100 },
   { cost: 5, date: new Date("2023-01-02"), revenue: 120 },
   { cost: 15, date: new Date("2023-01-03"), revenue: 80 },
@@ -21,26 +19,26 @@ const data: DataRecord[] = [
 ];
 
 /** Configuration for the chart including data, x-series, and y-series definitions. */
-export /**
-        *
-        */
-const chartConfig: ChartConfig<DataRecord> = {
+/** Example chart configuration including dataset and series definitions. */
+export const chartConfig: ChartConfig<DataRecord> = {
   data,
   xSerie: {
-    /**
-     *
-     */
+    /** Accessor that returns the x value (date) for a record. */
     accessor: (d) => d.date,
     label: "Date",
   },
   ySeries: [
-    { /**
-       *
-       */
-    accessor: (d) => d.revenue, label: "Revenue", stroke: "steelblue" },
-    { /**
-       *
-       */
-    accessor: (d) => d.cost, label: "Cost", stroke: "tomato" },
+    {
+      /** Accessor that returns the y value for the revenue series. */
+      accessor: (d) => d.revenue,
+      label: "Revenue",
+      stroke: "steelblue",
+    },
+    {
+      /** Accessor that returns the y value for the cost series. */
+      accessor: (d) => d.cost,
+      label: "Cost",
+      stroke: "tomato",
+    },
   ],
 };

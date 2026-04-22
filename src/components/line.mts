@@ -40,9 +40,7 @@ interface RenderLineOptions {
   transitionDuration?: number;
 }
 
-/**
- *
- */
+/** Mapping of curve preset names to D3 curve factories. */
 const curveByName: Record<CurvePreset, CurveFactory> = {
   basis: curveBasis,
   basisClosed: curveBasisClosed,
@@ -64,9 +62,7 @@ const curveByName: Record<CurvePreset, CurveFactory> = {
   stepBefore: curveStepBefore,
 };
 
-/**
- *
- */
+/** Resolve a curve factory from either a preset name or supplied factory function. */
 const resolveCurveFactory = (
   curve: CurveFactory | CurvePreset,
 ): CurveFactory => (typeof curve === "string" ? curveByName[curve] : curve);
@@ -119,10 +115,8 @@ const renderLine = <T,>(
    */
   const curveFactory = resolveCurveFactory(curve);
 
-  /**
-   *
-   */
-  const buildPath = (serie: ProcessedSeries<T>): null | string =>
+/** Build a path 'd' attribute for a series using the configured curve factory. */
+const buildPath = (serie: ProcessedSeries<T>): null | string =>
     line<T>()
       .curve(curveFactory)
       .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))

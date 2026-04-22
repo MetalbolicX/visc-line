@@ -16,29 +16,17 @@ export interface ObserveResizeOptions {
   debounceMs?: number;
 }
 
-/**
- *
- */
-export /**
-        *
-        */
-const observeResize = (
+/** Observe an element for size changes and schedule the provided render callback. */
+export const observeResize = (
   container: Element,
   renderCallback: () => void,
   { debounceMs = 0 }: ObserveResizeOptions = {},
 ): (() => void) => {
-  /**
-   *
-   */
+  // requestAnimationFrame id used when throttling without debounce
   let frameId: null | number = null;
-  /**
-   *
-   */
+  // Timeout id used when debounceMs > 0
   let timeoutId: null | ReturnType<typeof setTimeout> = null;
 
-  /**
-   *
-   */
   const runCallback = (): void => {
     renderCallback();
   };

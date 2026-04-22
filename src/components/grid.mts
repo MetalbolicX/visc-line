@@ -3,9 +3,7 @@ import type { Selection } from "d3";
 import type { AnyScale, BoundsSelection, TickableScale } from "@/types/index.mjs";
 
 // Soft, dashed grid lines keep the chart background light without stealing focus.
-/**
- *
- */
+/** Default visual style applied to grid lines. */
 const defaultGridLineStyle = {
   opacity: 0.65,
   shapeRendering: "crispEdges",
@@ -18,17 +16,13 @@ const defaultGridLineStyle = {
 export type GridLineStyle = Partial<DefaultGridLineStyle>;
 type DefaultGridLineStyle = typeof defaultGridLineStyle;
 
-/**
- *
- */
+/** Merge user-provided grid style with defaults. */
 const getGridLineStyle = (style?: GridLineStyle): DefaultGridLineStyle => ({
   ...defaultGridLineStyle,
   ...style,
 });
 
-/**
- *
- */
+/** Cast an AnyScale into a TickableScale for tick generation. */
 const asTickableScale = (scale: AnyScale): TickableScale =>
   scale as unknown as TickableScale;
 

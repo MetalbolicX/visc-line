@@ -45,13 +45,8 @@ interface ChartOptions {
   xType?: "linear" | "log" | "pow" | "time";
 }
 
-/**
- *
- */
-export /**
-        *
-        */
-const createChart = <T,>(
+/** Create a chart instance mounted into the given container using the provided configuration. */
+export const createChart = <T,>(
   container: HTMLElement,
   config: ChartConfig<T>,
   {
