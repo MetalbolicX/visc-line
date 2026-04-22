@@ -48,6 +48,10 @@ export default tseslint.config(
           message: "Do not use .push(). Use the spread operator to maintain immutability.",
         },
         {
+          selector: "CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/] > MemberExpression > CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/]",
+          message: "Pipeline detected: Avoid chaining multiple array methods. Use '.values()' to start an Iterator Helper pipeline instead to save memory."
+        },
+        {
           selector: "ForStatement",
           message: "Avoid standard for-loops. Use for...of or array methods (map, filter, etc.).",
         },
@@ -74,6 +78,34 @@ export default tseslint.config(
       "@typescript-eslint/no-inferrable-types": "error", // No types for primitives
       "@typescript-eslint/explicit-function-return-type": "off",
 
+      // --- Destructuring ---
+      // Use the ESLint core rule to prefer destructuring for variable
+      // declarations and assignments. This captures array/object
+      // destructuring style (e.g. `const [first] = arr` instead of
+      // `const first = arr[0]`).
+      //
+      // For modern element access (like using `arr.at(-1)` instead of
+      // `arr[arr.length - 1]` or `arr.slice(-1)[0]`) we also enable the
+      // unicorn rule `unicorn/prefer-at` below.
+      //
+      // Note: enforcing destructuring in function parameters isn't
+      // covered by the core `prefer-destructuring` rule. If you'd like
+      // that enforced (or want to limit messy signatures), consider
+      // enabling `max-params` or adding a community rule/plugin.
+      "prefer-destructuring": ["error", {
+        "VariableDeclarator": {
+          "array": true,
+          "object": true
+        },
+        "AssignmentExpression": {
+          "array": true,
+          "object": true
+        }
+      }, { "enforceForRenamedProperties": false }],
+      // Limit function parameters to keep signatures manageable. Default
+      // chosen here is 3 — adjust if your codebase prefers 4.
+      "max-params": ["error", 3],
+
       // --- JSDoc (Enforced for JS and TS) ---
       "jsdoc/require-jsdoc": ["warn", { 
         "require": {
@@ -89,6 +121,8 @@ export default tseslint.config(
 
       // --- Environment & Modern APIs ---
       "unicorn/prefer-node-protocol": "error", // Use node: prefix
+      // Prefer using .at() for cleaner, modern index access when appropriate
+      "unicorn/prefer-at": "error",
       "no-restricted-properties": [
         "error",
         { "property": "innerHTML", "message": "Use textContent or createContextualFragment instead." }

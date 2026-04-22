@@ -29,17 +29,18 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.1.0",
-    "eslint-plugin-jsdoc": "^62.8.1",
-    "eslint-plugin-perfectionist": "^5.7.0",
+    "eslint": "^10.2.1",
+    "eslint-plugin-jsdoc": "^62.9.0",
+    "eslint-plugin-perfectionist": "^5.9.0",
+    "eslint-plugin-prefer-destructuring": "^7.2.0",
     "eslint-plugin-unicorn": "^64.0.0",
-    "jsdom": "^29.0.1",
-    "tsdown": "^0.21.7",
+    "jsdom": "^29.0.2",
+    "tsdown": "^0.21.9",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2",
-    "typescript-eslint": "^8.58.0",
-    "vite": "^8.0.3",
-    "vitest": "^4.1.2"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.0",
+    "vite": "^8.0.9",
+    "vitest": "^4.1.4"
   },
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
@@ -57,7 +58,7 @@
   "dependencies": {
     "@types/d3": "^7.4.3",
     "d3": "^7.9.0",
-    "tipviz": "^2.1.0"
+    "tipviz": "^2.2.0"
   },
   "peerDependencies": {
     "d3": "^7.9.0",
