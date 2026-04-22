@@ -16,18 +16,36 @@ export interface ObserveResizeOptions {
   debounceMs?: number;
 }
 
-export const observeResize = (
+/**
+ *
+ */
+export /**
+        *
+        */
+const observeResize = (
   container: Element,
   renderCallback: () => void,
   { debounceMs = 0 }: ObserveResizeOptions = {},
 ): (() => void) => {
-  let frameId: number | null = null;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  /**
+   *
+   */
+  let frameId: null | number = null;
+  /**
+   *
+   */
+  let timeoutId: null | ReturnType<typeof setTimeout> = null;
 
+  /**
+   *
+   */
   const runCallback = (): void => {
     renderCallback();
   };
 
+  /**
+   *
+   */
   const scheduleRender = (): void => {
     if (debounceMs > 0) {
       if (timeoutId !== null) {
@@ -50,6 +68,9 @@ export const observeResize = (
     });
   };
 
+  /**
+   *
+   */
   const observer = new ResizeObserver(() => {
     scheduleRender();
   });

@@ -36,6 +36,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.mts"],
+  "include": ["src/**/*.ts", "src/**/*.mts", "examples/**/*.ts", "examples/**/*.mts", "docs/**/*.js"],
   "exclude": ["node_modules", "dist"]
 }

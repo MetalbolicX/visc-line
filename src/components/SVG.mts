@@ -14,7 +14,10 @@ import type { SVGSelection } from "@/types/index.mjs";
  * @param options.background - Background color for the SVG. Defaults to `"white"`.
  * @returns D3 selection for the created or updated `<svg>` element.
  */
-export const renderSVG = (
+export /**
+        *
+        */
+const renderSVG = (
   container: HTMLElement,
   { background = "var(--vl-background, white)" }: { background?: string } = {},
 ): SVGSelection =>
@@ -25,4 +28,4 @@ export const renderSVG = (
     .attr("width", container.clientWidth)
     .attr("height", container.clientHeight)
     .style("background", background)
-    .style("overflow", "visible") as SVGSelection;
+    .style("overflow", "visible");

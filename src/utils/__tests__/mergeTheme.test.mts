@@ -64,7 +64,7 @@ describe("mergeTheme", () => {
      */
     const result = mergeTheme(defaultTheme, {
       line: { strokeWidth: undefined },
-    } as Parameters<typeof mergeTheme>[1]);
+    });
     expect(result.line.strokeWidth).toBe(defaultTheme.line.strokeWidth);
   });
 

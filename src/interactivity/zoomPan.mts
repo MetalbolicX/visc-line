@@ -1,4 +1,4 @@
-import type { ZoomBehavior, ZoomScale } from "d3";
+import type { ZoomBehavior } from "d3";
 
 import { zoom } from "d3";
 
@@ -49,13 +49,10 @@ const addZoomPan = (
       [innerWidth, innerHeight],
     ])
     .on("zoom", (event) => {
-      /**
-       *
-       */
-      const { transform: t } = event;
+      const { transform: t } = event as { transform: { rescaleX: (scale: unknown) => unknown; rescaleY: (scale: unknown) => unknown } };
       onZoom(
-        t.rescaleX(xScale as ZoomScale) as AnyScale,
-        t.rescaleY(yScale as ZoomScale) as AnyScale,
+        t.rescaleX(xScale) as AnyScale,
+        t.rescaleY(yScale) as AnyScale,
       );
     });
 
@@ -68,9 +65,12 @@ const addZoomPan = (
   /**
    *
    */
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   augmented.reset = () =>
     svg.call(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       zoomBehavior.transform as never,
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       zoom<SVGSVGElement, unknown>().transform,
     );
 

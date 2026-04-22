@@ -1,5 +1,6 @@
 import { curveCatmullRom } from "d3";
-import { chartConfig, type DataRecord } from "./data.mjs";
+
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   addTooltip,
   addZoomPan,
@@ -21,19 +22,34 @@ import {
   renderYAxisLabel,
   renderYGrid,
 } from "../src/index.mjs";
-
 // Theme utilities (merge defaults and write CSS variables)
 // The theme utilities may not be re-exported from `src/index.mjs` yet.
-// @ts-ignore: allow runtime import even if index.mjs doesn't export these names
-import { defaultTheme, mergeTheme, applyThemeCssVars } from "../src/index.mjs";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { applyThemeCssVars, defaultTheme, mergeTheme } from "../src/index.mjs";
+import { chartConfig, type DataRecord } from "./data.mjs";
 
-const MARGINS = { top: 50, right: 60, bottom: 70, left: 55 };
-const LEGEND_WIDTH = 90;
-const LEGEND_TOP_OFFSET = 12;
+/**
+ *
+ */
+const margins = { bottom: 70, left: 55, right: 60, top: 50 };
+/**
+ *
+ */
+const legendWidth = 90;
+/**
+ *
+ */
+const legendTopOffset = 12;
 
+/**
+ *
+ */
 const { data: rawData, xSerie, ySeries } = chartConfig;
 
 // Data processing is pure — run once, outside the render cycle.
+/**
+ *
+ */
 const processedSeries = processAllSeries<DataRecord>(
   rawData,
   xSerie.accessor,
@@ -60,7 +76,10 @@ const processedSeries = processAllSeries<DataRecord>(
  * main(container);
  * ```
  */
-export const main = (container: HTMLElement): void => {
+export /**
+        *
+        */
+const main = (container: HTMLElement): void => {
   // Create and apply a lightweight theme override (CSS variables)
   // const customTheme = mergeTheme(defaultTheme, {
   //   colors: {
@@ -74,21 +93,39 @@ export const main = (container: HTMLElement): void => {
   // applyThemeCssVars(container, customTheme);
 
   // SVG structure is stable across renders — create once.
+  /**
+   *
+   */
   const svg = renderSVG(container, { background: "#fafafa" });
-  const bounds = renderBoundsGroup(svg, MARGINS);
+  /**
+   *
+   */
+  const bounds = renderBoundsGroup(svg, margins);
 
+  /**
+   *
+   */
   const render = (): void => {
-    const dims = getDimensions(container, MARGINS);
+    /**
+     *
+     */
+    const dims = getDimensions(container, margins);
+    /**
+     *
+     */
     const { xDomain, yDomain } = getMultiSeriesExtents(
       processedSeries,
       xSerie.accessor,
     );
+    /**
+     *
+     */
     const { xScale, yScale } = createScales({
-      xDomain,
-      yDomain,
-      innerWidth: dims.innerWidth,
       innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+      xDomain,
       xType: "time",
+      yDomain,
     });
 
     // Axes
@@ -124,15 +161,15 @@ export const main = (container: HTMLElement): void => {
       .call(renderXAxisLabel, { ...dims, label: xSerie.label })
       .call(renderYAxisLabel, { ...dims, label: "Value" })
       .call(renderLegend, {
-        items: processedSeries.map(({ label, stroke }) => ({
-          label,
-          color: stroke,
-        })),
-        x: MARGINS.left + dims.innerWidth - LEGEND_WIDTH,
-        y: MARGINS.top + LEGEND_TOP_OFFSET,
         fontSize: 12,
-        swatchSize: 12,
         gap: 6,
+        items: processedSeries.map(({ label, stroke }) => ({
+          color: stroke,
+          label,
+        })),
+        swatchSize: 12,
+        x: margins.left + dims.innerWidth - legendWidth,
+        y: margins.top + legendTopOffset,
       });
 
     // Interactivity
@@ -143,16 +180,17 @@ export const main = (container: HTMLElement): void => {
       yScale,
       xSerie.accessor,
       {
-        innerWidth: dims.innerWidth,
         innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
       },
     );
 
     addZoomPan(svg, {
-      xScale,
-      yScale,
-      innerWidth: dims.innerWidth,
       innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+      /**
+       *
+       */
       onZoom: (newX, newY) => {
         renderXAxis(bounds, newX, dims.innerHeight);
         renderYAxis(bounds, newY);
@@ -174,6 +212,8 @@ export const main = (container: HTMLElement): void => {
           xSerie.accessor,
         );
       },
+      xScale,
+      yScale,
     });
   };
 

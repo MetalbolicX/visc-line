@@ -26,5 +26,5 @@ const renderBoundsGroup = (
     .attr("class", "bounds")
     .attr(
       "transform",
-      `translate(${margins.left},${margins.top})`,
-    ) as BoundsSelection;
+      `translate(${String(margins.left)},${String(margins.top)})`,
+    );

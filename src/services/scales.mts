@@ -11,7 +11,7 @@ import type { AnyScale, ScaleType } from "@/types/index.mjs";
 /**
  *
  */
-const SCALE_FACTORIES: Record<ScaleType, (exp?: number) => AnyScale> = {
+const scaleFactories: Record<ScaleType, (exp?: number) => AnyScale> = {
   /**
    *
    */
@@ -86,7 +86,8 @@ const createScales = ({
    *
    */
   const xScale = (
-    (SCALE_FACTORIES[xType] ?? SCALE_FACTORIES.linear)(
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    (scaleFactories[xType] ?? scaleFactories.linear)(
       xExponent,
     ) as ScaleLinear<number, number>
   )
@@ -97,7 +98,8 @@ const createScales = ({
    *
    */
   const yScale = (
-    (SCALE_FACTORIES[yType] ?? SCALE_FACTORIES.linear)(
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    (scaleFactories[yType] ?? scaleFactories.linear)(
       yExponent,
     ) as ScaleLinear<number, number>
   )

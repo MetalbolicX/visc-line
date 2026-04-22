@@ -1,7 +1,11 @@
-import type { AnyScale, BoundsSelection, TickableScale } from "@/types/index.mjs";
 import type { Selection } from "d3";
 
+import type { AnyScale, BoundsSelection, TickableScale } from "@/types/index.mjs";
+
 // Soft, dashed grid lines keep the chart background light without stealing focus.
+/**
+ *
+ */
 const defaultGridLineStyle = {
   opacity: 0.65,
   shapeRendering: "crispEdges",
@@ -11,17 +15,26 @@ const defaultGridLineStyle = {
   strokeWidth: "var(--vl-grid-stroke-width, 1)",
 } as const;
 
-type DefaultGridLineStyle = typeof defaultGridLineStyle;
 export type GridLineStyle = Partial<DefaultGridLineStyle>;
+type DefaultGridLineStyle = typeof defaultGridLineStyle;
 
+/**
+ *
+ */
 const getGridLineStyle = (style?: GridLineStyle): DefaultGridLineStyle => ({
   ...defaultGridLineStyle,
   ...style,
 });
 
+/**
+ *
+ */
 const asTickableScale = (scale: AnyScale): TickableScale =>
   scale as unknown as TickableScale;
 
+/**
+ *
+ */
 const applyGridAttrs = (
   selection: Selection<SVGLineElement, unknown, SVGGElement, unknown>,
   gridStyle: DefaultGridLineStyle,
@@ -35,14 +48,29 @@ const applyGridAttrs = (
     .attr("shape-rendering", gridStyle.shapeRendering);
 };
 
-export const renderXGrid = (
+/**
+ *
+ */
+export /**
+        *
+        */
+const renderXGrid = (
   boundSelection: BoundsSelection,
   xScale: AnyScale,
   yScale: AnyScale,
   style?: GridLineStyle,
 ): void => {
+  /**
+   *
+   */
   const xTickableScale = asTickableScale(xScale);
+  /**
+   *
+   */
   const yTickableScale = asTickableScale(yScale);
+  /**
+   *
+   */
   const [xMin, xMax] = xTickableScale.domain();
 
   if (xMin === undefined || xMax === undefined) {
@@ -63,14 +91,29 @@ export const renderXGrid = (
   );
 };
 
-export const renderYGrid = (
+/**
+ *
+ */
+export /**
+        *
+        */
+const renderYGrid = (
   boundSelection: BoundsSelection,
   xScale: AnyScale,
   yScale: AnyScale,
   style?: GridLineStyle,
 ): void => {
+  /**
+   *
+   */
   const xTickableScale = asTickableScale(xScale);
+  /**
+   *
+   */
   const yTickableScale = asTickableScale(yScale);
+  /**
+   *
+   */
   const [yMin, yMax] = yTickableScale.domain();
 
   if (yMin === undefined || yMax === undefined) {

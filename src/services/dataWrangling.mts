@@ -74,25 +74,42 @@ const processAllSeries = <T,>(
  */
 const extentCache = new Map<string, { xDomain: [undefined, undefined] | [unknown, unknown]; yDomain: [number, number] | [undefined, undefined] }>();
 
+/**
+ *
+ */
 const extentCacheKey = (
   processedSeries: ProcessedSeries<T>[],
-  xAccessor: (d: T) => unknown,
 ): string =>
   processedSeries
-    .map((s) => `${s.label}:${s.data.length}`)
+    .map((s) => `${s.label}:${String(s.data.length)}`)
     .join("|");
 
-export const getMultiSeriesExtents = <T,>(
+/**
+ *
+ */
+export /**
+        *
+        */
+const getMultiSeriesExtents = <T,>(
   processedSeries: ProcessedSeries<T>[],
   xAccessor: (d: T) => unknown,
 ): {
   xDomain: [undefined, undefined] | [unknown, unknown];
   yDomain: [number, number] | [undefined, undefined];
 } => {
-  const cacheKey = extentCacheKey(processedSeries, xAccessor);
+  /**
+   *
+   */
+  const cacheKey = extentCacheKey(processedSeries);
+  /**
+   *
+   */
   const cached = extentCache.get(cacheKey);
   if (cached) return cached;
 
+  /**
+   *
+   */
   const result = {
     xDomain: extent(
       processedSeries.flatMap(({ data }) => data),

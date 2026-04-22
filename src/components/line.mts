@@ -95,7 +95,11 @@ const resolveCurveFactory = (
  *
  * @returns A D3 Selection of the rendered SVGPathElement(s) bound to the provided ProcessedSeries<T> data.
  */
-export const renderLine = <T,>(
+// eslint-disable-next-line max-params
+export /**
+        *
+        */
+const renderLine = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
@@ -108,10 +112,17 @@ export const renderLine = <T,>(
     strokeWidth = "var(--vl-line-stroke-width, 2)",
     transitionDuration = 1000,
   }: RenderLineOptions = {},
+// eslint-disable-next-line max-params
 ): Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null> => {
+  /**
+   *
+   */
   const curveFactory = resolveCurveFactory(curve);
 
-  const buildPath = (serie: ProcessedSeries<T>): string | null =>
+  /**
+   *
+   */
+  const buildPath = (serie: ProcessedSeries<T>): null | string =>
     line<T>()
       .curve(curveFactory)
       .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))
@@ -119,7 +130,11 @@ export const renderLine = <T,>(
       serie.data,
     );
 
-  const reducedMotion =
+  /**
+   *
+   */
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const isMotionReduced =
     reducedMotionOption ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -142,8 +157,14 @@ export const renderLine = <T,>(
           .attr("stroke-linecap", "round")
           .attr("d", (d) => buildPath(d))
           .each(function () {
-            if (reducedMotion) return;
+            if (isMotionReduced) return;
+            /**
+             *
+             */
             const path = select(this);
+            /**
+             *
+             */
             const totalLength = this.getTotalLength();
             path
               .attr("stroke-dasharray", totalLength)
@@ -154,8 +175,17 @@ export const renderLine = <T,>(
           }),
       (update) =>
         update.each(function (d) {
+          /**
+           *
+           */
           const path = select(this);
+          /**
+           *
+           */
           const newPathD = buildPath(d);
+          /**
+           *
+           */
           const totalLength = this.getTotalLength();
           path
             .attr("stroke-dasharray", totalLength)
@@ -164,7 +194,7 @@ export const renderLine = <T,>(
             .attr("stroke", d.stroke ?? "var(--vl-palette-0, steelblue)")
             .attr("opacity", d.opacity ?? opacity)
             .transition()
-            .duration(reducedMotion ? 0 : transitionDuration)
+            .duration(isMotionReduced ? 0 : transitionDuration)
             .attr("stroke-dashoffset", 0);
         }),
       (exit) => exit.remove(),

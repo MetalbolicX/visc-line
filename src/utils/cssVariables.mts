@@ -29,7 +29,7 @@ const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
     style.setProperty(`--vl-palette-${String(i)}`, color);
   });
 
-  style.setProperty("--vl-axis-font-size", `${theme.axis.fontSize}px`);
+  style.setProperty("--vl-axis-font-size", `${String(theme.axis.fontSize)}px`);
   style.setProperty("--vl-axis-tick-size", String(theme.axis.tickSize));
   style.setProperty("--vl-axis-tick-padding", String(theme.axis.tickPadding));
 
@@ -47,27 +47,24 @@ const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
   style.setProperty("--vl-point-stroke", theme.points.stroke);
   style.setProperty("--vl-point-stroke-width", String(theme.points.strokeWidth));
 
-  style.setProperty("--vl-legend-font-size", `${theme.legend.fontSize}px`);
-  style.setProperty("--vl-legend-item-spacing", `${theme.legend.itemSpacing}px`);
-  style.setProperty("--vl-legend-symbol-size", `${theme.legend.symbolSize}px`);
+  style.setProperty("--vl-legend-font-size", `${String(theme.legend.fontSize)}px`);
+  style.setProperty("--vl-legend-item-spacing", `${String(theme.legend.itemSpacing)}px`);
+  style.setProperty("--vl-legend-symbol-size", `${String(theme.legend.symbolSize)}px`);
 
-  style.setProperty("--vl-title-font-size", `${theme.title.fontSize}px`);
+  style.setProperty("--vl-title-font-size", `${String(theme.title.fontSize)}px`);
   style.setProperty("--vl-title-font-weight", String(theme.title.fontWeight));
   style.setProperty("--vl-title-color", theme.title.color);
-  style.setProperty("--vl-title-padding", `${theme.title.padding}px`);
+  style.setProperty("--vl-title-padding", `${String(theme.title.padding)}px`);
 
   if (theme.tooltip) {
     style.setProperty("--vl-tooltip-bg", theme.tooltip.background);
-    style.setProperty(
-      "--vl-tooltip-border-radius",
-      `${theme.tooltip.borderRadius}px`,
-    );
-    style.setProperty("--vl-tooltip-padding", `${theme.tooltip.padding}px`);
-    style.setProperty("--vl-tooltip-font-size", `${theme.tooltip.fontSize}px`);
+    style.setProperty("--vl-tooltip-border-radius", `${String(theme.tooltip.borderRadius)}px`);
+    style.setProperty("--vl-tooltip-padding", `${String(theme.tooltip.padding)}px`);
+    style.setProperty("--vl-tooltip-font-size", `${String(theme.tooltip.fontSize)}px`);
     style.setProperty("--vl-tooltip-color", theme.tooltip.color);
   }
 
-  style.setProperty("--vl-spacing-sm", `${theme.spacing.small}px`);
-  style.setProperty("--vl-spacing-md", `${theme.spacing.medium}px`);
-  style.setProperty("--vl-spacing-lg", `${theme.spacing.large}px`);
+  style.setProperty("--vl-spacing-sm", `${String(theme.spacing.small)}px`);
+  style.setProperty("--vl-spacing-md", `${String(theme.spacing.medium)}px`);
+  style.setProperty("--vl-spacing-lg", `${String(theme.spacing.large)}px`);
 };

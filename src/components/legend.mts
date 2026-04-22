@@ -37,7 +37,10 @@ interface RenderLegendOptions {
  *
  * @returns void
  */
-export const renderLegend = (
+export /**
+        *
+        */
+const renderLegend = (
   svg: SVGSelection,
   {
     fontSize = "var(--vl-legend-font-size, 12px)",
@@ -49,21 +52,30 @@ export const renderLegend = (
     y = 0,
   }: RenderLegendOptions,
 ): void => {
+  /**
+   *
+   */
   const legendGroup = svg
     .selectAll<SVGGElement, null>("g.legend")
     .data([null])
     .join("g")
     .attr("class", "legend")
-    .attr("transform", `translate(${x},${y})`);
+    .attr("transform", `translate(${String(x)},${String(y)})`);
 
+  /**
+   *
+   */
   const rowHeight = swatchSize + gap;
 
+  /**
+   *
+   */
   const entries = legendGroup
     .selectAll<SVGGElement, LegendItem>("g.legend-entry")
     .data(items)
     .join("g")
     .attr("class", "legend-entry")
-    .attr("transform", (_, i) => `translate(0,${i * rowHeight})`);
+    .attr("transform", (_, i) => `translate(0,${String(i * rowHeight)})`);
 
   entries
     .selectAll<SVGRectElement, LegendItem>("rect.swatch")

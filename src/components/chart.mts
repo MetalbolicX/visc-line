@@ -1,11 +1,4 @@
-import {
-  applyThemeCssVars,
-  defaultTheme,
-  mergeTheme,
-} from "@/themes/index.mjs";
-
-import { observeResize } from "@/accessibility/index.mjs";
-
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import type {
   ChartConfig,
   ProcessedSeries,
@@ -13,6 +6,7 @@ import type {
 } from "@/types/index.mjs";
 import type { Margins } from "@/types/index.mjs";
 
+import { observeResize } from "@/accessibility/index.mjs";
 import {
   addTooltip,
   createScales,
@@ -27,9 +21,14 @@ import {
   renderXAxisLabel,
   renderXGrid,
   renderYAxis,
-  renderYGrid,
   renderYAxisLabel,
+  renderYGrid,
 } from "@/components/index.mjs";
+import {
+  applyThemeCssVars,
+  defaultTheme,
+  mergeTheme,
+} from "@/themes/index.mjs";
 
 export interface ChartInstance<T> {
   container: HTMLElement;
@@ -46,7 +45,13 @@ interface ChartOptions {
   xType?: "linear" | "log" | "pow" | "time";
 }
 
-export const createChart = <T,>(
+/**
+ *
+ */
+export /**
+        *
+        */
+const createChart = <T,>(
   container: HTMLElement,
   config: ChartConfig<T>,
   {
@@ -56,32 +61,59 @@ export const createChart = <T,>(
     xType = "time",
   }: ChartOptions = {},
 ): ChartInstance<T> => {
+  /**
+   *
+   */
   const resolvedTheme = mergeTheme(defaultTheme, theme);
   applyThemeCssVars(container, resolvedTheme);
 
+  /**
+   *
+   */
   const svg = renderSVG(container);
+  /**
+   *
+   */
   const bounds = renderBoundsGroup(svg, margins);
 
+  /**
+   *
+   */
   const processedSeries = processAllSeries<T>(
     config.data,
     config.xSerie.accessor,
     config.ySeries,
   );
 
+  /**
+   *
+   */
   let currentSeries = processedSeries;
 
+  /**
+   *
+   */
   const render = (): void => {
+    /**
+     *
+     */
     const dims = getDimensions(container, margins);
+    /**
+     *
+     */
     const { xDomain, yDomain } = getMultiSeriesExtents(
       currentSeries,
       config.xSerie.accessor,
     );
+    /**
+     *
+     */
     const { xScale, yScale } = createScales({
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
       xDomain,
-      yDomain,
       xType,
+      yDomain,
     });
 
     bounds
@@ -105,12 +137,15 @@ export const createChart = <T,>(
       xScale,
       yScale,
       config.xSerie.accessor,
-      { innerWidth: dims.innerWidth, innerHeight: dims.innerHeight },
+      { innerHeight: dims.innerHeight, innerWidth: dims.innerWidth },
     );
   };
 
   render();
 
+  /**
+   *
+   */
   const dispose = observeResize(container, render);
 
   return {
@@ -120,6 +155,9 @@ export const createChart = <T,>(
       return currentSeries;
     },
     svg,
+    /**
+     *
+     */
     update: (newData: T[]): void => {
       currentSeries = processAllSeries<T>(
         newData,

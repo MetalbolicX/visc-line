@@ -1,11 +1,12 @@
 "use strict";
 
 import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
-import perfectionist from "eslint-plugin-perfectionist";
 import jsdoc from "eslint-plugin-jsdoc";
+import perfectionist from "eslint-plugin-perfectionist";
 import unicorn from "eslint-plugin-unicorn";
+import tseslint from "typescript-eslint";
 
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 export default tseslint.config(
   {
     // Removed JS/MJS from ignores to satisfy "applyTo" requirements
@@ -16,67 +17,91 @@ export default tseslint.config(
   ...tseslint.configs.stylisticTypeChecked,
   perfectionist.configs["recommended-natural"],
   {
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: 2024,
+        projectService: {
+          allowDefaultProject: [
+            "eslint.config.mjs",
+            "tsdown.config.mjs",
+            "vite.config.mjs",
+            "vitest.config.mts",
+            "docs/docsify.js",
+          ],
+        },
+        tsconfigRootDir: import.meta.dirname, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+      },
+    },
     plugins: {
       jsdoc,
       unicorn,
     },
-    languageOptions: {
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-        ecmaVersion: 2024,
-      },
-    },
     rules: {
-      // --- Formatting & Basic Syntax ---
-      "quotes": ["error", "double"],
-      "semi": ["error", "always"],
-      "no-var": "error",
-      "prefer-const": "error",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/naming-convention": [
+        "error",
+        { "format": ["PascalCase"], "selector": "class" },
+        { "format": ["camelCase"], "selector": ["variable", "function", "method"] },
+        // Enforce verbs for booleans
+        { 
+          "format": ["camelCase"], 
+          "prefix": ["is", "has", "can", "should", "will", "did"], 
+          "selector": "variable", 
+          "types": ["boolean"] 
+        },
+      ],
+      // --- TypeScript Specifics ---
+      "@typescript-eslint/no-inferrable-types": "error", // No types for primitives
       "eqeqeq": ["error", "always"],
+      "jsdoc/check-alignment": "warn",
 
-      // Enforce template literals, forbid '+' for concatenation
-      "prefer-template": "error",
+      "jsdoc/require-description": "warn",
+      // --- JSDoc (Enforced for JS and TS) ---
+      "jsdoc/require-jsdoc": ["warn", { 
+        "contexts": ["VariableDeclaration"],
+        "require": {
+          "ArrowFunctionExpression": true,
+          "ClassDeclaration": true,
+          "FunctionDeclaration": true,
+          "MethodDefinition": true
+        }
+      }],
+
+      // Limit function parameters to keep signatures manageable. Default
+      // chosen here is 3 — adjust if your codebase prefers 4.
+      "max-params": ["error", 5],
+      
+      "no-restricted-globals": [
+        "error",
+        { "message": "Ensure AbortController is used with fetch if needed for cancellation.", "name": "fetch" }
+      ],
+
+      "no-restricted-properties": [
+        "error",
+        { "message": "Use textContent or createContextualFragment instead.", "property": "innerHTML" }
+      ],
       "no-restricted-syntax": [
         "error",
         {
-          selector: "BinaryExpression[operator='+'][left.type='Literal'][left.value=/./], BinaryExpression[operator='+'][right.type='Literal'][right.value=/./]",
           message: "Do not use '+' for string concatenation. Use template literals.",
+          selector: "BinaryExpression[operator='+'][left.type='Literal'][left.value=/./], BinaryExpression[operator='+'][right.type='Literal'][right.value=/./]",
         },
         {
-          selector: "CallExpression[callee.property.name='push']",
           message: "Do not use .push(). Use the spread operator to maintain immutability.",
+          selector: "CallExpression[callee.property.name='push']",
         },
         {
-          selector: "CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/] > MemberExpression > CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/]",
-          message: "Pipeline detected: Avoid chaining multiple array methods. Use '.values()' to start an Iterator Helper pipeline instead to save memory."
+          message: "Pipeline detected: Avoid chaining multiple array methods. Use '.values()' to start an Iterator Helper pipeline instead to save memory.",
+          selector: "CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/] > MemberExpression > CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/]"
         },
         {
-          selector: "ForStatement",
           message: "Avoid standard for-loops. Use for...of or array methods (map, filter, etc.).",
+          selector: "ForStatement",
         },
       ],
 
-      // --- Naming Conventions ---
-      // Supports kebab-case and name.type.extension (e.g., user.route.ts)
-      "unicorn/filename-case": "off",
-      
-      "@typescript-eslint/naming-convention": [
-        "error",
-        { "selector": "class", "format": ["PascalCase"] },
-        { "selector": ["variable", "function", "method"], "format": ["camelCase"] },
-        // Enforce verbs for booleans
-        { 
-          "selector": "variable", 
-          "types": ["boolean"], 
-          "format": ["camelCase"], 
-          "prefix": ["is", "has", "can", "should", "will", "did"] 
-        },
-      ],
-
-      // --- TypeScript Specifics ---
-      "@typescript-eslint/no-inferrable-types": "error", // No types for primitives
-      "@typescript-eslint/explicit-function-return-type": "off",
+      "no-var": "error",
+      "prefer-const": "error",
 
       // --- Destructuring ---
       // Use the ESLint core rule to prefer destructuring for variable
@@ -93,44 +118,28 @@ export default tseslint.config(
       // that enforced (or want to limit messy signatures), consider
       // enabling `max-params` or adding a community rule/plugin.
       "prefer-destructuring": ["error", {
-        "VariableDeclarator": {
+        "AssignmentExpression": {
           "array": true,
           "object": true
         },
-        "AssignmentExpression": {
+        "VariableDeclarator": {
           "array": true,
           "object": true
         }
       }, { "enforceForRenamedProperties": false }],
-      // Limit function parameters to keep signatures manageable. Default
-      // chosen here is 3 — adjust if your codebase prefers 4.
-      "max-params": ["error", 3],
+      // Enforce template literals, forbid '+' for concatenation
+      "prefer-template": "error",
+      // --- Formatting & Basic Syntax ---
+      "quotes": ["error", "double"],
 
-      // --- JSDoc (Enforced for JS and TS) ---
-      "jsdoc/require-jsdoc": ["warn", { 
-        "require": {
-          "FunctionDeclaration": true,
-          "MethodDefinition": true,
-          "ClassDeclaration": true,
-          "ArrowFunctionExpression": true
-        },
-        "contexts": ["VariableDeclaration"]
-      }],
-      "jsdoc/check-alignment": "warn",
-      "jsdoc/require-description": "warn",
-
-      // --- Environment & Modern APIs ---
-      "unicorn/prefer-node-protocol": "error", // Use node: prefix
+      "semi": ["error", "always"],
+      // --- Naming Conventions ---
+      // Supports kebab-case and name.type.extension (e.g., user.route.ts)
+      "unicorn/filename-case": "off",
       // Prefer using .at() for cleaner, modern index access when appropriate
       "unicorn/prefer-at": "error",
-      "no-restricted-properties": [
-        "error",
-        { "property": "innerHTML", "message": "Use textContent or createContextualFragment instead." }
-      ],
-      "no-restricted-globals": [
-        "error",
-        { "name": "fetch", "message": "Ensure AbortController is used with fetch if needed for cancellation." }
-      ]
+      // --- Environment & Modern APIs ---
+      "unicorn/prefer-node-protocol": "error" // Use node: prefix
     },
   }
 );

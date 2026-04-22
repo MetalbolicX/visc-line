@@ -1,13 +1,8 @@
-import { axisBottom } from "d3";
 import type { AxisDomain } from "d3";
 
-import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
+import { axisBottom } from "d3";
 
-/** Options for {@link renderXAxis}. */
-interface RenderXAxisOptions {
-  tickCount?: number;
-  tickFormat?: (domainValue: AxisDomain, index: number) => string;
-}
+import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /**
  * Render an X axis inside the provided bounds group using a D3 axis generator.
@@ -21,21 +16,39 @@ interface RenderXAxisOptions {
  * @param options - Optional configuration.
  */
 type AxisCompatibleScale = AnyScale & {
-  range: () => number[];
   copy: () => unknown;
+  range: () => number[];
 };
 
-const asAxisScale = (scale: AnyScale): AxisCompatibleScale =>
-  scale as unknown as AxisCompatibleScale;
+/** Options for {@link renderXAxis}. */
+interface RenderXAxisOptions {
+  tickCount?: number;
+  tickFormat?: (domainValue: AxisDomain, index: number) => string;
+}
 
-export const renderXAxis = (
+/**
+ *
+ */
+const asAxisScale = (scale: AnyScale): AxisCompatibleScale =>
+  scale;
+
+/**
+ *
+ */
+export /**
+        *
+        */
+const renderXAxis = (
   boundsGroup: BoundsSelection,
   xScale: AnyScale,
   innerHeight: number,
   { tickCount = 5, tickFormat }: RenderXAxisOptions = {},
 ): void => {
+  /**
+   *
+   */
   const axis = axisBottom(asAxisScale(xScale)).ticks(tickCount);
-  if (tickFormat) axis.tickFormat(tickFormat as (d: AxisDomain, i: number) => string);
+  if (tickFormat) axis.tickFormat(tickFormat);
 
   boundsGroup
     .selectAll<SVGGElement, null>("g.x-axis")

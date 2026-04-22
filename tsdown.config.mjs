@@ -2,21 +2,21 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: "./src/index.mts",
-  format: ["cjs", "es", "umd"],
-  platform: "browser",
-  minify: true,
-  dts: true,
   deps: {
     alwaysBundle: ["tipviz"],
   },
-  tsconfig: true,
-  outDir: "./dist",
+  dts: true,
+  entry: "./src/index.mts",
   fixedExtension: true,
+  format: ["cjs", "es", "umd"],
+  minify: true,
+  outDir: "./dist",
   outputOptions: {
-    name: "ViscLine",
     globals: {
       d3: "d3",
     },
+    name: "ViscLine",
   },
+  platform: "browser",
+  tsconfig: true,
 });

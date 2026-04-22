@@ -31,15 +31,13 @@ interface RenderPointsOptions {
  * @param options.stroke - Stroke color for circles. Default: "white".
  * @param options.strokeWidth - Stroke width in pixels. Default: 1.5.
  * @param options.opacity - Opacity for circles. Default: 0.85.
- * @returns D3 Selection of series group elements: Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null>.
- *
- * @remarks
- * - Creates one <g> per series with classes "point-series" and "point-series--{label}".
- * - Binds each series' data using xAccessor and joins to <circle class="point"> elements.
- * - Circle fill defaults to series.stroke if present, otherwise "steelblue".
- * - This function mutates the DOM via D3 and is intended for imperative rendering.
- */
-export const renderPoints = <T,>(
+* @returns D3 Selection of series group elements: Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null>.
+// eslint-disable-next-line max-params
+export /**
+        *
+        */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const renderPoints = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
@@ -52,6 +50,7 @@ export const renderPoints = <T,>(
     stroke = "var(--vl-point-stroke, white)",
     strokeWidth = 1.5,
   }: RenderPointsOptions = {},
+// eslint-disable-next-line max-params
 ): Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null> =>
   boundsGroup
     .selectAll<SVGGElement, ProcessedSeries<T>>("g.point-series")

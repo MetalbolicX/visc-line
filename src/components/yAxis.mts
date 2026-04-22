@@ -1,13 +1,8 @@
-import { axisLeft } from "d3";
 import type { AxisDomain } from "d3";
 
-import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
+import { axisLeft } from "d3";
 
-/** Options for {@link renderYAxis}. */
-interface RenderYAxisOptions {
-  tickCount?: number;
-  tickFormat?: (domainValue: AxisDomain, index: number) => string;
-}
+import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /**
  * Render a left Y axis into a provided bounds group using the given D3 scale.
@@ -21,20 +16,38 @@ interface RenderYAxisOptions {
  * @param options - Optional configuration object.
  */
 type AxisCompatibleScale = AnyScale & {
-  range: () => number[];
   copy: () => unknown;
+  range: () => number[];
 };
 
-const asAxisScale = (scale: AnyScale): AxisCompatibleScale =>
-  scale as unknown as AxisCompatibleScale;
+/** Options for {@link renderYAxis}. */
+interface RenderYAxisOptions {
+  tickCount?: number;
+  tickFormat?: (domainValue: AxisDomain, index: number) => string;
+}
 
-export const renderYAxis = (
+/**
+ *
+ */
+const asAxisScale = (scale: AnyScale): AxisCompatibleScale =>
+  scale;
+
+/**
+ *
+ */
+export /**
+        *
+        */
+const renderYAxis = (
   boundsGroup: BoundsSelection,
   yScale: AnyScale,
   { tickCount = 5, tickFormat }: RenderYAxisOptions = {},
 ): void => {
+  /**
+   *
+   */
   const axis = axisLeft(asAxisScale(yScale)).ticks(tickCount);
-  if (tickFormat) axis.tickFormat(tickFormat as (d: AxisDomain, i: number) => string);
+  if (tickFormat) axis.tickFormat(tickFormat);
 
   boundsGroup
     .selectAll<SVGGElement, null>("g.y-axis")

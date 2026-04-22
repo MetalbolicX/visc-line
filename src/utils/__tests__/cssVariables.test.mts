@@ -51,14 +51,14 @@ describe("applyThemeCssVars", () => {
   it("writes palette colors with indexed --vl-palette-N vars", () => {
     applyThemeCssVars(container, defaultTheme);
     defaultTheme.colors.palette.forEach((color, i) => {
-      expect(container.style.getPropertyValue(`--vl-palette-${i}`)).toBe(color);
+      expect(container.style.getPropertyValue(`--vl-palette-${String(i)}`)).toBe(color);
     });
   });
 
   it("writes --vl-axis-font-size with 'px' suffix", () => {
     applyThemeCssVars(container, defaultTheme);
     expect(container.style.getPropertyValue("--vl-axis-font-size")).toBe(
-      `${defaultTheme.axis.fontSize}px`,
+      `${String(defaultTheme.axis.fontSize)}px`,
     );
   });
 
@@ -79,14 +79,14 @@ describe("applyThemeCssVars", () => {
   it("writes --vl-legend-font-size with px suffix", () => {
     applyThemeCssVars(container, defaultTheme);
     expect(container.style.getPropertyValue("--vl-legend-font-size")).toBe(
-      `${defaultTheme.legend.fontSize}px`,
+      `${String(defaultTheme.legend.fontSize)}px`,
     );
   });
 
   it("writes --vl-title-font-size with px suffix", () => {
     applyThemeCssVars(container, defaultTheme);
     expect(container.style.getPropertyValue("--vl-title-font-size")).toBe(
-      `${defaultTheme.title.fontSize}px`,
+      `${String(defaultTheme.title.fontSize)}px`,
     );
   });
 
@@ -94,7 +94,7 @@ describe("applyThemeCssVars", () => {
     applyThemeCssVars(container, {
       ...defaultTheme,
       tooltip: undefined,
-    } as typeof defaultTheme);
+    });
     expect(container.style.getPropertyValue("--vl-tooltip-bg")).toBe("");
   });
 
@@ -121,13 +121,13 @@ describe("applyThemeCssVars", () => {
   it("writes spacing small, medium, and large", () => {
     applyThemeCssVars(container, defaultTheme);
     expect(container.style.getPropertyValue("--vl-spacing-sm")).toBe(
-      `${defaultTheme.spacing.small}px`,
+      `${String(defaultTheme.spacing.small)}px`,
     );
     expect(container.style.getPropertyValue("--vl-spacing-md")).toBe(
-      `${defaultTheme.spacing.medium}px`,
+      `${String(defaultTheme.spacing.medium)}px`,
     );
     expect(container.style.getPropertyValue("--vl-spacing-lg")).toBe(
-      `${defaultTheme.spacing.large}px`,
+      `${String(defaultTheme.spacing.large)}px`,
     );
   });
 });
