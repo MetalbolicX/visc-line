@@ -9,24 +9,21 @@ import {
 import type { AnyScale, ScaleType } from "@/types/index.mjs";
 
 /**
+ * Factory map for creating D3 scales by logical ScaleType.
  *
+ * Each entry is a function that returns a fresh, unconfigured D3 scale instance
+ * compatible with our AnyScale wrapper. The optional `exp` parameter is only
+ * observed by the `pow` factory (defaulting to 2) and is ignored by others.
+ *
+ * Supported keys: `linear`, `log`, `pow`, `time`.
+ *
+ * Note: callers are expected to further configure the returned scale (domain,
+ * range, nice, etc.) before use.
  */
 const scaleFactories: Record<ScaleType, (exp?: number) => AnyScale> = {
-  /**
-   *
-   */
   linear: () => scaleLinear(),
-  /**
-   *
-   */
   log: () => scaleLog(),
-  /**
-   *
-   */
   pow: (exp = 2) => scalePow().exponent(exp),
-  /**
-   *
-   */
   time: () => scaleTime(),
 };
 
@@ -36,11 +33,33 @@ export interface ChartScales {
   yScale: AnyScale;
 }
 
-/** Options for {@link createScales}. */
+/**
+ * Pair of configured D3 scales used for chart coordinate transforms.
+ *
+ * - xScale maps input domain values (numeric or temporal) to [0, innerWidth].
+ * - yScale maps numeric domain values to [innerHeight, 0] (inverted Y axis for SVG).
+ */
+export interface ChartScales {
+  xScale: AnyScale;
+  yScale: AnyScale;
+}
+
+/**
+ * Options for createScales.
+ *
+ * - innerHeight/innerWidth: the drawable area (excluding margins) used to
+ *   construct the output ranges for the scales.
+ * - xDomain: numeric or temporal domain for the X scale. Use [undefined, undefined]
+ *   to defer domain configuration elsewhere.
+ * - yDomain: numeric domain for the Y scale. Use [undefined, undefined] to defer.
+ * - xExponent/yExponent: exponent used only when the corresponding scale type is
+ *   "pow" (defaults to 2). Other scale types ignore this value.
+ * - xType/yType: logical scale kind ("linear" | "log" | "pow" | "time").
+ */
 export interface CreateScalesOptions {
   innerHeight: number;
   innerWidth: number;
-  xDomain: [undefined, undefined] | [unknown, unknown];
+  xDomain: [number, number] | [Date, Date] | [undefined, undefined];
   xExponent?: number;
   xType?: ScaleType;
   yDomain: [number, number] | [undefined, undefined];
@@ -49,30 +68,26 @@ export interface CreateScalesOptions {
 }
 
 /**
- * Creates and returns x and y scales configured for a chart's inner drawing area.
+ * Create configured X and Y scales for charts.
  *
- * The function selects scale factories by the provided `xType` / `yType` (falling back to a linear
- * factory if an unknown type is supplied), configures each scale with the provided domain,
- * maps them to pixel ranges based on `innerWidth` / `innerHeight`, and applies `.nice()` for
- * rounded tick-friendly domains.
+ * This factory returns fresh, pre-configured AnyScale instances whose domains
+ * and ranges are set according to the provided options. The returned scales
+ * are ready for immediate use in plotting routines but can be further
+ * configured (e.g. .nice(), tick settings) by the caller.
  *
- * @param options - Configuration options for scale creation.
- * @param options.xDomain - Domain for the x scale (expected as a two-element array, coerced to numbers).
- * @param options.yDomain - Domain for the y scale (values will be converted via `Number`).
- * @param options.innerWidth - Width in pixels of the chart's inner drawing area; x range is [0, innerWidth].
- * @param options.innerHeight - Height in pixels of the chart's inner drawing area; y range is [innerHeight, 0]
- *   (inverted to match screen coordinates).
- * @param options.xType - Identifier for the x scale factory to use (defaults to `"linear"`).
- * @param options.yType - Identifier for the y scale factory to use (defaults to `"linear"`).
- * @param options.xExponent - Exponent passed to the x scale factory when applicable (default: 2).
- * @param options.yExponent - Exponent passed to the y scale factory when applicable (default: 2).
+ * Notes:
+ * - xExponent/yExponent are only applied when the corresponding type is "pow".
+ * - For time scales, supply Date values for xDomain; numeric domains are used
+ *   for linear/log/pow scales.
  *
- * @returns ChartScales — an object containing `xScale` and `yScale`, each configured with domain, range and `.nice()`.
+ * @param options.createScales - Options object (see CreateScalesOptions).
+ * @returns A ChartScales pair containing xScale and yScale.
+ * @example
+ * ```ts
+ * createScales({ innerHeight: 200, innerWidth: 400, xDomain: [0, 10], yDomain: [0, 100] });
+ * ```
  */
-export /**
-        *
-        */
-const createScales = ({
+export const createScales = ({
   innerHeight,
   innerWidth,
   xDomain,
@@ -82,26 +97,20 @@ const createScales = ({
   yExponent = 2,
   yType = "linear",
 }: CreateScalesOptions): ChartScales => {
-  /**
-   *
-   */
   const xScale = (
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    (scaleFactories[xType] ?? scaleFactories.linear)(
-      xExponent,
-    ) as ScaleLinear<number, number>
+    (scaleFactories[xType] ?? scaleFactories.linear)(xExponent) as ScaleLinear<
+      number,
+      number
+    >
   )
     .domain(xDomain as number[])
     .range([0, innerWidth])
     .nice() as AnyScale;
-  /**
-   *
-   */
   const yScale = (
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    (scaleFactories[yType] ?? scaleFactories.linear)(
-      yExponent,
-    ) as ScaleLinear<number, number>
+    (scaleFactories[yType] ?? scaleFactories.linear)(yExponent) as ScaleLinear<
+      number,
+      number
+    >
   )
     .domain((yDomain as number[]).map(Number))
     .range([innerHeight, 0])

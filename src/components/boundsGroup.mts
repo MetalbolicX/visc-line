@@ -12,10 +12,7 @@ import type { BoundsSelection, Margins, SVGSelection } from "@/types/index.mjs";
  * @param margins - Margins object providing left and top offsets for the translation.
  * @returns The selected or created group element cast to BoundsSelection.
  */
-export /**
-        *
-        */
-const renderBoundsGroup = (
+export const renderBoundsGroup = (
   svg: SVGSelection,
   margins: Margins,
 ): BoundsSelection =>

@@ -18,25 +18,42 @@ interface RenderPointsOptions {
 }
 
 /**
- * Renders circle points for multiple series into the provided bounds group using D3 selections and join.
+ * Renders point markers for one or more series into the provided bounds group.
  *
- * @template T - Datum type for series points.
- * @param boundsGroup - Parent bounds selection (typically a <g>) to which series groups will be appended/updated.
- * @param series - Array of processed series; each item is expected to include a label, a data array and an accessor for y-values.
- * @param xScale - Scale function for x-values; receives xAccessor(d) and must return a pixel x coordinate.
- * @param yScale - Scale function for y-values; receives series.accessor(d) and must return a pixel y coordinate.
- * @param xAccessor - Function that extracts the x-value from a datum.
- * @param options - Optional rendering settings.
- * @param options.radius - Radius of rendered circles in pixels. Default: 4.
- * @param options.stroke - Stroke color for circles. Default: "white".
- * @param options.strokeWidth - Stroke width in pixels. Default: 1.5.
- * @param options.opacity - Opacity for circles. Default: 0.85.
-* @returns D3 Selection of series group elements: Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null>.
-// eslint-disable-next-line max-params
-export /**
-        *
-        */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ * This function performs a D3 data-join: it binds the supplied `series` array
+ * to child <g> elements with class `point-series`, and for each series joins
+ * that series' `data` to <circle.point> elements. Attributes (cx, cy, r,
+ * fill, stroke, stroke-width, opacity) are set on the circles. The function
+ * mutates the DOM and is idempotent when called repeatedly with the same
+ * inputs (D3 join semantics).
+ *
+ * Type notes:
+ * - T is the datum type for each point in a series.
+ * - `xAccessor` extracts the x-value from a datum and is also used as the
+ *   key function for joining points within a series.
+ * - `series` entries are expected to have a unique `label` property used as
+ *   the series-level key in the outer join.
+ *
+ * @typeParam T - Item type for series data points.
+ * @param boundsGroup - The D3 selection representing the chart plotting area
+ *   (a group element) where point series groups will be appended/updated.
+ * @param series - Array of processed series; each series must include `data`,
+ *   an `accessor` for the y-value, and a `label` used as the series key.
+ * @param xScale - D3 scale used to compute the circle `cx` from the
+ *   `xAccessor` result.
+ * @param yScale - D3 scale used to compute the circle `cy` from the series'
+ *   `accessor` result.
+ * @param xAccessor - Function that returns the x value for a point datum;
+ *   also used as the per-point key for the inner join.
+ * @param options - Optional visual tuning for point appearance (fill,
+ *   opacity, radius, stroke, strokeWidth). Defaults are provided.
+ * @returns A D3 selection containing the series <g> elements created/updated
+ *   under `boundsGroup`.
+ * @example
+ * ```ts
+ * renderPoints(bounds, mySeries, xScale, yScale, d => d.time, { radius: 3 });
+ * ```
+ */
 const renderPoints = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
@@ -50,7 +67,6 @@ const renderPoints = <T,>(
     stroke = "var(--vl-point-stroke, white)",
     strokeWidth = 1.5,
   }: RenderPointsOptions = {},
-// eslint-disable-next-line max-params
 ): Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null> =>
   boundsGroup
     .selectAll<SVGGElement, ProcessedSeries<T>>("g.point-series")

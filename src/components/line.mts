@@ -68,34 +68,33 @@ const resolveCurveFactory = (
 ): CurveFactory => (typeof curve === "string" ? curveByName[curve] : curve);
 
 /**
- * Renders and updates line series within a given bounds group using D3.
+ * Render and update SVG path elements for line series inside the provided bounds group.
  *
- * @template T - The datum type for each point in the series.
+ * Binds the given series array to <path class="chart-line"> elements and manages
+ * the enter / update / exit lifecycle. Uses a D3 line generator with a configurable
+ * curve factory and supports animated stroke drawing via stroke-dashoffset. Respects
+ * the user's reduced-motion preference or the `reducedMotion` option to disable
+ * animations.
  *
- * @param boundsGroup - A D3 selection representing the group (<g>) that contains the chart bounds where lines will be rendered.
- * @param series - Array of processed series to render. Each series should contain a label (used as the data key), stroke, strokeWidth, accessor, and data array.
- * @param xScale - A scale function used to map x values (produced by xAccessor) to pixel coordinates.
- * @param yScale - A scale function used to map y values (produced by each series' accessor) to pixel coordinates.
- * @param xAccessor - Function that extracts the x-value from a datum of type T.
- * @param options - Optional rendering options.
- * @param options.strokeWidth - Default stroke width to apply to lines when a series-specific strokeWidth is not provided. Default: 2.
- * @param options.transitionDuration - Duration in milliseconds for the entering/updating line draw animation. Default: 1000.
+ * @template T - Datum type for series points.
+ * @param {BoundsSelection} boundsGroup - D3 group selection to contain the line paths.
+ * @param {ProcessedSeries<T>[]} series - Array of processed series to render. Each series
+ *   should include a unique `label`, `data`, and an `accessor` for y values; optional
+ *   visual overrides: `stroke`, `strokeWidth`, `opacity`.
+ * @param {AnyScale} xScale - Scale mapping x values (from xAccessor) to pixel positions.
+ * @param {AnyScale} yScale - Scale mapping y values (from series.accessor) to pixel positions.
+ * @param {(d: T) => unknown} xAccessor - Function extracting the x value from a datum.
+ * @param {RenderLineOptions} [options] - Rendering options (curve factory or preset, stroke opacity/width,
+ *   reducedMotion, transitionDuration).
+ * @returns {Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null>} A D3 selection of the path elements
+ *   after the data join.
  *
- * @remarks
- * - Binds the provided series array to "path.chart-line" elements using the series' label as the key.
- * - For entering series, appends a <path> with class "chart-line chart-line--{label}", sets visual attributes (fill, stroke, stroke-width, linejoin, linecap)
- *   and the initial "d" path from the series data. It then animates the stroke drawing using stroke-dasharray/stroke-dashoffset from the path's total length.
- * - For updating series, recomputes the path "d", resets stroke dash attributes based on the current path length and transitions the path and stroke to the new values.
- * - For exiting series, removes the corresponding <path>.
- * - The path geometry is produced with a D3 line generator that uses xScale(xAccessor(d)) and yScale(series.accessor(d)).
- *
- * @returns A D3 Selection of the rendered SVGPathElement(s) bound to the provided ProcessedSeries<T> data.
+ * @example
+ * ```ts
+ * renderLine(boundsGroup, series, xScale, yScale, d => d.x, { curve: 'monotoneX', transitionDuration: 500 });
+ * ```
  */
-// eslint-disable-next-line max-params
-export /**
-        *
-        */
-const renderLine = <T,>(
+export const renderLine = <T,>(
   boundsGroup: BoundsSelection,
   series: ProcessedSeries<T>[],
   xScale: AnyScale,
@@ -108,15 +107,11 @@ const renderLine = <T,>(
     strokeWidth = "var(--vl-line-stroke-width, 2)",
     transitionDuration = 1000,
   }: RenderLineOptions = {},
-// eslint-disable-next-line max-params
 ): Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null> => {
-  /**
-   *
-   */
   const curveFactory = resolveCurveFactory(curve);
 
-/** Build a path 'd' attribute for a series using the configured curve factory. */
-const buildPath = (serie: ProcessedSeries<T>): null | string =>
+  /** Build a path 'd' attribute for a series using the configured curve factory. */
+  const buildPath = (serie: ProcessedSeries<T>): null | string =>
     line<T>()
       .curve(curveFactory)
       .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))
@@ -124,10 +119,6 @@ const buildPath = (serie: ProcessedSeries<T>): null | string =>
       serie.data,
     );
 
-  /**
-   *
-   */
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   const isMotionReduced =
     reducedMotionOption ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -142,23 +133,14 @@ const buildPath = (serie: ProcessedSeries<T>): null | string =>
           .attr("class", (d) => `chart-line chart-line--${d.label}`)
           .attr("fill", "none")
           .attr("stroke", (d) => d.stroke ?? "var(--vl-palette-0, steelblue)")
-          .attr(
-            "stroke-width",
-            (d) => d.strokeWidth ?? strokeWidth,
-          )
+          .attr("stroke-width", (d) => d.strokeWidth ?? strokeWidth)
           .attr("opacity", (d) => d.opacity ?? opacity)
           .attr("stroke-linejoin", "round")
           .attr("stroke-linecap", "round")
           .attr("d", (d) => buildPath(d))
           .each(function () {
             if (isMotionReduced) return;
-            /**
-             *
-             */
             const path = select(this);
-            /**
-             *
-             */
             const totalLength = this.getTotalLength();
             path
               .attr("stroke-dasharray", totalLength)
@@ -169,17 +151,8 @@ const buildPath = (serie: ProcessedSeries<T>): null | string =>
           }),
       (update) =>
         update.each(function (d) {
-          /**
-           *
-           */
           const path = select(this);
-          /**
-           *
-           */
           const newPathD = buildPath(d);
-          /**
-           *
-           */
           const totalLength = this.getTotalLength();
           path
             .attr("stroke-dasharray", totalLength)

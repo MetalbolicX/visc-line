@@ -1,46 +1,55 @@
 import type { SVGSelection } from "@/types/index.mjs";
 
-/** A single entry in the legend. */
+/**
+ * A single entry in the legend.
+ *
+ * - `color`: CSS/SVG color string used to fill the swatch.
+ * - `label`: Human-facing label displayed next to the swatch.
+ */
 export interface LegendItem {
+  /** CSS/SVG color string used to fill the swatch. */
   color: string;
+  /** Text shown next to the swatch in the legend. */
   label: string;
 }
 
-/** Options for {@link renderLegend}. */
+/** Options for {@link renderLegend}.
+ *
+ * `items` is required; other fields have sensible defaults used when omitted.
+ */
 interface RenderLegendOptions {
+  /** Font size for legend labels. Can be a CSS string (e.g. '12px') or a numeric value. */
   fontSize?: number | string;
+  /** Gap in pixels between the swatch and the label, and between rows. */
   gap?: number;
+  /** Array of items to render in order. */
   items: LegendItem[];
+  /** Color applied to the label text. */
   labelColor?: string;
+  /** Size in pixels of the legend swatch (square). */
   swatchSize?: number;
+  /** X offset applied to the legend group. */
   x?: number;
+  /** Y offset applied to the legend group. */
   y?: number;
 }
 
 /**
- * Renders a compact legend inside the given SVG selection.
+ * Render a vertical legend into the provided SVG selection.
  *
- * Creates a single <g class="legend"> translated to (x, y). For each entry in
- * options.items a <g class="legend-entry"> row is created containing a rounded
- * rectangle (.swatch) filled with the item's color and a text (.legend-label)
- * positioned to the right of the swatch.
+ * This function will create or update a single <g class="legend"> group at
+ * the provided (x,y) transform and populate it with one <g class="legend-entry"> per
+ * item. Each entry contains a rectangular swatch and a label. Existing legend
+ * content is joined and updated (idempotent for the same `items` order).
  *
- * @param svg - D3 selection of the SVG container to render the legend into.
- * @param options - Rendering options.
- * @param options.items - Array of legend items. Each item should include:
- *                         { label: string, color: string }.
- * @param options.x - Horizontal translation of the legend group (px). Default: 0.
- * @param options.y - Vertical translation of the legend group (px). Default: 0.
- * @param options.fontSize - Font size for labels (px). Default: 12.
- * @param options.swatchSize - Width and height of the color swatch (px). Default: 12.
- * @param options.gap - Gap (px) used between swatch and label and between rows. Default: 6.
- *
- * @returns void
+ * @param svg - D3-like SVG selection to render into.
+ * @param options - Rendering options. `items` is required and controls order.
+ * @example
+ * ```ts
+ * renderLegend(svgSelection, { items: [{ label: 'Series A', color: '#1f77b4' }] });
+ * ```
  */
-export /**
-        *
-        */
-const renderLegend = (
+export const renderLegend = (
   svg: SVGSelection,
   {
     fontSize = "var(--vl-legend-font-size, 12px)",
@@ -52,9 +61,6 @@ const renderLegend = (
     y = 0,
   }: RenderLegendOptions,
 ): void => {
-  /**
-   *
-   */
   const legendGroup = svg
     .selectAll<SVGGElement, null>("g.legend")
     .data([null])
@@ -62,14 +68,8 @@ const renderLegend = (
     .attr("class", "legend")
     .attr("transform", `translate(${String(x)},${String(y)})`);
 
-  /**
-   *
-   */
   const rowHeight = swatchSize + gap;
 
-  /**
-   *
-   */
   const entries = legendGroup
     .selectAll<SVGGElement, LegendItem>("g.legend-entry")
     .data(items)

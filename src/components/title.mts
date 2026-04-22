@@ -1,37 +1,42 @@
 import type { Margins, SVGSelection } from "@/types/index.mjs";
 
-/** Options for {@link renderTitle}. */
+/**
+ * Options for renderTitle.
+ *
+ * - `margins` is used to compute the title's centered x position and top y offset.
+ * - `width` is the full svg width used together with margins to center the text.
+ */
 interface RenderTitleOptions {
+  /** CSS color or paint server for the title (default: var(--vl-title-color, #222)). */
   fill?: string;
+  /** Font size as number (px) or CSS size string. */
   fontSize?: number | string;
+  /** Font weight as number or CSS string. */
   fontWeight?: number | string;
+  /** Layout margins (left, right, top, bottom) used for positioning. */
   margins: Margins;
+  /** The title text to render. */
   title: string;
+  /** Total SVG width in pixels. */
   width: number;
 }
 
 /**
- * Render or update a centered chart title inside the given SVG selection.
+ * Render or update a centered chart title inside the provided SVG selection.
  *
- * Binds a single <text> element with class "chart-title" (creating it if missing),
- * positions it horizontally centered between the left and right margins at
- * y = margins.top / 2, sets text-anchor and dominant-baseline to center it,
- * applies font-size, font-weight and fill, and sets the element's text content.
+ * This mutates the passed svg by selecting/creating a single <text.chart-title> element
+ * and setting its position, font, and fill. The title is horizontally centered between
+ * margins.left and width - margins.right and vertically placed at margins.top / 2.
  *
- * @param svg - D3 SVG selection to render the title into.
- * @param options - Configuration options.
- * @param options.width - Total width of the drawing area (including margins).
- * @param options.margins - Margins object with numeric top, right, bottom, left.
- * @param options.title - Title text to render.
- * @param options.fontSize - Font size for the title (default: 16).
- * @param options.fill - Fill color for the title text (default: "#222").
- * @param options.fontWeight - Font weight for the title (default: "bold").
+ * @param svg - D3-like SVG selection to render the title into.
+ * @param options - Rendering options (fill, fontSize, fontWeight, margins, title, width).
  * @returns void
+ * @example
+ * ```ts
+ * renderTitle(svg, { title: 'My Chart', margins: { left: 12, right: 12, top: 24, bottom: 12 }, width: 800 });
+ * ```
  */
-export /**
-        *
-        */
-const renderTitle = (
+export const renderTitle = (
   svg: SVGSelection,
   {
     fill = "var(--vl-title-color, #222)",

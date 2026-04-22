@@ -1,22 +1,36 @@
 /**
- * Observe a DOM element for size changes and invoke a render callback when resizing occurs.
+ * Options for observeResize.
  *
- * @param container - The element to observe for resize events.
- * @param renderCallback - Callback to run when the element is resized.
- * @param options - Optional scheduling configuration.
- * @param options.debounceMs - Debounce delay in milliseconds. If provided and greater than 0,
- * callbacks are coalesced with a timeout; otherwise requestAnimationFrame throttling is used.
- * @returns A function that, when called, disconnects the underlying ResizeObserver and stops observing.
- *
- * @remarks
- * This utility uses the browser's ResizeObserver API. Call the returned cleanup function to release resources
- * and stop listening for resize events.
+ * @property debounceMs - Milliseconds to debounce resize notifications. When > 0,
+ *   callbacks are delayed until there is a pause in resize events. When 0 (the
+ *   default), callbacks are throttled using requestAnimationFrame.
  */
 export interface ObserveResizeOptions {
   debounceMs?: number;
 }
 
-/** Observe an element for size changes and schedule the provided render callback. */
+/**
+ * Observe element size changes and schedule a render callback.
+ *
+ * This sets up a ResizeObserver on the provided container and schedules
+ * invocations of renderCallback either debounced (when debounceMs > 0) or
+ * throttled via requestAnimationFrame (default). The returned cleanup function
+ * disconnects the observer and clears any pending scheduled callback.
+ *
+ * @param container - The DOM element to observe for size changes.
+ * @param renderCallback - Callback invoked when a resize is observed. Should
+ *   be idempotent and fast; it may be called frequently during resizes.
+ * @param options.debounceMs - Optional debounce interval in milliseconds.
+ *   Default: 0 (use requestAnimationFrame throttling).
+ * @returns A cleanup function that disconnects the observer and cancels any
+ *   pending animation frame or timeout.
+ * @example
+ * ```ts
+ * const stop = observeResize(container, () => render(), { debounceMs: 100 });
+ * // later
+ * stop();
+ * ```
+ */
 export const observeResize = (
   container: Element,
   renderCallback: () => void,
@@ -32,7 +46,7 @@ export const observeResize = (
   };
 
   /**
-   *
+   * Schedule the render callback using either debounce or requestAnimationFrame.
    */
   const scheduleRender = (): void => {
     if (debounceMs > 0) {
@@ -57,7 +71,7 @@ export const observeResize = (
   };
 
   /**
-   *
+   * Create a ResizeObserver to watch the container element and schedule the render callback.
    */
   const observer = new ResizeObserver(() => {
     scheduleRender();
