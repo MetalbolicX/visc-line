@@ -19,7 +19,7 @@ export type CurvePreset =
   | "stepBefore";
 
 /** Makes every key in T (and nested objects) optional for partial overrides. */
-export type DeepPartial<T> = {
+export type DeepPartial<T> = { readonly
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
@@ -28,54 +28,54 @@ export type DeepPartial<T> = {
  * a specific data series. Only the keys provided will take effect.
  */
 export interface SeriesStyle {
-  opacity?: number;
-  pointFill?: string;
-  pointRadius?: number;
-  pointStroke?: string;
-  stroke?: string;
-  strokeWidth?: number;
+  readonly opacity?: number;
+  readonly pointFill?: string;
+  readonly pointRadius?: number;
+  readonly pointStroke?: string;
+  readonly stroke?: string;
+  readonly strokeWidth?: number;
 }
 
 export interface Theme {
-  accessibility?: { highContrast?: boolean; reducedMotion?: boolean; };
-  axis: {
-    color?: string;
-    fontSize: number;
-    tickPadding: number;
-    tickSize: number;
-  };
-  breakpoints?: { lg: number; md: number; sm: number; };
-  colors: {
-    axis: string;
-    background: string;
-    grid: string;
-    palette: string[]; // series colors
-    text: string;
-  };
-  grid: { dashArray?: null | string; stroke: string; strokeWidth: number; };
-  legend: {
-    fontSize: number;
-    itemSpacing: number;
-    position: "bottom" | "left" | "right" | "top";
-    symbolSize: number;
-  };
-  line: { curve: CurvePreset; opacity: number; strokeWidth: number; };
-  points: { fill: string; radius: number; stroke: string; strokeWidth: number };
-  spacing: { large: number; medium: number; small: number; };
-  title: {
-    color: string;
-    fontSize: number;
-    fontWeight: number;
-    padding: number;
-  };
-  tooltip?: {
-    background: string;
-    border: string;
-    borderRadius: number;
-    color: string;
-    fontSize: number;
-    padding: number;
-  };
+  readonly accessibility?: Readonly<{ readonly highContrast?: boolean; readonly reducedMotion?: boolean; }>;
+  readonly axis: Readonly<{
+    readonly color?: string;
+    readonly fontSize: number;
+    readonly tickPadding: number;
+    readonly tickSize: number;
+  }>;
+  readonly breakpoints?: Readonly<{ readonly lg: number; readonly md: number; readonly sm: number; }>;
+  readonly colors: Readonly<{
+    readonly axis: string;
+    readonly background: string;
+    readonly grid: string;
+    readonly palette: readonly string[]; // series colors
+    readonly text: string;
+  }>;
+  readonly grid: Readonly<{ readonly dashArray?: null | string; readonly stroke: string; readonly strokeWidth: number; }>;
+  readonly legend: Readonly<{
+    readonly fontSize: number;
+    readonly itemSpacing: number;
+    readonly position: "bottom" | "left" | "right" | "top";
+    readonly symbolSize: number;
+  }>;
+  readonly line: Readonly<{ readonly curve: CurvePreset; readonly opacity: number; readonly strokeWidth: number; }>;
+  readonly points: Readonly<{ readonly fill: string; readonly radius: number; readonly stroke: string; readonly strokeWidth: number }>;
+  readonly spacing: Readonly<{ readonly large: number; readonly medium: number; readonly small: number; }>;
+  readonly title: Readonly<{
+    readonly color: string;
+    readonly fontSize: number;
+    readonly fontWeight: number;
+    readonly padding: number;
+  }>;
+  readonly tooltip?: Readonly<{
+    readonly background: string;
+    readonly border: string;
+    readonly borderRadius: number;
+    readonly color: string;
+    readonly fontSize: number;
+    readonly padding: number;
+  }>;
 }
 
 /** Shape accepted by the theme parameter — only supply the tokens you want to override. */

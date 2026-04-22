@@ -33,11 +33,11 @@ import type {
 /** Options for {@link renderLine}. */
 interface RenderLineOptions {
   /** D3 curve factory used by the line generator. Defaults to {@link curveLinear}. */
-  curve?: CurveFactory | CurvePreset;
-  opacity?: number | string;
-  reducedMotion?: boolean;
-  strokeWidth?: number | string;
-  transitionDuration?: number;
+  readonly curve?: CurveFactory | CurvePreset;
+  readonly opacity?: number | string;
+  readonly reducedMotion?: boolean;
+  readonly strokeWidth?: number | string;
+  readonly transitionDuration?: number;
 }
 
 /** Mapping of curve preset names to D3 curve factories. */
@@ -96,7 +96,7 @@ const resolveCurveFactory = (
  */
 export const renderLine = <T,>(
   boundsGroup: BoundsSelection,
-  series: ProcessedSeries<T>[],
+  series: readonly ProcessedSeries<T>[],
   xScale: AnyScale,
   yScale: AnyScale,
   xAccessor: (d: T) => unknown,
@@ -119,7 +119,7 @@ export const renderLine = <T,>(
       serie.data,
     );
 
-  const isMotionReduced =
+  const shouldReduceMotion : boolean =
     reducedMotionOption ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -137,9 +137,9 @@ export const renderLine = <T,>(
           .attr("opacity", (d) => d.opacity ?? opacity)
           .attr("stroke-linejoin", "round")
           .attr("stroke-linecap", "round")
-          .attr("d", (d) => buildPath(d))
+          .attr("d", buildPath)
           .each(function () {
-            if (isMotionReduced) return;
+            if (shouldReduceMotion) return;
             const path = select(this);
             const totalLength = this.getTotalLength();
             path

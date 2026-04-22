@@ -23,10 +23,10 @@ import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
  * scale methods to remain permissive over different scale kinds (linear,
  * time, band, etc.).
  */
-type AxisCompatibleScale = AnyScale & {
-  copy: () => unknown;
-  range: () => number[];
-};
+type AxisCompatibleScale = AnyScale & Readonly<{
+  readonly copy: () => unknown;
+  readonly range: () => readonly number[];
+}>;
 
 /**
  * A minimal shape of a D3 scale required by axis generators used here.
@@ -45,8 +45,8 @@ type AxisCompatibleScale = AnyScale & {
  *   value and the tick index and should return the rendered label.
  */
 interface RenderXAxisOptions {
-  tickCount?: number;
-  tickFormat?: (domainValue: AxisDomain, index: number) => string;
+  readonly tickCount?: number;
+  readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
 /**

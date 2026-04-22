@@ -12,10 +12,10 @@ import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
  * for tick placement. This narrows the loose `AnyScale` imported from the
  * project-types to the minimal surface this module relies on.
  */
-type AxisCompatibleScale = AnyScale & {
-  copy: () => unknown;
-  range: () => number[];
-};
+type AxisCompatibleScale = AnyScale & Readonly<{
+  readonly copy: () => unknown;
+  readonly range: () => readonly number[];
+}>;
 
 /**
  * Configuration options for renderYAxis.
@@ -26,8 +26,8 @@ type AxisCompatibleScale = AnyScale & {
  *   directly to D3's axis.tickFormat.
  */
 interface RenderYAxisOptions {
-  tickCount?: number;
-  tickFormat?: (domainValue: AxisDomain, index: number) => string;
+  readonly tickCount?: number;
+  readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
 /**

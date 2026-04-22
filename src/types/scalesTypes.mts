@@ -13,6 +13,6 @@ export type ScaleType = "linear" | "log" | "pow" | "time";
 /** Minimal contract for scales used by axis and grid renderers. */
 export interface TickableScale {
   (value: unknown): number;
-  domain: () => unknown[];
-  ticks: (count?: number) => unknown[];
+  readonly domain: () => readonly unknown[];
+  readonly ticks: (count?: number) => readonly unknown[];
 }

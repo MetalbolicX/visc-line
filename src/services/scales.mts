@@ -29,8 +29,8 @@ const scaleFactories: Record<ScaleType, (exp?: number) => AnyScale> = {
 
 /** The pair of configured D3 scales returned by {@link createScales}. */
 export interface ChartScales {
-  xScale: AnyScale;
-  yScale: AnyScale;
+  readonly xScale: AnyScale;
+  readonly yScale: AnyScale;
 }
 
 /**
@@ -40,8 +40,8 @@ export interface ChartScales {
  * - yScale maps numeric domain values to [innerHeight, 0] (inverted Y axis for SVG).
  */
 export interface ChartScales {
-  xScale: AnyScale;
-  yScale: AnyScale;
+  readonly xScale: AnyScale;
+  readonly yScale: AnyScale;
 }
 
 /**
@@ -57,14 +57,14 @@ export interface ChartScales {
  * - xType/yType: logical scale kind ("linear" | "log" | "pow" | "time").
  */
 export interface CreateScalesOptions {
-  innerHeight: number;
-  innerWidth: number;
-  xDomain: [number, number] | [Date, Date] | [undefined, undefined];
-  xExponent?: number;
-  xType?: ScaleType;
-  yDomain: [number, number] | [undefined, undefined];
-  yExponent?: number;
-  yType?: ScaleType;
+  readonly innerHeight: number;
+  readonly innerWidth: number;
+  readonly xDomain: readonly [Date, Date] | readonly [number, number] | readonly [undefined, undefined];
+  readonly xExponent?: number;
+  readonly xType?: ScaleType;
+  readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
+  readonly yExponent?: number;
+  readonly yType?: ScaleType;
 }
 
 /**
@@ -97,22 +97,18 @@ export const createScales = ({
   yExponent = 2,
   yType = "linear",
 }: CreateScalesOptions): ChartScales => {
+  const xFactory = scaleFactories[xType];
+  const yFactory = scaleFactories[yType];
   const xScale = (
-    (scaleFactories[xType] ?? scaleFactories.linear)(xExponent) as ScaleLinear<
-      number,
-      number
-    >
+    xFactory(xExponent) as ScaleLinear<number, number>
   )
-    .domain(xDomain as number[])
+    .domain(xDomain as readonly number[])
     .range([0, innerWidth])
     .nice() as AnyScale;
   const yScale = (
-    (scaleFactories[yType] ?? scaleFactories.linear)(yExponent) as ScaleLinear<
-      number,
-      number
-    >
+    yFactory(yExponent) as ScaleLinear<number, number>
   )
-    .domain((yDomain as number[]).map(Number))
+    .domain((yDomain as readonly number[]).map(Number))
     .range([innerHeight, 0])
     .nice() as AnyScale;
   return { xScale, yScale };

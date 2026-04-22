@@ -2,12 +2,12 @@ import type { Margins, SVGSelection } from "@/types/index.mjs";
 
 /** Options shared between X and Y axis label renderers. */
 interface AxisLabelOptions {
-  fill?: string;
-  fontSize?: number | string;
-  innerHeight: number;
-  innerWidth: number;
-  label?: string;
-  margins: Margins;
+  readonly fill?: string;
+  readonly fontSize?: number | string;
+  readonly innerHeight: number;
+  readonly innerWidth: number;
+  readonly label?: string;
+  readonly margins: Margins;
 }
 
 /**

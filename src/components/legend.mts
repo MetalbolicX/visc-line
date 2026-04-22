@@ -8,9 +8,9 @@ import type { SVGSelection } from "@/types/index.mjs";
  */
 export interface LegendItem {
   /** CSS/SVG color string used to fill the swatch. */
-  color: string;
+  readonly color: string;
   /** Text shown next to the swatch in the legend. */
-  label: string;
+  readonly label: string;
 }
 
 /** Options for {@link renderLegend}.
@@ -19,19 +19,19 @@ export interface LegendItem {
  */
 interface RenderLegendOptions {
   /** Font size for legend labels. Can be a CSS string (e.g. '12px') or a numeric value. */
-  fontSize?: number | string;
+  readonly fontSize?: number | string;
   /** Gap in pixels between the swatch and the label, and between rows. */
-  gap?: number;
+  readonly gap?: number;
   /** Array of items to render in order. */
-  items: LegendItem[];
+  readonly items: readonly LegendItem[];
   /** Color applied to the label text. */
-  labelColor?: string;
+  readonly labelColor?: string;
   /** Size in pixels of the legend swatch (square). */
-  swatchSize?: number;
+  readonly swatchSize?: number;
   /** X offset applied to the legend group. */
-  x?: number;
+  readonly x?: number;
   /** Y offset applied to the legend group. */
-  y?: number;
+  readonly y?: number;
 }
 
 /**

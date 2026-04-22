@@ -10,11 +10,11 @@ import type {
 
 /** Options for {@link renderPoints}. */
 interface RenderPointsOptions {
-  fill?: string;
-  opacity?: number;
-  radius?: number;
-  stroke?: string;
-  strokeWidth?: number;
+  readonly fill?: string;
+  readonly opacity?: number;
+  readonly radius?: number;
+  readonly stroke?: string;
+  readonly strokeWidth?: number;
 }
 
 /**
@@ -54,9 +54,9 @@ interface RenderPointsOptions {
  * renderPoints(bounds, mySeries, xScale, yScale, d => d.time, { radius: 3 });
  * ```
  */
-const renderPoints = <T,>(
+export const renderPoints = <T,>(
   boundsGroup: BoundsSelection,
-  series: ProcessedSeries<T>[],
+  series: readonly ProcessedSeries<T>[],
   xScale: AnyScale,
   yScale: AnyScale,
   xAccessor: (d: T) => unknown,

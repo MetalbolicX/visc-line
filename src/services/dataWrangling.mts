@@ -29,10 +29,10 @@ const isValidNumber = (v: unknown): boolean =>
  * @returns Array of data items for which both xAccessor(item) and yAccessor(item) are valid numbers.
  */
 export const processNumericData = <T,>(
-  rawData: T[],
+  rawData: readonly T[],
   xAccessor: (d: T) => unknown,
   yAccessor: (d: T) => unknown,
-): T[] =>
+): readonly T[] =>
   rawData.filter(
     (d) => isValidNumber(xAccessor(d)) && isValidNumber(yAccessor(d)),
   );
@@ -50,10 +50,10 @@ export const processNumericData = <T,>(
  * @returns New array of series descriptors where each descriptor includes a `data` array.
  */
 export const processAllSeries = <T,>(
-  rawData: T[],
+  rawData: readonly T[],
   xAccessor: (d: T) => unknown,
-  ySeries: SeriesDescriptor<T>[],
-): ProcessedSeries<T>[] =>
+  ySeries: readonly SeriesDescriptor<T>[],
+): readonly ProcessedSeries<T>[] =>
   ySeries.map((serie) => ({
     ...serie,
     data: processNumericData(rawData, xAccessor, serie.accessor),
@@ -79,10 +79,10 @@ export const processAllSeries = <T,>(
  */
 const extentCache = new Map<
   string,
-  {
-    xDomain: [undefined, undefined] | [unknown, unknown];
-    yDomain: [number, number] | [undefined, undefined];
-  }
+  Readonly<{
+    readonly xDomain: readonly [undefined, undefined] | readonly [unknown, unknown];
+    readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
+  }>
 >();
 
 /**
@@ -103,10 +103,10 @@ const extentCache = new Map<
  * @param processedSeries - Array of processed series to derive the key from.
  * @returns A simple string key safe to use as a Map key for caching extents.
  */
-const extentCacheKey = <T,>(processedSeries: ProcessedSeries<T>[]): string =>
+const extentCacheKey = <T,>(processedSeries: readonly ProcessedSeries<T>[]): string =>
   processedSeries
     .map(
-      (s) => `${encodeURIComponent(String(s.label))}:${String(s.data.length)}`,
+      (s) => `${encodeURIComponent(s.label)}:${String(s.data.length)}`,
     )
     .join("|");
 
@@ -138,12 +138,12 @@ const extentCacheKey = <T,>(processedSeries: ProcessedSeries<T>[]): string =>
  * ```
  */
 export const getMultiSeriesExtents = <T,>(
-  processedSeries: ProcessedSeries<T>[],
+  processedSeries: readonly ProcessedSeries<T>[],
   xAccessor: (d: T) => unknown,
-): {
-  xDomain: [undefined, undefined] | [unknown, unknown];
-  yDomain: [number, number] | [undefined, undefined];
-} => {
+): Readonly<{
+  readonly xDomain: readonly [undefined, undefined] | readonly [unknown, unknown];
+  readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
+}> => {
   const cacheKey = extentCacheKey(processedSeries);
   const cached = extentCache.get(cacheKey);
   if (cached) return cached;
@@ -152,10 +152,10 @@ export const getMultiSeriesExtents = <T,>(
     xDomain: extent(
       processedSeries.flatMap(({ data }) => data),
       xAccessor as (d: T) => number,
-    ) as [undefined, undefined] | [unknown, unknown],
+    ) as readonly [undefined, undefined] | readonly [unknown, unknown],
     yDomain: extent(
       processedSeries.flatMap(({ accessor, data }) => data.map(accessor)),
-    ) as [number, number] | [undefined, undefined],
+    ),
   };
 
   extentCache.set(cacheKey, result);

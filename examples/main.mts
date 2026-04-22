@@ -66,50 +66,15 @@ const processedSeries = processAllSeries<DataRecord>(
  * main(container);
  * ```
  */
-export /**
-        *
-        */
-const main = (container: HTMLElement): void => {
-  // Create and apply a lightweight theme override (CSS variables)
-  // const customTheme = mergeTheme(defaultTheme, {
-  //   colors: {
-  //     palette: ["#E24A33", "#348ABD", "#988ED5"],
-  //     background: "#fafafa",
-  //   },
-  //   line: { strokeWidth: 10, curve: "monotoneX" },
-  //   axis: { fontSize: 13 },
-  //   points: { radius: 2 },
-  // });
-  // applyThemeCssVars(container, customTheme);
-
-  // SVG structure is stable across renders — create once.
-  /**
-   *
-   */
+export const main = (container: HTMLElement): void => {
   const svg = renderSVG(container, { background: "#fafafa" });
-  /**
-   *
-   */
   const bounds = renderBoundsGroup(svg, margins);
-
-  /**
-   *
-   */
   const render = (): void => {
-    /**
-     *
-     */
     const dims = getDimensions(container, margins);
-    /**
-     *
-     */
     const { xDomain, yDomain } = getMultiSeriesExtents(
       processedSeries,
       xSerie.accessor,
     );
-    /**
-     *
-     */
     const { xScale, yScale } = createScales({
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,

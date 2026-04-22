@@ -75,7 +75,7 @@ describe("createScales", () => {
       xDomain: [
         new Date("2023-01-01").getTime(),
         new Date("2023-12-31").getTime(),
-      ] as [unknown, unknown],
+      ] as readonly [unknown, unknown],
       xType: "time",
       yDomain: [0, 100],
     });
@@ -151,7 +151,7 @@ describe("createScales", () => {
     const result = createScales({
       innerHeight: 400,
       innerWidth: 800,
-      xDomain: [undefined, undefined] as [unknown, unknown],
+      xDomain: [undefined, undefined] as readonly [unknown, unknown],
       yDomain: [0, 100],
     });
     expect(Number.isNaN(result.xScale.domain()[0] as number)).toBe(true);

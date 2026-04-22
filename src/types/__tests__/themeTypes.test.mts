@@ -8,7 +8,7 @@ describe("CurvePreset", () => {
   /**
    *
    */
-  const validCurves: CurvePreset[] = [
+  const validCurves: readonly CurvePreset[] = [
     "basis",
     "basisClosed",
     "basisOpen",
@@ -68,7 +68,7 @@ describe("Theme type", () => {
     const themeWithoutTooltip = {
       ...defaultTheme,
       tooltip: undefined,
-    } as { tooltip?: typeof defaultTheme.tooltip };
+    } as Readonly<{ readonly tooltip?: typeof defaultTheme.tooltip }>;
     expect(themeWithoutTooltip.tooltip).toBeUndefined();
   });
 
@@ -79,7 +79,7 @@ describe("Theme type", () => {
     const themeWithoutAccessibility = {
       ...defaultTheme,
       accessibility: undefined,
-    } as { accessibility?: typeof defaultTheme.accessibility };
+    } as Readonly<{ readonly accessibility?: typeof defaultTheme.accessibility }>;
     expect(themeWithoutAccessibility.accessibility).toBeUndefined();
   });
 });

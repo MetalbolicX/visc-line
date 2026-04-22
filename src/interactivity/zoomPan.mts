@@ -5,17 +5,17 @@ import { zoom } from "d3";
 import type { AnyScale, SVGSelection } from "@/types/index.mjs";
 
 /** The D3 zoom behavior augmented with a `reset()` helper. */
-export type ZoomBehaviorWithReset = ZoomBehavior<SVGSVGElement, unknown> & {
-  reset: () => void;
-};
+export type ZoomBehaviorWithReset = Readonly<{
+  readonly reset: () => void;
+}> & ZoomBehavior<SVGSVGElement, unknown>;
 
 /** Options for {@link addZoomPan}. */
 interface AddZoomPanOptions {
-  innerHeight: number;
-  innerWidth: number;
-  onZoom: (newX: AnyScale, newY: AnyScale) => void;
-  xScale: AnyScale;
-  yScale: AnyScale;
+  readonly innerHeight: number;
+  readonly innerWidth: number;
+  readonly onZoom: (newX: AnyScale, newY: AnyScale) => void;
+  readonly xScale: AnyScale;
+  readonly yScale: AnyScale;
 }
 
 /**
@@ -49,7 +49,7 @@ const addZoomPan = (
       [innerWidth, innerHeight],
     ])
     .on("zoom", (event) => {
-      const { transform: t } = event as { transform: { rescaleX: (scale: unknown) => unknown; rescaleY: (scale: unknown) => unknown } };
+      const { transform: t } = event as Readonly<{ readonly transform: { readonly rescaleX: (scale: unknown) => unknown; readonly rescaleY: (scale: unknown) => unknown } }>;
       onZoom(
         t.rescaleX(xScale) as AnyScale,
         t.rescaleY(yScale) as AnyScale,
@@ -65,7 +65,7 @@ const addZoomPan = (
   /**
    *
    */
-  // eslint-disable-next-line @typescript-eslint/unbound-method
+   
   augmented.reset = () =>
     svg.call(
       // eslint-disable-next-line @typescript-eslint/unbound-method

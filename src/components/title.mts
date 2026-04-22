@@ -8,17 +8,17 @@ import type { Margins, SVGSelection } from "@/types/index.mjs";
  */
 interface RenderTitleOptions {
   /** CSS color or paint server for the title (default: var(--vl-title-color, #222)). */
-  fill?: string;
+  readonly fill?: string;
   /** Font size as number (px) or CSS size string. */
-  fontSize?: number | string;
+  readonly fontSize?: number | string;
   /** Font weight as number or CSS string. */
-  fontWeight?: number | string;
+  readonly fontWeight?: number | string;
   /** Layout margins (left, right, top, bottom) used for positioning. */
-  margins: Margins;
+  readonly margins: Margins;
   /** The title text to render. */
-  title: string;
+  readonly title: string;
   /** Total SVG width in pixels. */
-  width: number;
+  readonly width: number;
 }
 
 /**

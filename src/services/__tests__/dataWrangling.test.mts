@@ -76,7 +76,7 @@ describe("processNumericData", () => {
     const rawData = [
       { x: null, y: 1 },
       { x: 1, y: 2 },
-    ] as { x: null | number; y: number }[];
+    ] as readonly Readonly<{ readonly x: null | number; readonly y: number }>[];
     /**
      *
      */
@@ -91,7 +91,7 @@ describe("processNumericData", () => {
     const rawData = [
       { x: 1, y: undefined },
       { x: 2, y: 3 },
-    ] as { x: number; y: number | undefined }[];
+    ] as readonly Readonly<{ readonly x: number; readonly y: number | undefined }>[];
     /**
      *
      */
@@ -135,9 +135,9 @@ describe("getMultiSeriesExtents", () => {
    *
    */
   const makeSeries = (
-    data: { x: number; y: number }[],
-    accessor: (d: { x: number; y: number }) => number,
-  ): ProcessedSeries<{ x: number; y: number }> => ({
+    data: readonly Readonly<{ readonly x: number; readonly y: number }>[],
+    accessor: (d: Readonly<{ readonly x: number; readonly y: number }>) => number,
+  ): ProcessedSeries<Readonly<{ readonly x: number; readonly y: number }>> => ({
     accessor,
     data,
     label: "series",

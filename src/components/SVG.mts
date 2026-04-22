@@ -16,7 +16,7 @@ import type { SVGSelection } from "@/types/index.mjs";
  */
 export const renderSVG = (
   container: HTMLElement,
-  { background = "var(--vl-background, white)" }: { background?: string } = {},
+  { background = "var(--vl-background, white)" }: Readonly<{ readonly background?: string }> = {},
 ): SVGSelection =>
   select(container)
     .selectAll<SVGSVGElement, null>("svg")

@@ -12,13 +12,10 @@ import type {
 // ── Per-chart tooltip instances ───────────────────────────────────────────────
 
 interface TooltipEntry {
-  loadedStylesheet: string | undefined;
-  tooltip: TipVizTooltip;
+  readonly loadedStylesheet: string | undefined;
+  readonly tooltip: TipVizTooltip;
 }
 
-/**
- *
- */
 const tooltipRegistry = new WeakMap<SVGGElement, TooltipEntry>();
 
 // ── Sorting utilities ─────────────────────────────────────────────────────────
@@ -61,26 +58,29 @@ const compareComparableX = (a: ComparableX, b: ComparableX): number => {
  * @returns A new sorted copy.
  */
 const sortDataByX = <T,>(
-  data: T[],
+  data: readonly T[],
   xAccessor: (d: T) => unknown,
-): T[] =>
-  [...data].sort((a, b) =>
-    compareComparableX(toComparableX(xAccessor(a)), toComparableX(xAccessor(b))),
+): readonly T[] =>
+  data.toSorted((a, b) =>
+    compareComparableX(
+      toComparableX(xAccessor(a)),
+      toComparableX(xAccessor(b)),
+    ),
   );
 
 // ── Public data types ─────────────────────────────────────────────────────────
 
 /** Data passed to the tooltip renderer. */
 export interface TooltipData {
-  rows: TooltipRow[];
-  xLabel: string;
+  readonly rows: readonly TooltipRow[];
+  readonly xLabel: string;
 }
 
 /** One value row in the tooltip body. */
 export interface TooltipRow {
-  color: string;
-  label: string;
-  value: string;
+  readonly color: string;
+  readonly label: string;
+  readonly value: string;
 }
 
 // ── HTML utilities ────────────────────────────────────────────────────────────
@@ -100,7 +100,18 @@ const esc = (text: string): string =>
     .replace(/"/g, "&quot;");
 
 /**
+ * Regular expression matching a conservative subset of CSS color values that are
+ * considered safe for interpolation into inline style attributes.
  *
+ * Supported forms:
+ * - Hex colors: #rgb, #rrggbb, and with alpha channel (#rrggbbaa).
+ * - Functional colors: rgb(...), rgba(...), hsl(...), hsla(...) with numbers,
+ *   percentages, spaces, commas, slashes and decimal alpha values.
+ * - CSS custom properties: var(--name) (no fallback syntax is parsed here).
+ * - Named colors: simple identifiers like "red", "blue", etc.
+ *
+ * This pattern is intentionally conservative to reduce the risk of style
+ * injection; values that do not match are replaced with a safe fallback.
  */
 const safeColorPattern =
   /^(#[0-9a-fA-F]{3,8}|(rgb|hsl)a?\([0-9.%\s,/-]+\)|var\(--[a-zA-Z0-9-_]+\)|[a-zA-Z]+)$/;
@@ -125,9 +136,6 @@ const safeColor = (text: string): string =>
  * @returns An HTML string safe for tooltip insertion.
  */
 const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
-  /**
-   *
-   */
   const rowsHtml = rows
     .map(
       ({ color, label, value }) => /*html*/ `
@@ -149,12 +157,12 @@ const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
 
 /** Options for the {@link addTooltip} function. */
 interface AddTooltipOptions {
-  formatX?: (v: unknown) => string;
-  formatY?: (v: unknown) => string;
-  innerHeight: number;
-  innerWidth: number;
-  stylesheetUrl?: string;
-  tooltipHtml?: (data: TooltipData) => string;
+  readonly formatX?: (v: unknown) => string;
+  readonly formatY?: (v: unknown) => string;
+  readonly innerHeight: number;
+  readonly innerWidth: number;
+  readonly stylesheetUrl?: string;
+  readonly tooltipHtml?: (data: TooltipData) => string;
 }
 
 // ── Main export ──────────────────────────────────────────────────────────────
@@ -179,10 +187,9 @@ interface AddTooltipOptions {
  * @param options - innerWidth, innerHeight, and optional formatters / renderer.
  * @returns The TipVizTooltip instance for this bounds element.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const addTooltip = <T,>(
+export const addTooltip = <T,>(
   boundsGroup: BoundsSelection,
-  series: ProcessedSeries<T>[],
+  series: readonly ProcessedSeries<T>[],
   xScale: AnyScale,
   yScale: AnyScale,
   xAccessor: (d: T) => unknown,
@@ -194,48 +201,22 @@ const addTooltip = <T,>(
     stylesheetUrl,
     tooltipHtml = defaultTooltipHtml,
   }: AddTooltipOptions = { innerHeight: 0, innerWidth: 0 },
-// eslint-disable-next-line max-params
 ): TipVizTooltip => {
-  /**
-   *
-   */
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const boundsEl = boundsGroup.node()!;
-  /**
-   *
-   */
   const referenceData = sortDataByX(series[0]?.data ?? [], xAccessor);
-  /**
-   *
-   */
   const sortedSeriesByLabel = new Map(
     series.map((serie) => [serie.label, sortDataByX(serie.data, xAccessor)]),
   );
-  /**
-   *
-   */
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const bisect = bisector((d: T) => toComparableX(xAccessor(d))).center;
-
-  // ── Per-chart tooltip instance ─────────────────────────────────────────
-  /**
-   *
-   */
   let entry = tooltipRegistry.get(boundsEl);
 
   if (!entry) {
-    /**
-     *
-     */
     const el = document.createElement("tip-viz-tooltip") as TipVizTooltip;
     document.body.appendChild(el);
     entry = { loadedStylesheet: undefined, tooltip: el };
     tooltipRegistry.set(boundsEl, entry);
   }
 
-  /**
-   *
-   */
   const { tooltip } = entry;
 
   tooltip.setHtml((d) => tooltipHtml(d as TooltipData));
@@ -245,19 +226,12 @@ const addTooltip = <T,>(
     entry.loadedStylesheet = stylesheetUrl;
   }
 
-  // ── Cursor layer ─────────────────────────────────────────────────────────
-  /**
-   *
-   */
+  // ── Cursor layer ───────────────
   const tooltipLayer = boundsGroup
     .selectAll<SVGGElement, null>("g.tooltip-layer")
     .data([null])
     .join("g")
     .attr("class", "tooltip-layer");
-
-  /**
-   *
-   */
   const cursorLine = tooltipLayer
     .selectAll<SVGLineElement, null>("line.cursor-line")
     .data([null])
@@ -270,10 +244,6 @@ const addTooltip = <T,>(
     .attr("stroke-dasharray", "4 3")
     .attr("pointer-events", "none")
     .attr("display", "none");
-
-  /**
-   *
-   */
   const cursorDots = tooltipLayer
     .selectAll<SVGCircleElement, ProcessedSeries<T>>("circle.cursor-dot")
     .data(series, ({ label }) => label)
@@ -296,47 +266,33 @@ const addTooltip = <T,>(
     .attr("height", innerHeight)
     .attr("fill", "transparent")
     .on("mousemove", (event: MouseEvent) => {
-      /**
-       *
-       */
       const [mx] = pointer(event);
-      /**
-       *
-       */
       const xVal = (
-        xScale as unknown as { invert: (v: number) => unknown }
+        xScale as unknown as Readonly<{
+          readonly invert: (v: number) => unknown;
+        }>
       ).invert(mx);
-      /**
-       *
-       */
       const comparableXVal = toComparableX(xVal);
-      /**
-       *
-       */
       const idx = Math.max(
         0,
-        Math.min(bisect(referenceData, comparableXVal), referenceData.length - 1),
+        Math.min(
+          bisect(referenceData, comparableXVal),
+          referenceData.length - 1,
+        ),
       );
-      /**
-       *
-       */
       const refDatum = referenceData[idx];
       if (!refDatum) return;
 
-      /**
-       *
-       */
       const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
-      const rows: TooltipRow[] = [];
+      const rows: readonly TooltipRow[] = [];
       let firstDot: null | SVGCircleElement = null;
 
       cursorDots.each(function (serie) {
         const sortedSeries = sortedSeriesByLabel.get(serie.label) ?? [];
 
         if (!sortedSeries.length) {
-          // eslint-disable-next-line no-restricted-syntax
           rows.push({
             color: serie.stroke ?? "steelblue",
             label: serie.label,
@@ -357,18 +313,11 @@ const addTooltip = <T,>(
         if (!datum) return;
 
         const dot = select(this)
-          .attr(
-            "cx",
-            (xScale as (v: unknown) => number)(xAccessor(datum)),
-          )
-          .attr(
-            "cy",
-            (yScale as (v: unknown) => number)(serie.accessor(datum)),
-          )
+          .attr("cx", (xScale as (v: unknown) => number)(xAccessor(datum)))
+          .attr("cy", (yScale as (v: unknown) => number)(serie.accessor(datum)))
           .attr("display", null)
           .node();
 
-        // eslint-disable-next-line no-restricted-syntax
         rows.push({
           color: serie.stroke ?? "steelblue",
           label: serie.label,
@@ -380,7 +329,7 @@ const addTooltip = <T,>(
 
       tooltip.show(
         { rows, xLabel: formatX(xAccessor(refDatum)) } satisfies TooltipData,
-        (event.currentTarget as Element),
+        event.currentTarget as Element,
       );
     })
     .on("mouseleave", () => {
@@ -392,7 +341,4 @@ const addTooltip = <T,>(
   return tooltip;
 };
 
-// ── Exported for testing ──────────────────────────────────────────────────────
-
-/** @internal */
 export { safeColor, sortDataByX, toComparableX };

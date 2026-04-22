@@ -31,11 +31,16 @@
     "noImplicitAny": false,
     "outDir": "./dist",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.mts", "examples/**/*.ts", "examples/**/*.mts", "docs/**/*.js"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.mts",
+    "examples/**/*.ts",
+    "examples/**/*.mts",
+    "docs/**/*.js"
+  ],
   "exclude": ["node_modules", "dist"]
 }

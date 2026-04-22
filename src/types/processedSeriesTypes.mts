@@ -1,25 +1,25 @@
 export interface ChartConfig<T> {
-  data: T[];
-  xSerie: {
-    accessor: (d: T) => unknown;
-    label: string;
-  };
-  ySeries: SeriesDescriptor<T>[];
+  readonly data: readonly T[];
+  readonly xSerie: Readonly<{
+    readonly accessor: (d: T) => unknown;
+    readonly label: string;
+  }>;
+  readonly ySeries: readonly SeriesDescriptor<T>[];
 }
 
 /** A series descriptor with processed data attached. */
 export interface ProcessedSeries<T> extends SeriesDescriptor<T> {
-  data: T[];
+  readonly data: readonly T[];
 }
 
 /** Describes a single data series with its accessor and rendering properties. */
 export interface SeriesDescriptor<T> {
-  accessor: (d: T) => number;
-  label: string;
-  opacity?: number | string;
-  pointFill?: string;
-  pointRadius?: number;
-  pointStroke?: string;
-  stroke?: string;
-  strokeWidth?: number | string;
+  readonly accessor: (d: T) => number;
+  readonly label: string;
+  readonly opacity?: number | string;
+  readonly pointFill?: string;
+  readonly pointRadius?: number;
+  readonly pointStroke?: string;
+  readonly stroke?: string;
+  readonly strokeWidth?: number | string;
 }

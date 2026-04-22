@@ -95,8 +95,8 @@ describe("safeColor", () => {
 
 describe("sortDataByX", () => {
   interface DataPoint {
-    date: Date;
-    value: number;
+    readonly date: Date;
+    readonly value: number;
   }
 
   /**
@@ -108,7 +108,7 @@ describe("sortDataByX", () => {
     /**
      *
      */
-    const data: DataPoint[] = [
+    const data: readonly DataPoint[] = [
       { date: new Date("2023-01-03"), value: 3 },
       { date: new Date("2023-01-01"), value: 1 },
     ];
@@ -124,7 +124,7 @@ describe("sortDataByX", () => {
     /**
      *
      */
-    const data: DataPoint[] = [
+    const data: readonly DataPoint[] = [
       { date: new Date("2023-01-05"), value: 5 },
       { date: new Date("2023-01-01"), value: 1 },
       { date: new Date("2023-01-03"), value: 3 },
@@ -168,7 +168,7 @@ describe("sortDataByX", () => {
     /**
      *
      */
-    const data: DataPoint[] = [
+    const data: readonly DataPoint[] = [
       { date: new Date("2023-01-01"), value: 1 },
       { date: new Date("2023-01-02"), value: 2 },
     ];

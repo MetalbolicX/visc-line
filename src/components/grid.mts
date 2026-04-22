@@ -93,9 +93,9 @@ export const renderXGrid = (
       .join("line")
       .attr("class", "grid-x")
       .attr("x1", xTickableScale(xMin))
-      .attr("y1", (d) => yTickableScale(d))
+      .attr("y1", yTickableScale)
       .attr("x2", xTickableScale(xMax))
-      .attr("y2", (d) => yTickableScale(d)),
+      .attr("y2", yTickableScale),
     getGridLineStyle(style),
   );
 };
@@ -141,9 +141,9 @@ export const renderYGrid = (
       .data(xTickableScale.ticks())
       .join("line")
       .attr("class", "grid-y")
-      .attr("x1", (d) => xTickableScale(d))
+      .attr("x1", xTickableScale)
       .attr("y1", yTickableScale(yMin))
-      .attr("x2", (d) => xTickableScale(d))
+      .attr("x2", xTickableScale)
       .attr("y2", yTickableScale(yMax)),
     getGridLineStyle(style),
   );

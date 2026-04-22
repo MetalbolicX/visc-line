@@ -6,7 +6,7 @@
  *   default), callbacks are throttled using requestAnimationFrame.
  */
 export interface ObserveResizeOptions {
-  debounceMs?: number;
+  readonly debounceMs?: number;
 }
 
 /**

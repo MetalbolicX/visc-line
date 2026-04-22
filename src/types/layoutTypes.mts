@@ -1,16 +1,16 @@
 /** Computed outer and inner dimensions for a chart. */
 export interface Dimensions {
-  height: number;
-  innerHeight: number;
-  innerWidth: number;
-  margins: Margins;
-  width: number;
+  readonly height: number;
+  readonly innerHeight: number;
+  readonly innerWidth: number;
+  readonly margins: Margins;
+  readonly width: number;
 }
 
 /** Margin values for a chart's drawing area. */
 export interface Margins {
-  bottom: number;
-  left: number;
-  right: number;
-  top: number;
+  readonly bottom: number;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
 }
