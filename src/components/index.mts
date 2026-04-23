@@ -1,6 +1,6 @@
 export * from "./axisLabel.mjs";
 export * from "./boundsGroup.mjs";
-// export * from "./chart.mjs";
+export * from "./chart.mjs";
 export * from "./grid.mjs";
 export * from "./legend.mjs";
 export * from "./line.mjs";

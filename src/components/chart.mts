@@ -1,14 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import type { ChartConfig, ProcessedSeries, Theme } from "@/types/index.mjs";
 import type { Margins } from "@/types/index.mjs";
 
 import { observeResize } from "@/accessibility/index.mjs";
 import {
-  addTooltip,
-  createScales,
-  getDimensions,
-  getMultiSeriesExtents,
-  processAllSeries,
   renderBoundsGroup,
   renderLine,
   renderPoints,
@@ -20,11 +14,15 @@ import {
   renderYAxisLabel,
   renderYGrid,
 } from "@/components/index.mjs";
+import { addTooltip } from "@/interactivity/index.mjs";
 import {
-  applyThemeCssVars,
-  defaultTheme,
-  mergeTheme,
-} from "@/themes/index.mjs";
+  createScales,
+  getDimensions,
+  getMultiSeriesExtents,
+  processAllSeries,
+} from "@/services/index.mjs";
+import { defaultTheme } from "@/themes/index.mjs";
+import { applyThemeCssVars, mergeTheme } from "@/utils/index.mjs";
 
 export interface ChartInstance<T> {
   readonly container: HTMLElement;
@@ -35,7 +33,7 @@ export interface ChartInstance<T> {
 }
 
 interface ChartOptions {
-  readonly curve?: Parameters<typeof renderLine>[5]["curve"];
+  readonly curve?: NonNullable<Parameters<typeof renderLine>[5]>["curve"];
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
   readonly xType?: "linear" | "log" | "pow" | "time";
@@ -71,7 +69,7 @@ export const createChart = <T,>(
     const { xScale, yScale } = createScales({
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
-      xDomain,
+      xDomain: xDomain as Parameters<typeof createScales>[0]["xDomain"],
       xType,
       yDomain,
     });
@@ -99,8 +97,18 @@ export const createChart = <T,>(
     );
 
     svg
-      .call(renderXAxisLabel, { ...dims, label: config.xSerie.label })
-      .call(renderYAxisLabel, { ...dims, label: "Value" });
+      .call(renderXAxisLabel, {
+        innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
+        label: config.xSerie.label,
+        margins: dims.margins,
+      })
+      .call(renderYAxisLabel, {
+        innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
+        label: "Value",
+        margins: dims.margins,
+      });
 
     addTooltip<T>(
       bounds,

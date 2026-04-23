@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Code tabs web component</title>
+    <title>visc-line chart builder</title>
   </head>
   <link rel="stylesheet" href="styles.css" />
   <body>
     <figure id="viz-container"></figure>
     <script type="module" lang="ts">
-      import { main } from "./examples/main.mts";
+      import { main } from "./examples/chart-builder.mts";
       const container = document.getElementById("viz-container");
       if (!container) {
         throw new Error("Container element not found");

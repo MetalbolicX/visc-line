@@ -119,20 +119,23 @@ export const renderLine = <T,>(
       serie.data,
     );
 
-  const shouldReduceMotion : boolean =
+  const shouldReduceMotion: boolean =
     reducedMotionOption ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return boundsGroup
     .selectAll<SVGPathElement, ProcessedSeries<T>>("path.chart-line")
-    .data(series, (d) => d.label)
+    .data(series, ({ label }) => label)
     .join(
       (enter) =>
         enter
           .append("path")
-          .attr("class", (d) => `chart-line chart-line--${d.label}`)
+          .attr("class", ({ label }) => `chart-line chart-line--${label}`)
           .attr("fill", "none")
-          .attr("stroke", (d) => d.stroke ?? "var(--vl-palette-0, steelblue)")
+          .attr(
+            "stroke",
+            ({ stroke }) => stroke ?? "var(--vl-palette-0, steelblue)",
+          )
           .attr("stroke-width", (d) => d.strokeWidth ?? strokeWidth)
           .attr("opacity", (d) => d.opacity ?? opacity)
           .attr("stroke-linejoin", "round")
@@ -161,7 +164,7 @@ export const renderLine = <T,>(
             .attr("stroke", d.stroke ?? "var(--vl-palette-0, steelblue)")
             .attr("opacity", d.opacity ?? opacity)
             .transition()
-            .duration(isMotionReduced ? 0 : transitionDuration)
+            .duration(shouldReduceMotion ? 0 : transitionDuration)
             .attr("stroke-dashoffset", 0);
         }),
       (exit) => exit.remove(),
