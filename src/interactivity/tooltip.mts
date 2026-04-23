@@ -286,8 +286,8 @@ export const addTooltip = <T,>(
       const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
-      const rows: readonly TooltipRow[] = [];
-      let firstDot: null | SVGCircleElement = null;
+      const rows: TooltipRow[] = [];
+      let firstDot: SVGCircleElement | null = null;
 
       cursorDots.each(function (serie) {
         const sortedSeries = sortedSeriesByLabel.get(serie.label) ?? [];
@@ -329,7 +329,7 @@ export const addTooltip = <T,>(
 
       tooltip.show(
         { rows, xLabel: formatX(xAccessor(refDatum)) } satisfies TooltipData,
-        event.currentTarget as Element,
+        firstDot ?? (event.currentTarget as Element),
       );
     })
     .on("mouseleave", () => {
