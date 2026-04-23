@@ -10,6 +10,7 @@ import {
   observeResize,
   processAllSeries,
   renderBoundsGroup,
+  renderContentGroup,
   renderLegend,
   renderLine,
   renderPoints,
@@ -71,6 +72,10 @@ export const main = (container: HTMLElement): void => {
   const bounds = renderBoundsGroup(svg, margins);
   const render = (): void => {
     const dims = getDimensions(container, margins);
+    const content = renderContentGroup(bounds, svg, {
+      innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+    });
     const { xDomain, yDomain } = getMultiSeriesExtents(
       processedSeries,
       xSerie.accessor,
@@ -88,9 +93,9 @@ export const main = (container: HTMLElement): void => {
       .call(renderXAxis, xScale, dims.innerHeight)
       .call(renderYAxis, yScale);
 
-    // Visuals
+    // Visuals — rendered into the clipped content group
     renderLine<DataRecord>(
-      bounds,
+      content,
       processedSeries,
       xScale,
       yScale,
@@ -100,15 +105,15 @@ export const main = (container: HTMLElement): void => {
       },
     );
     renderPoints<DataRecord>(
-      bounds,
+      content,
       processedSeries,
       xScale,
       yScale,
       xSerie.accessor,
     );
 
-    // Gridlines
-    bounds.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
+    // Gridlines — also clipped so they don't bleed past the axes
+    content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
 
     // Labels, title, legend
     svg
@@ -150,7 +155,7 @@ export const main = (container: HTMLElement): void => {
         renderXAxis(bounds, newX, dims.innerHeight);
         renderYAxis(bounds, newY);
         renderLine<DataRecord>(
-          bounds,
+          content,
           processedSeries,
           newX,
           newY,
@@ -160,7 +165,7 @@ export const main = (container: HTMLElement): void => {
           },
         );
         renderPoints<DataRecord>(
-          bounds,
+          content,
           processedSeries,
           newX,
           newY,

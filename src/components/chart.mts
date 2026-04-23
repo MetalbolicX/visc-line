@@ -4,6 +4,7 @@ import type { Margins } from "@/types/index.mjs";
 import { observeResize } from "@/accessibility/index.mjs";
 import {
   renderBoundsGroup,
+  renderContentGroup,
   renderLine,
   renderPoints,
   renderSVG,
@@ -62,6 +63,10 @@ export const createChart = <T,>(
   let currentSeries = processedSeries;
   const render = (): void => {
     const dims = getDimensions(container, margins);
+    const content = renderContentGroup(bounds, svg, {
+      innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+    });
     const { xDomain, yDomain } = getMultiSeriesExtents(
       currentSeries,
       config.xSerie.accessor,
@@ -78,10 +83,10 @@ export const createChart = <T,>(
       .call(renderXAxis, xScale, dims.innerHeight)
       .call(renderYAxis, yScale);
 
-    bounds.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
+    content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
 
     renderLine<T>(
-      bounds,
+      content,
       currentSeries,
       xScale,
       yScale,
@@ -89,7 +94,7 @@ export const createChart = <T,>(
       { curve },
     );
     renderPoints<T>(
-      bounds,
+      content,
       currentSeries,
       xScale,
       yScale,
