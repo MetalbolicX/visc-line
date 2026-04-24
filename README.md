@@ -20,7 +20,33 @@ pnpm add visc-line
 
 ## Basic Usage
 
+### Quick builders
+
+`visc-line` now exposes two high-level helpers:
+
+- `createChart(container, config, options)`: full chart (axes, grid, points, labels, tooltip)
+- `createMinimalChart(container, config, options)`: minimal chart (theme + svg + bounds/content + line only)
+
+```ts
+import { createChart, createMinimalChart } from "visc-line";
+
+// Full chart
+const full = createChart(container, config, { xType: "time" });
+
+// Minimal chart (line-only baseline)
+const minimal = createMinimalChart(container, config, { xType: "time" });
+
+// Later
+full.update(newData);
+minimal.dispose();
+```
+
 Use the example `main` to mount a chart into an existing container — the example shows the recommended integration pattern. The runnable example is at [examples/main.mts](examples/main.mts).
+
+Builder examples:
+
+- Full helper: [examples/chart-builder.mts](examples/chart-builder.mts)
+- Minimal helper: [examples/minimal-chart-builder.mts](examples/minimal-chart-builder.mts)
 
 From a local development HTML page (ES module):
 
@@ -40,6 +66,8 @@ You can also import helpers directly (useful for embedding in apps or building c
 import {
   addTooltip,
   addZoomPan,
+  createChart,
+  createMinimalChart,
   createScales,
   processAllSeries,
   renderBoundsGroup,

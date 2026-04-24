@@ -1,8 +1,11 @@
 import type { CurveFactory } from "d3";
 
 import type {
+  AnyScale,
+  BoundsSelection,
   ChartConfig,
   CurvePreset,
+  Dimensions,
   ProcessedSeries,
   Theme,
 } from "@/types/index.mjs";
@@ -78,6 +81,122 @@ interface ChartOptions {
   readonly xType?: "linear" | "log" | "pow" | "time";
 }
 
+interface MinimalChartOptions {
+  readonly curve?: CurveFactory | CurvePreset;
+  readonly margins?: Margins;
+  readonly theme?: Partial<Theme>;
+  readonly xType?: "linear" | "log" | "pow" | "time";
+}
+
+interface ChartInternals {
+  readonly bounds: BoundsSelection;
+  readonly content: BoundsSelection;
+  readonly dims: Dimensions;
+  readonly xScale: AnyScale;
+  readonly yScale: AnyScale;
+}
+
+const chartInternalsRegistry = new WeakMap<ChartInstance<unknown>, ChartInternals>();
+
+const getChartInternals = (instance: ChartInstance<unknown>): ChartInternals => {
+  const internals = chartInternalsRegistry.get(instance);
+  if (!internals) {
+    throw new Error("Chart internals are unavailable.");
+  }
+  return internals;
+};
+
+const DEFAULT_MARGINS: Margins = { bottom: 70, left: 55, right: 60, top: 50 };
+
+export const createMinimalChart = <T,>(
+  container: HTMLElement,
+  config: ChartConfig<T>,
+  {
+    curve,
+    margins = DEFAULT_MARGINS,
+    theme,
+    xType = "time",
+  }: MinimalChartOptions = {},
+): ChartInstance<T> => {
+  const resolvedTheme = mergeTheme(defaultTheme, theme);
+  applyThemeCssVars(container, resolvedTheme);
+  const svg = renderSVG(container);
+  const bounds = renderBoundsGroup(svg, margins);
+  let currentSeries = processAllSeries<T>(
+    config.data,
+    config.xSerie.accessor,
+    config.ySeries,
+  );
+
+  const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
+  const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
+
+  const disposePlaceholder = (): void => {};
+
+  let disposeResize = disposePlaceholder;
+
+  const instance: ChartInstance<T> = {
+    container,
+    dispose: (): void => {
+      disposeResize();
+      chartInternalsRegistry.delete(instance as ChartInstance<unknown>);
+    },
+    get series() {
+      return currentSeries;
+    },
+    svg,
+    update: (newData: readonly T[]): void => {
+      currentSeries = processAllSeries<T>(
+        newData,
+        config.xSerie.accessor,
+        config.ySeries,
+      );
+      render();
+    },
+  };
+
+  const render = (): void => {
+    const dims = getDimensions(container, margins);
+    const content = renderContentGroup(bounds, svg, {
+      innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+    });
+    const { xDomain, yDomain } = getMultiSeriesExtents(
+      currentSeries,
+      config.xSerie.accessor,
+    );
+    const { xScale, yScale } = createScales({
+      innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+      xDomain: xDomain as Parameters<typeof createScales>[0]["xDomain"],
+      xType,
+      yDomain,
+    });
+
+    renderLine<T>(
+      content,
+      currentSeries,
+      xScale,
+      yScale,
+      config.xSerie.accessor,
+      { curve: resolvedCurve, reducedMotion },
+    );
+
+    chartInternalsRegistry.set(instance as ChartInstance<unknown>, {
+      bounds,
+      content,
+      dims,
+      xScale,
+      yScale,
+    });
+  };
+
+  render();
+  disposeResize = observeResize(container, render);
+
+  return instance;
+};
+
 /**
  * Create and mount a responsive SVG chart into the provided container.
  *
@@ -113,21 +232,24 @@ export const createChart = <T,>(
   config: ChartConfig<T>,
   {
     curve,
-    margins = { bottom: 70, left: 55, right: 60, top: 50 },
+    margins = DEFAULT_MARGINS,
     theme,
     xType = "time",
   }: ChartOptions = {},
 ): ChartInstance<T> => {
+  const minimalChart = createMinimalChart(container, config, {
+    curve,
+    margins,
+    theme,
+    xType,
+  });
+  const { bounds } = getChartInternals(minimalChart as ChartInstance<unknown>);
+  const { svg } = minimalChart;
+  minimalChart.dispose();
+  svg.selectAll<SVGPathElement, unknown>("path.chart-line").remove();
+
   const resolvedTheme = mergeTheme(defaultTheme, theme);
-  applyThemeCssVars(container, resolvedTheme);
-  const svg = renderSVG(container);
-  const bounds = renderBoundsGroup(svg, margins);
-  const processedSeries = processAllSeries<T>(
-    config.data,
-    config.xSerie.accessor,
-    config.ySeries,
-  );
-  let currentSeries = processedSeries;
+  let currentSeries = minimalChart.series;
 
   const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
   const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
