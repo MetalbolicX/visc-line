@@ -1,4 +1,11 @@
-import type { ChartConfig, ProcessedSeries, Theme } from "@/types/index.mjs";
+import type { CurveFactory } from "d3";
+
+import type {
+  ChartConfig,
+  CurvePreset,
+  ProcessedSeries,
+  Theme,
+} from "@/types/index.mjs";
 import type { Margins } from "@/types/index.mjs";
 
 import { observeResize } from "@/accessibility/index.mjs";
@@ -23,8 +30,23 @@ import {
   processAllSeries,
 } from "@/services/index.mjs";
 import { defaultTheme } from "@/themes/index.mjs";
-import { applyThemeCssVars, mergeTheme } from "@/utils/index.mjs";
+import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 
+/**
+ * A live, mounted chart handle returned by createChart.
+ *
+ * Template T is the raw datum type used to produce rendered series. Consumers
+ * must call dispose() when the chart is no longer needed to remove observers
+ * and event handlers and avoid memory leaks.
+ *
+ * Invariants:
+ * - `container` must remain attached to the document for layout/measurement
+ *   helpers (getDimensions) to produce correct values.
+ * - `series` reflects the most recently processed series produced from the
+ *   last call to update() or the initial config data.
+ *
+ * @template T - datum type for the underlying data array
+ */
 export interface ChartInstance<T> {
   readonly container: HTMLElement;
   readonly dispose: () => void;
@@ -33,14 +55,59 @@ export interface ChartInstance<T> {
   readonly update: (newData: readonly T[]) => void;
 }
 
+/**
+ * Curve preset name or D3 CurveFactory for the line generator.
+ * When omitted, falls back to `theme.line.curve` (default: `"linear"`).
+ */
+/**
+ * Optional configuration for createChart.
+ *
+ * Type-first notes:
+ * - `curve`: either a D3 CurveFactory or a named CurvePreset. If omitted the
+ *   resolved curve is taken from the merged theme (theme.line.curve).
+ * - `margins`: layout margins in pixels. Defaults to { bottom:70, left:55,
+ *   right:60, top:50 } and only affects SVG group placement.
+ * - `theme`: a partial Theme object merged with the library defaultTheme.
+ * - `xType`: the x-axis scale type. Supported values are 'linear', 'log',
+ *   'pow', and 'time' (default: 'time').
+ */
 interface ChartOptions {
-  readonly curve?: NonNullable<Parameters<typeof renderLine>[5]>["curve"];
+  readonly curve?: CurveFactory | CurvePreset;
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
   readonly xType?: "linear" | "log" | "pow" | "time";
 }
 
-/** Create a chart instance mounted into the given container using the provided configuration. */
+/**
+ * Create and mount a responsive SVG chart into the provided container.
+ *
+ * Key behaviors and side effects:
+ * - Renders axes, grids, lines and points into an internal SVG appended to
+ *   `container` and registers resize observers + tooltip handlers. Call
+ *   `dispose()` on the returned ChartInstance to remove those observers.
+ * - The chart measures layout using getDimensions; `container` must be
+ *   attached to the document for correct measurement and grid/axis placement.
+ * - `update(newData)` will re-process the series and re-render; the returned
+ *   instance exposes the latest processed series via the `series` getter.
+ *
+ * Type parameters and arguments are intentionally explicit: the function does
+ * not accept `any` and preserves the generic datum type T across processing
+ * and interactivity handlers.
+ *
+ * @template T - the raw data item type supplied to the chart (used by accessors)
+ * @param {HTMLElement} container - DOM element to append the SVG into. Must be
+ *   attached to document for measurement.
+ * @param {ChartConfig<T>} config - chart configuration (xSerie, ySeries, data)
+ * @param {ChartOptions} [options] - optional rendering overrides (curve, margins, theme, xType)
+ * @returns {ChartInstance<T>} a live chart handle. Call dispose() to teardown.
+ * @example
+ * ```ts
+ * const chart = createChart(document.getElementById('root'), config);
+ * // later
+ * chart.update(newData);
+ * chart.dispose();
+ * ```
+ */
 export const createChart = <T,>(
   container: HTMLElement,
   config: ChartConfig<T>,
@@ -61,6 +128,30 @@ export const createChart = <T,>(
     config.ySeries,
   );
   let currentSeries = processedSeries;
+
+  const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
+  const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
+
+  /**
+   * Re-render the entire chart into the existing SVG container.
+   *
+   * Notes / invariants:
+   * - Expects `container` to be attached to the document so measurements (getDimensions)
+   *   return correct values. If the container is detached, grid/axis placement may be wrong.
+   * - Idempotent in the sense that calling it repeatedly will reconcile the SVG content
+   *   by delegating to the renderer helpers (renderLine, renderPoints, renderAxis/grid helpers).
+   * - Side effects: mutates the SVG DOM (axes, grid, lines, points) and registers tooltip
+   *   event handlers via addTooltip. It does not close over external mutable state other than
+   *   `currentSeries`, `resolvedCurve` and `reducedMotion` which influence rendering output.
+   * - Performance: this is a hot path (called on resize and data updates). Consider memoizing
+   *   expensive scale/extent calculations if rendering becomes a bottleneck. (PERF)
+   *
+   * @remarks
+   * Uses the helper pipeline: measure -> create content group -> compute multi-series extents ->
+   * create scales -> render axes and grids -> draw lines & points -> attach axis labels & tooltip.
+   *
+   * @returns void
+   */
   const render = (): void => {
     const dims = getDimensions(container, margins);
     const content = renderContentGroup(bounds, svg, {
@@ -91,7 +182,7 @@ export const createChart = <T,>(
       xScale,
       yScale,
       config.xSerie.accessor,
-      { curve },
+      { curve: resolvedCurve, reducedMotion },
     );
     renderPoints<T>(
       content,

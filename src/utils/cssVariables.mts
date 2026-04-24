@@ -35,9 +35,9 @@ const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
 
   style.setProperty("--vl-grid-stroke", theme.grid.stroke);
   style.setProperty("--vl-grid-stroke-width", String(theme.grid.strokeWidth));
-  if (theme.grid.dashArray) {
-    style.setProperty("--vl-grid-dash-array", theme.grid.dashArray);
-  }
+  style.setProperty("--vl-grid-dash-array", theme.grid.dashArray);
+  style.setProperty("--vl-grid-opacity", String(theme.grid.opacity));
+  style.setProperty("--vl-grid-stroke-linecap", theme.grid.strokeLinecap);
 
   style.setProperty("--vl-line-stroke-width", String(theme.line.strokeWidth));
   style.setProperty("--vl-line-opacity", String(theme.line.opacity));
@@ -46,6 +46,7 @@ const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
   style.setProperty("--vl-point-fill", theme.points.fill);
   style.setProperty("--vl-point-stroke", theme.points.stroke);
   style.setProperty("--vl-point-stroke-width", String(theme.points.strokeWidth));
+  style.setProperty("--vl-point-opacity", String(theme.points.opacity));
 
   style.setProperty("--vl-legend-font-size", `${String(theme.legend.fontSize)}px`);
   style.setProperty("--vl-legend-item-spacing", `${String(theme.legend.itemSpacing)}px`);
@@ -58,13 +59,10 @@ const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
 
   if (theme.tooltip) {
     style.setProperty("--vl-tooltip-bg", theme.tooltip.background);
+    style.setProperty("--vl-tooltip-border", theme.tooltip.border);
     style.setProperty("--vl-tooltip-border-radius", `${String(theme.tooltip.borderRadius)}px`);
     style.setProperty("--vl-tooltip-padding", `${String(theme.tooltip.padding)}px`);
     style.setProperty("--vl-tooltip-font-size", `${String(theme.tooltip.fontSize)}px`);
     style.setProperty("--vl-tooltip-color", theme.tooltip.color);
   }
-
-  style.setProperty("--vl-spacing-sm", `${String(theme.spacing.small)}px`);
-  style.setProperty("--vl-spacing-md", `${String(theme.spacing.medium)}px`);
-  style.setProperty("--vl-spacing-lg", `${String(theme.spacing.large)}px`);
 };

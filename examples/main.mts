@@ -1,12 +1,13 @@
-import { curveCatmullRom } from "d3";
-
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   addTooltip,
   addZoomPan,
+  applyThemeCssVars,
   createScales,
+  defaultTheme,
   getDimensions,
   getMultiSeriesExtents,
+  mergeTheme,
   observeResize,
   processAllSeries,
   renderBoundsGroup,
@@ -23,10 +24,6 @@ import {
   renderYAxisLabel,
   renderYGrid,
 } from "../src/index.mjs";
-// Theme utilities (merge defaults and write CSS variables)
-// The theme utilities may not be re-exported from `src/index.mjs` yet.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { applyThemeCssVars, defaultTheme, mergeTheme } from "../src/index.mjs";
 import { chartConfig, type DataRecord } from "./data.mjs";
 
 /** Chart margins used to compute inner drawing area. */
@@ -56,20 +53,19 @@ const processedSeries = processAllSeries<DataRecord>(
  * events and re-renders on change.
  *
  * @param container - DOM element to mount the chart into.
- *
- * @remarks
- * The `onZoom` handler updates axes and re-renders lines/points with the new scales.
- *
- * @example
- * ```ts
- * import { main } from './main.js';
- * const container = document.querySelector('#chart') as HTMLElement;
- * main(container);
- * ```
  */
 export const main = (container: HTMLElement): void => {
-  const svg = renderSVG(container, { background: "#fafafa" });
+  // Apply a theme with a custom background; all other visual properties come from
+  // CSS custom properties written by applyThemeCssVars.
+  const theme = mergeTheme(defaultTheme, {
+    colors: { background: "#fafafa" },
+    line: { curve: "catmullRom" },
+  });
+  applyThemeCssVars(container, theme);
+
+  const svg = renderSVG(container);
   const bounds = renderBoundsGroup(svg, margins);
+
   const render = (): void => {
     const dims = getDimensions(container, margins);
     const content = renderContentGroup(bounds, svg, {
@@ -83,7 +79,7 @@ export const main = (container: HTMLElement): void => {
     const { xScale, yScale } = createScales({
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
-      xDomain,
+      xDomain: xDomain as Parameters<typeof createScales>[0]["xDomain"],
       xType: "time",
       yDomain,
     });
@@ -93,16 +89,17 @@ export const main = (container: HTMLElement): void => {
       .call(renderXAxis, xScale, dims.innerHeight)
       .call(renderYAxis, yScale);
 
-    // Visuals — rendered into the clipped content group
+    // Gridlines — rendered into the clipped content group
+    content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
+
+    // Lines and points — also clipped
     renderLine<DataRecord>(
       content,
       processedSeries,
       xScale,
       yScale,
       xSerie.accessor,
-      {
-        curve: curveCatmullRom,
-      },
+      { curve: "catmullRom" },
     );
     renderPoints<DataRecord>(
       content,
@@ -112,22 +109,16 @@ export const main = (container: HTMLElement): void => {
       xSerie.accessor,
     );
 
-    // Gridlines — also clipped so they don't bleed past the axes
-    content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
-
     // Labels, title, legend
     svg
-      .call(renderTitle, { ...dims, title: "Revenue & Cost Over Time" })
+      .call(renderTitle, { margins: dims.margins, title: "Revenue & Cost Over Time", width: dims.width })
       .call(renderXAxisLabel, { ...dims, label: xSerie.label })
       .call(renderYAxisLabel, { ...dims, label: "Value" })
       .call(renderLegend, {
-        fontSize: 12,
-        gap: 6,
         items: processedSeries.map(({ label, stroke }) => ({
-          color: stroke,
+          color: stroke ?? "steelblue",
           label,
         })),
-        swatchSize: 12,
         x: margins.left + dims.innerWidth - legendWidth,
         y: margins.top + legendTopOffset,
       });
@@ -160,9 +151,7 @@ export const main = (container: HTMLElement): void => {
           newX,
           newY,
           xSerie.accessor,
-          {
-            curve: curveCatmullRom,
-          },
+          { curve: "catmullRom" },
         );
         renderPoints<DataRecord>(
           content,
@@ -176,12 +165,6 @@ export const main = (container: HTMLElement): void => {
       yScale,
     });
   };
-
-  // Optional: per-series override — make first series thicker and red
-  // if (processedSeries && processedSeries.length > 0) {
-  //   processedSeries[0].stroke = "#d62728";
-  //   (processedSeries[0] as any).strokeWidth = 4;
-  // }
 
   render();
   observeResize(container, render);

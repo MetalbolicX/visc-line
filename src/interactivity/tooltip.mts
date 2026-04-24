@@ -12,7 +12,7 @@ import type {
 // ── Per-chart tooltip instances ───────────────────────────────────────────────
 
 interface TooltipEntry {
-  readonly loadedStylesheet: string | undefined;
+  loadedStylesheet: string | undefined;
   readonly tooltip: TipVizTooltip;
 }
 
@@ -141,14 +141,14 @@ const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
       ({ color, label, value }) => /*html*/ `
         <div style="display:flex;align-items:center;gap:6px;height:18px">
         <span style="width:8px;height:8px;border-radius:50%;background:${safeColor(color)};flex-shrink:0"></span>
-        <span style="font-size:11px;color:#222">${esc(label)}: ${esc(value)}</span>
+        <span style="font-size:var(--vl-tooltip-font-size,12px);color:var(--vl-tooltip-color,#222222)">${esc(label)}: ${esc(value)}</span>
         </div>`,
     )
     .join("");
 
   return /*html*/ `
-    <div style="font-family:sans-serif;padding:8px 10px;min-width:140px;background:#fff;border:1px solid #ddd;border-radius:4px;filter:drop-shadow(0 1px 4px rgba(0,0,0,.12))">
-    <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:4px">${esc(xLabel)}</div>
+    <div style="font-family:sans-serif;padding:var(--vl-tooltip-padding,8px);min-width:140px;background:var(--vl-tooltip-bg,#ffffff);border:var(--vl-tooltip-border,1px solid #cccccc);border-radius:var(--vl-tooltip-border-radius,4px);filter:drop-shadow(0 1px 4px rgba(0,0,0,.12))">
+    <div style="font-size:var(--vl-tooltip-font-size,12px);font-weight:bold;color:var(--vl-tooltip-color,#222222);margin-bottom:4px">${esc(xLabel)}</div>
     ${rowsHtml}
     </div>`;
 };
@@ -219,7 +219,7 @@ export const addTooltip = <T,>(
 
   const { tooltip } = entry;
 
-  tooltip.setHtml((d) => tooltipHtml(d as TooltipData));
+  tooltip.setHtml((d) => tooltipHtml(d as unknown as TooltipData));
 
   if (stylesheetUrl !== undefined && stylesheetUrl !== entry.loadedStylesheet) {
     tooltip.loadStylesheet(stylesheetUrl);

@@ -58,21 +58,18 @@ const addZoomPan = (
 
   svg.call(zoomBehavior as never);
 
-  /**
-   *
-   */
   const augmented = zoomBehavior as ZoomBehaviorWithReset;
-  /**
-   *
-   */
-   
-  augmented.reset = () =>
-    svg.call(
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      zoomBehavior.transform as never,
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      zoom<SVGSVGElement, unknown>().transform,
-    );
+
+  Object.defineProperty(augmented, "reset", {
+    configurable: true,
+    value: () =>
+      svg.call(
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        zoomBehavior.transform as never,
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        zoom<SVGSVGElement, unknown>().transform,
+      ),
+  });
 
   return augmented;
 };

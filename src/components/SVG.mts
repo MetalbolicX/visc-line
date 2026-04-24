@@ -3,26 +3,22 @@ import { select } from "d3";
 import type { SVGSelection } from "@/types/index.mjs";
 
 /**
- * Renders (creates or updates) a single SVG element inside the given container using D3.
+ * Renders (creates or updates) a single SVG element inside the given container.
  *
- * Ensures exactly one `<svg>` is bound to the container, sets its width and height
- * to the container's `clientWidth` and `clientHeight`, applies the provided background
- * color, and sets overflow to `"visible"`.
+ * Ensures exactly one `<svg>` is bound to the container, sets its width and
+ * height to the container's `clientWidth` / `clientHeight`, and applies the
+ * chart background colour via the `--vl-background` CSS custom property
+ * written by {@link applyThemeCssVars}.
  *
  * @param container - The DOM element that will contain the SVG.
- * @param options - Optional configuration.
- * @param options.background - Background color for the SVG. Defaults to `"white"`.
  * @returns D3 selection for the created or updated `<svg>` element.
  */
-export const renderSVG = (
-  container: HTMLElement,
-  { background = "var(--vl-background, white)" }: Readonly<{ readonly background?: string }> = {},
-): SVGSelection =>
+export const renderSVG = (container: HTMLElement): SVGSelection =>
   select(container)
     .selectAll<SVGSVGElement, null>("svg")
     .data([null])
     .join("svg")
     .attr("width", container.clientWidth)
     .attr("height", container.clientHeight)
-    .style("background", background)
+    .style("background", "var(--vl-background, white)")
     .style("overflow", "visible");

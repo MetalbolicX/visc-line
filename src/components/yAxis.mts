@@ -6,51 +6,37 @@ import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /**
  * A scale compatible with D3 axis generators used in this module.
- *
- * We require `copy` because some D3 axis implementations may call it to
- * avoid mutating the original scale, and `range` to compute numeric extents
- * for tick placement. This narrows the loose `AnyScale` imported from the
- * project-types to the minimal surface this module relies on.
  */
 type AxisCompatibleScale = AnyScale & Readonly<{
   readonly copy: () => unknown;
   readonly range: () => readonly number[];
 }>;
 
-/**
- * Configuration options for renderYAxis.
- *
- * - `tickCount`: preferred number of ticks to request from the axis generator.
- * - `tickFormat`: optional formatter for tick labels. Receives the domain value
- *   and tick index and must return the rendered string. The formatter is passed
- *   directly to D3's axis.tickFormat.
- */
+/** Options for {@link renderYAxis}. */
 interface RenderYAxisOptions {
+  /** Preferred number of ticks to request from the axis generator. */
   readonly tickCount?: number;
+  /** Optional formatter for tick labels. */
   readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
-/**
- * Cast a generic scale to the AxisCompatibleScale used by the axis generator.
- * This is a narrow, identity cast kept local to avoid leaking relaxed types
- * across the codebase.
- */
 const asAxisScale = (scale: AnyScale): AxisCompatibleScale => scale;
 
 /**
  * Render a left-oriented Y axis into the provided bounds group.
  *
- * This will create or update a single <g class="y-axis"> element inside the
- * supplied `boundsGroup` and call a D3 left-axis generator configured with the
- * provided `yScale`. The function mutates the DOM under `boundsGroup` and
- * returns nothing.
+ * Tick size, tick padding, tick label font size, and tick label colour are
+ * driven by CSS custom properties (`--vl-axis-tick-size`, `--vl-axis-tick-padding`,
+ * `--vl-axis-font-size`, `--vl-axis-color`) written by {@link applyThemeCssVars}.
+ * Numeric values are resolved via `getComputedStyle` because D3's
+ * `.tickSize()` / `.tickPadding()` require actual numbers.
  *
- * @param boundsGroup - D3 selection of the container group where the axis will be rendered.
+ * @param boundsGroup - D3 selection of the container group where the axis is rendered.
  * @param yScale - D3 scale used to generate the axis. Must implement `copy()` and `range()`.
- * @param options - Optional configuration: `tickCount` (default 5) and `tickFormat`.
+ * @param options.tickCount - Preferred number of ticks (default 5).
+ * @param options.tickFormat - Optional formatter for tick labels.
  * @example
  * ```ts
- * // basic usage
  * renderYAxis(boundsG, yScale, { tickCount: 6, tickFormat: (v) => `${v}%` });
  * ```
  */
@@ -59,13 +45,25 @@ export const renderYAxis = (
   yScale: AnyScale,
   { tickCount = 5, tickFormat }: RenderYAxisOptions = {},
 ): void => {
-  const axis = axisLeft(asAxisScale(yScale)).ticks(tickCount);
+  const node = boundsGroup.node();
+  const cs = node ? getComputedStyle(node) : null;
+  const tickSize = cs ? parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6 : 6;
+  const tickPadding = cs ? parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8 : 8;
+
+  const axis = axisLeft(asAxisScale(yScale))
+    .ticks(tickCount)
+    .tickSize(tickSize)
+    .tickPadding(tickPadding);
   if (tickFormat) axis.tickFormat(tickFormat);
 
-  boundsGroup
+  const g = boundsGroup
     .selectAll<SVGGElement, null>("g.y-axis")
     .data([null])
     .join("g")
     .attr("class", "y-axis")
     .call(axis);
+
+  g.selectAll<SVGTextElement, unknown>("text")
+    .style("fill", "var(--vl-axis-color, #333333)")
+    .style("font-size", "var(--vl-axis-font-size, 12px)");
 };

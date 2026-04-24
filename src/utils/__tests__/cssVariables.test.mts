@@ -90,6 +90,34 @@ describe("applyThemeCssVars", () => {
     );
   });
 
+  it("writes --vl-grid-opacity", () => {
+    applyThemeCssVars(container, defaultTheme);
+    expect(container.style.getPropertyValue("--vl-grid-opacity")).toBe(
+      String(defaultTheme.grid.opacity),
+    );
+  });
+
+  it("writes --vl-grid-stroke-linecap", () => {
+    applyThemeCssVars(container, defaultTheme);
+    expect(container.style.getPropertyValue("--vl-grid-stroke-linecap")).toBe(
+      defaultTheme.grid.strokeLinecap,
+    );
+  });
+
+  it("always writes --vl-grid-dash-array (no null guard)", () => {
+    applyThemeCssVars(container, defaultTheme);
+    expect(container.style.getPropertyValue("--vl-grid-dash-array")).toBe(
+      defaultTheme.grid.dashArray,
+    );
+  });
+
+  it("writes --vl-point-opacity", () => {
+    applyThemeCssVars(container, defaultTheme);
+    expect(container.style.getPropertyValue("--vl-point-opacity")).toBe(
+      String(defaultTheme.points.opacity),
+    );
+  });
+
   it("does not write tooltip vars when theme.tooltip is undefined", () => {
     applyThemeCssVars(container, {
       ...defaultTheme,
@@ -98,10 +126,7 @@ describe("applyThemeCssVars", () => {
     expect(container.style.getPropertyValue("--vl-tooltip-bg")).toBe("");
   });
 
-  it("writes tooltip vars when theme.tooltip is provided", () => {
-    /**
-     *
-     */
+  it("writes all tooltip vars when theme.tooltip is provided", () => {
     const themeWithTooltip = {
       ...defaultTheme,
       tooltip: {
@@ -115,19 +140,17 @@ describe("applyThemeCssVars", () => {
     };
     applyThemeCssVars(container, themeWithTooltip);
     expect(container.style.getPropertyValue("--vl-tooltip-bg")).toBe("#fff");
+    expect(container.style.getPropertyValue("--vl-tooltip-border")).toBe("1px solid #ccc");
+    expect(container.style.getPropertyValue("--vl-tooltip-border-radius")).toBe("4px");
     expect(container.style.getPropertyValue("--vl-tooltip-font-size")).toBe("12px");
+    expect(container.style.getPropertyValue("--vl-tooltip-color")).toBe("#222");
+    expect(container.style.getPropertyValue("--vl-tooltip-padding")).toBe("8px");
   });
 
-  it("writes spacing small, medium, and large", () => {
+  it("does not write spacing or breakpoint vars", () => {
     applyThemeCssVars(container, defaultTheme);
-    expect(container.style.getPropertyValue("--vl-spacing-sm")).toBe(
-      `${String(defaultTheme.spacing.small)}px`,
-    );
-    expect(container.style.getPropertyValue("--vl-spacing-md")).toBe(
-      `${String(defaultTheme.spacing.medium)}px`,
-    );
-    expect(container.style.getPropertyValue("--vl-spacing-lg")).toBe(
-      `${String(defaultTheme.spacing.large)}px`,
-    );
+    expect(container.style.getPropertyValue("--vl-spacing-sm")).toBe("");
+    expect(container.style.getPropertyValue("--vl-spacing-md")).toBe("");
+    expect(container.style.getPropertyValue("--vl-spacing-lg")).toBe("");
   });
 });

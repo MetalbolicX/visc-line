@@ -5,17 +5,6 @@ import { axisBottom } from "d3";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /**
- * Render an X axis inside the provided bounds group using a D3 axis generator.
- *
- * Creates or updates a child `<g>` element with class `"x-axis"`, positions it at
- * `y = innerHeight`, and calls a D3 bottom axis constructed from the given scale.
- *
- * @param boundsGroup - D3 selection of the container group for the axis.
- * @param xScale - D3 scale used to generate axis ticks.
- * @param innerHeight - Vertical offset (pixels) to position the x-axis.
- * @param options - Optional configuration.
- */
-/**
  * Narrow view of a D3 scale sufficient for axis generators used here.
  *
  * We require `copy()` because D3 axis constructors call it internally
@@ -28,49 +17,32 @@ type AxisCompatibleScale = AnyScale & Readonly<{
   readonly range: () => readonly number[];
 }>;
 
-/**
- * A minimal shape of a D3 scale required by axis generators used here.
- *
- * This narrows AnyScale to the properties axisBottom expects so callers
- * and type-checking can rely on `copy()` and `range()` being present.
- */
-
 /** Options for {@link renderXAxis}. */
-/**
- * Configuration for renderXAxis.
- *
- * - tickCount: preferred number of axis ticks (positive integer). D3 may
- *   adjust this value depending on the domain and layout.
- * - tickFormat: optional formatter for tick labels; receives the domain
- *   value and the tick index and should return the rendered label.
- */
 interface RenderXAxisOptions {
+  /** Preferred number of axis ticks (positive integer). D3 may adjust this value. */
   readonly tickCount?: number;
+  /** Optional formatter for tick labels. */
   readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
-/**
- * Cast an arbitrary AnyScale to the narrower AxisCompatibleScale.
- * This is a thin, unchecked cast used to satisfy the D3 axis API at
- * call sites. Consumers should ensure the provided scale implements
- * `copy()` and `range()`.
- */
 const asAxisScale = (scale: AnyScale): AxisCompatibleScale => scale;
 
 /**
  * Render or update an X axis inside the provided bounds group.
  *
- * Side effects:
- * - creates or updates a single child <g class="x-axis"> element
- *   positioned at y = innerHeight and applies a D3 bottom axis to it.
+ * Tick size, tick padding, tick label font size, and tick label colour are
+ * driven by CSS custom properties (`--vl-axis-tick-size`, `--vl-axis-tick-padding`,
+ * `--vl-axis-font-size`, `--vl-axis-color`) that are written by
+ * {@link applyThemeCssVars} and inherited through the SVG element tree.
+ * Numeric values are resolved via `getComputedStyle` because D3's
+ * `.tickSize()` / `.tickPadding()` require actual numbers.
  *
  * @param boundsGroup - D3 selection of the container group for the axis.
- * @param xScale - D3-compatible scale used to generate ticks. Must
- *   implement `copy()` and `range()` (see {@link AxisCompatibleScale}).
- * @param innerHeight - Vertical pixel offset at which the x-axis is
- *   positioned (typically the inner drawing height of the chart).
- * @param options.tickCount - preferred number of ticks; D3 may adjust it.
- * @param options.tickFormat - optional formatter for tick labels.
+ * @param xScale - D3-compatible scale used to generate ticks. Must implement
+ *   `copy()` and `range()`.
+ * @param innerHeight - Vertical pixel offset at which the x-axis is positioned.
+ * @param options.tickCount - Preferred number of ticks; D3 may adjust.
+ * @param options.tickFormat - Optional formatter for tick labels.
  */
 export const renderXAxis = (
   boundsGroup: BoundsSelection,
@@ -78,14 +50,26 @@ export const renderXAxis = (
   innerHeight: number,
   { tickCount = 5, tickFormat }: RenderXAxisOptions = {},
 ): void => {
-  const axis = axisBottom(asAxisScale(xScale)).ticks(tickCount);
+  const node = boundsGroup.node();
+  const cs = node ? getComputedStyle(node) : null;
+  const tickSize = cs ? parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6 : 6;
+  const tickPadding = cs ? parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8 : 8;
+
+  const axis = axisBottom(asAxisScale(xScale))
+    .ticks(tickCount)
+    .tickSize(tickSize)
+    .tickPadding(tickPadding);
   if (tickFormat) axis.tickFormat(tickFormat);
 
-  boundsGroup
+  const g = boundsGroup
     .selectAll<SVGGElement, null>("g.x-axis")
     .data([null])
     .join("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${String(innerHeight)})`)
     .call(axis);
+
+  g.selectAll<SVGTextElement, unknown>("text")
+    .style("fill", "var(--vl-axis-color, #333333)")
+    .style("font-size", "var(--vl-axis-font-size, 12px)");
 };

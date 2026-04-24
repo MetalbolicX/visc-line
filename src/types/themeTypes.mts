@@ -44,7 +44,6 @@ export interface Theme {
     readonly tickPadding: number;
     readonly tickSize: number;
   }>;
-  readonly breakpoints?: Readonly<{ readonly lg: number; readonly md: number; readonly sm: number; }>;
   readonly colors: Readonly<{
     readonly axis: string;
     readonly background: string;
@@ -52,7 +51,13 @@ export interface Theme {
     readonly palette: readonly string[]; // series colors
     readonly text: string;
   }>;
-  readonly grid: Readonly<{ readonly dashArray?: null | string; readonly stroke: string; readonly strokeWidth: number; }>;
+  readonly grid: Readonly<{
+    readonly dashArray: string;
+    readonly opacity: number;
+    readonly stroke: string;
+    readonly strokeLinecap: string;
+    readonly strokeWidth: number;
+  }>;
   readonly legend: Readonly<{
     readonly fontSize: number;
     readonly itemSpacing: number;
@@ -60,8 +65,13 @@ export interface Theme {
     readonly symbolSize: number;
   }>;
   readonly line: Readonly<{ readonly curve: CurvePreset; readonly opacity: number; readonly strokeWidth: number; }>;
-  readonly points: Readonly<{ readonly fill: string; readonly radius: number; readonly stroke: string; readonly strokeWidth: number }>;
-  readonly spacing: Readonly<{ readonly large: number; readonly medium: number; readonly small: number; }>;
+  readonly points: Readonly<{
+    readonly fill: string;
+    readonly opacity: number;
+    readonly radius: number;
+    readonly stroke: string;
+    readonly strokeWidth: number;
+  }>;
   readonly title: Readonly<{
     readonly color: string;
     readonly fontSize: number;

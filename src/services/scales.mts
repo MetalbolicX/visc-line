@@ -97,8 +97,8 @@ export const createScales = ({
   yExponent = 2,
   yType = "linear",
 }: CreateScalesOptions): ChartScales => {
-  const xFactory = scaleFactories[xType];
-  const yFactory = scaleFactories[yType];
+  const xFactory = scaleFactories[xType] ?? scaleFactories.linear;
+  const yFactory = scaleFactories[yType] ?? scaleFactories.linear;
   const xScale = (
     xFactory(xExponent) as ScaleLinear<number, number>
   )

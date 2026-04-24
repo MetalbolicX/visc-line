@@ -19,11 +19,6 @@ const defaultTheme: Theme = {
     tickPadding: 8,
     tickSize: 6,
   },
-  breakpoints: {
-    lg: 1024,
-    md: 768,
-    sm: 480,
-  },
   colors: {
     axis: "#333333",
     background: "#ffffff",
@@ -41,8 +36,10 @@ const defaultTheme: Theme = {
     text: "#222222",
   },
   grid: {
-    dashArray: null,
+    dashArray: "4 7",
+    opacity: 0.65,
     stroke: "#e6e6e6",
+    strokeLinecap: "round",
     strokeWidth: 1,
   },
   legend: {
@@ -58,14 +55,10 @@ const defaultTheme: Theme = {
   },
   points: {
     fill: "#ffffff",
+    opacity: 0.85,
     radius: 3,
     stroke: "#333333",
     strokeWidth: 1,
-  },
-  spacing: {
-    large: 16,
-    medium: 8,
-    small: 4,
   },
   title: {
     color: "#222222",

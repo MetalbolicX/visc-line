@@ -2,8 +2,6 @@ import type { Margins, SVGSelection } from "@/types/index.mjs";
 
 /** Options shared between X and Y axis label renderers. */
 interface AxisLabelOptions {
-  readonly fill?: string;
-  readonly fontSize?: number | string;
   readonly innerHeight: number;
   readonly innerWidth: number;
   readonly label?: string;
@@ -13,28 +11,18 @@ interface AxisLabelOptions {
 /**
  * Renders or updates a centered X-axis label inside the given SVG selection.
  *
- * Selects or creates a single <text> element with class "x-axis-label", positions it
- * horizontally centered within the inner drawing area and vertically below the chart
- * using the provided margins and innerHeight, applies styling, and sets the label text.
+ * Visual appearance (colour, font size) is controlled by CSS custom properties
+ * written by {@link applyThemeCssVars}:
+ * - `--vl-axis-color` — text colour
+ * - `--vl-axis-font-size` — font size
  *
- * @param svg - D3 selection of the SVG container to render the label into.
- * @param options - Configuration options for the axis label.
- * @param options.innerWidth - Inner drawing width (excluding margins).
- * @param options.innerHeight - Inner drawing height (excluding margins).
- * @param options.margins - Margins object (expected to include left and top).
- * @param options.label - Text content for the X-axis label.
- * @param options.fontSize - Font size in pixels for the label. Defaults to 12.
- *
+ * @param svg - D3 selection of the SVG container.
+ * @param options - Layout options (innerWidth, innerHeight, margins, label text).
  * @returns void
  */
-export /**
-        *
-        */
-const renderXAxisLabel = (
+export const renderXAxisLabel = (
   svg: SVGSelection,
   {
-    fill = "var(--vl-axis-color, #333)",
-    fontSize = "var(--vl-axis-font-size, 12px)",
     innerHeight,
     innerWidth,
     label,
@@ -49,39 +37,26 @@ const renderXAxisLabel = (
     .attr("x", margins.left + innerWidth / 2)
     .attr("y", margins.top + innerHeight + 40)
     .attr("text-anchor", "middle")
-    .attr("font-size", fontSize)
-    .attr("fill", fill)
+    .style("font-size", "var(--vl-axis-font-size, 12px)")
+    .style("fill", "var(--vl-axis-color, #333333)")
     .text(label ?? "");
 };
 
 /**
  * Renders a rotated Y-axis label into the given SVG selection.
  *
- * Selects or creates a single <text> element with class "y-axis-label", positions it
- * to the left of the chart area and vertically centered, rotates it -90 degrees, and
- * applies basic styling (text-anchor, font-size, fill).
+ * Visual appearance (colour, font size) is controlled by CSS custom properties
+ * written by {@link applyThemeCssVars}:
+ * - `--vl-axis-color` — text colour
+ * - `--vl-axis-font-size` — font size
  *
  * @param svg - The SVGSelection to render the label into.
- * @param options - AxisLabelOptions describing layout and label text. If omitted, an empty object is used.
- * @param options.innerWidth - Inner drawing width of the chart.
- * @param options.innerHeight - Inner drawing height of the chart.
- * @param options.margins - Margins object used to compute the label position (expects at least `left` and `top`).
- * @param options.label - The label text to display. Defaults to an empty string.
- * @param options.fontSize - Font size in pixels for the label. Defaults to 12.
+ * @param options - Layout options (innerHeight, margins, label text).
  * @returns void
- *
- * @remarks
- * - Created/used element will have class "y-axis-label".
- * - Function mutates the DOM and is idempotent (reuses the same element via D3's join).
  */
-export /**
-        *
-        */
-const renderYAxisLabel = (
+export const renderYAxisLabel = (
   svg: SVGSelection,
   {
-    fill = "var(--vl-axis-color, #333)",
-    fontSize = "var(--vl-axis-font-size, 12px)",
     innerHeight,
     label,
     margins,
@@ -97,7 +72,7 @@ const renderYAxisLabel = (
       `translate(${String(margins.left - 40)},${String(margins.top + innerHeight / 2)}) rotate(-90)`,
     )
     .attr("text-anchor", "middle")
-    .attr("font-size", fontSize)
-    .attr("fill", fill)
+    .style("font-size", "var(--vl-axis-font-size, 12px)")
+    .style("fill", "var(--vl-axis-color, #333333)")
     .text(label ?? "");
 };

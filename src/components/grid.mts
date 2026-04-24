@@ -1,55 +1,12 @@
-import type { Selection } from "d3";
-
 import type {
   AnyScale,
   BoundsSelection,
   TickableScale,
 } from "@/types/index.mjs";
 
-// Soft, dashed grid lines keep the chart background light without stealing focus.
-/** Default visual style applied to grid lines. */
-const defaultGridLineStyle = {
-  opacity: 0.65,
-  shapeRendering: "crispEdges",
-  stroke: "var(--vl-grid-stroke, #cfd8dc)",
-  strokeDasharray: "var(--vl-grid-dash-array, 4 7)",
-  strokeLinecap: "round",
-  strokeWidth: "var(--vl-grid-stroke-width, 1)",
-} as const;
-
-export type GridLineStyle = Partial<DefaultGridLineStyle>;
-type DefaultGridLineStyle = typeof defaultGridLineStyle;
-
-/** Merge user-provided grid style with defaults. */
-const getGridLineStyle = (style?: GridLineStyle): DefaultGridLineStyle => ({
-  ...defaultGridLineStyle,
-  ...style,
-});
-
 /** Cast an AnyScale into a TickableScale for tick generation. */
 const asTickableScale = (scale: AnyScale): TickableScale =>
   scale as unknown as TickableScale;
-
-/**
- * Apply visual attributes from a resolved grid style to a D3 selection of SVG lines.
- * This function mutates the provided selection by setting stroke, stroke-width,
- * stroke-dasharray, opacity, stroke-linecap and shape-rendering attributes.
- *
- * @param selection - D3 selection containing SVGLineElement nodes (scoped to a <g> container).
- * @param gridStyle - Fully-resolved grid line style (defaults already applied).
- */
-const applyGridAttrs = (
-  selection: Selection<SVGLineElement, unknown, SVGGElement, unknown>,
-  gridStyle: DefaultGridLineStyle,
-): void => {
-  selection
-    .attr("stroke", gridStyle.stroke)
-    .attr("stroke-width", gridStyle.strokeWidth)
-    .attr("stroke-dasharray", gridStyle.strokeDasharray)
-    .attr("opacity", gridStyle.opacity)
-    .attr("stroke-linecap", gridStyle.strokeLinecap)
-    .attr("shape-rendering", gridStyle.shapeRendering);
-};
 
 /**
  * Render horizontal grid lines (left-to-right) across the chart area.
@@ -58,25 +15,27 @@ const applyGridAttrs = (
  * and positions each line using the horizontal scale domain edges for
  * `x1`/`x2` and the tick value for `y1`/`y2`.
  *
- * This function mutates `boundSelection` by performing a D3 data join and
- * updating/appending `<line>` elements. It is a no-op when the horizontal
- * scale domain cannot be determined.
+ * Visual appearance is fully controlled by CSS custom properties written by
+ * {@link applyThemeCssVars}:
+ * - `--vl-grid-stroke` — line colour
+ * - `--vl-grid-stroke-width` — line width
+ * - `--vl-grid-dash-array` — dash pattern
+ * - `--vl-grid-opacity` — opacity
+ * - `--vl-grid-stroke-linecap` — line cap style
  *
- * @param boundSelection - D3 selection (typically an SVG <g> clipped to chart bounds) where grid lines are rendered.
- * @param xScale - Horizontal scale; must expose `domain()` and mapping (used to compute x positions).
- * @param yScale - Vertical scale; must be tickable (provide `ticks()`), used to generate horizontal lines.
- * @param style - Optional partial style to override default grid line appearance.
+ * @param boundSelection - D3 selection (typically a clipped content group) where grid lines are rendered.
+ * @param xScale - Horizontal scale; must expose `domain()` and mapping.
+ * @param yScale - Vertical scale; must be tickable (provide `ticks()`).
  * @returns void
  * @example
  * ```ts
- * renderXGrid(group, xScale, yScale, { stroke: '#eee' });
+ * renderXGrid(contentGroup, xScale, yScale);
  * ```
  */
 export const renderXGrid = (
   boundSelection: BoundsSelection,
   xScale: AnyScale,
   yScale: AnyScale,
-  style?: GridLineStyle,
 ): void => {
   const xTickableScale = asTickableScale(xScale);
   const yTickableScale = asTickableScale(yScale);
@@ -86,18 +45,21 @@ export const renderXGrid = (
     return;
   }
 
-  applyGridAttrs(
-    boundSelection
-      .selectAll<SVGLineElement, unknown>("line.grid-x")
-      .data(yTickableScale.ticks())
-      .join("line")
-      .attr("class", "grid-x")
-      .attr("x1", xTickableScale(xMin))
-      .attr("y1", yTickableScale)
-      .attr("x2", xTickableScale(xMax))
-      .attr("y2", yTickableScale),
-    getGridLineStyle(style),
-  );
+  boundSelection
+    .selectAll<SVGLineElement, unknown>("line.grid-x")
+    .data(yTickableScale.ticks())
+    .join("line")
+    .attr("class", "grid-x")
+    .attr("x1", xTickableScale(xMin))
+    .attr("y1", yTickableScale)
+    .attr("x2", xTickableScale(xMax))
+    .attr("y2", yTickableScale)
+    .attr("stroke", "var(--vl-grid-stroke, #e6e6e6)")
+    .attr("stroke-width", "var(--vl-grid-stroke-width, 1)")
+    .attr("stroke-dasharray", "var(--vl-grid-dash-array, 4 7)")
+    .attr("opacity", "var(--vl-grid-opacity, 0.65)")
+    .attr("stroke-linecap", "var(--vl-grid-stroke-linecap, round)")
+    .attr("shape-rendering", "crispEdges");
 };
 
 /**
@@ -107,25 +69,22 @@ export const renderXGrid = (
  * and positions each line using the tick value for `x1`/`x2` and the vertical
  * scale domain edges for `y1`/`y2`.
  *
- * This function mutates `boundSelection` by performing a D3 data join and
- * updating/appending `<line>` elements. It is a no-op when the vertical
- * scale domain cannot be determined.
+ * Visual appearance is fully controlled by CSS custom properties written by
+ * {@link applyThemeCssVars} — see {@link renderXGrid} for the full list.
  *
- * @param boundSelection - D3 selection (typically an SVG <g> clipped to chart bounds) where grid lines are rendered.
- * @param xScale - Horizontal scale; must be tickable (provide `ticks()`), used to generate vertical lines.
- * @param yScale - Vertical scale; must expose `domain()` and mapping (used to compute y positions).
- * @param style - Optional partial style to override default grid line appearance.
+ * @param boundSelection - D3 selection where grid lines are rendered.
+ * @param xScale - Horizontal scale; must be tickable (provide `ticks()`).
+ * @param yScale - Vertical scale; must expose `domain()` and mapping.
  * @returns void
  * @example
  * ```ts
- * renderYGrid(group, xScale, yScale, { stroke: '#eee' });
+ * renderYGrid(contentGroup, xScale, yScale);
  * ```
  */
 export const renderYGrid = (
   boundSelection: BoundsSelection,
   xScale: AnyScale,
   yScale: AnyScale,
-  style?: GridLineStyle,
 ): void => {
   const xTickableScale = asTickableScale(xScale);
   const yTickableScale = asTickableScale(yScale);
@@ -135,16 +94,19 @@ export const renderYGrid = (
     return;
   }
 
-  applyGridAttrs(
-    boundSelection
-      .selectAll<SVGLineElement, unknown>("line.grid-y")
-      .data(xTickableScale.ticks())
-      .join("line")
-      .attr("class", "grid-y")
-      .attr("x1", xTickableScale)
-      .attr("y1", yTickableScale(yMin))
-      .attr("x2", xTickableScale)
-      .attr("y2", yTickableScale(yMax)),
-    getGridLineStyle(style),
-  );
+  boundSelection
+    .selectAll<SVGLineElement, unknown>("line.grid-y")
+    .data(xTickableScale.ticks())
+    .join("line")
+    .attr("class", "grid-y")
+    .attr("x1", xTickableScale)
+    .attr("y1", yTickableScale(yMin))
+    .attr("x2", xTickableScale)
+    .attr("y2", yTickableScale(yMax))
+    .attr("stroke", "var(--vl-grid-stroke, #e6e6e6)")
+    .attr("stroke-width", "var(--vl-grid-stroke-width, 1)")
+    .attr("stroke-dasharray", "var(--vl-grid-dash-array, 4 7)")
+    .attr("opacity", "var(--vl-grid-opacity, 0.65)")
+    .attr("stroke-linecap", "var(--vl-grid-stroke-linecap, round)")
+    .attr("shape-rendering", "crispEdges");
 };
