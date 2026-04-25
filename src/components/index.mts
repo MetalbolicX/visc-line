@@ -1,5 +1,5 @@
 export { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
-export type { AxisLabelOptions } from "@/components/axisLabel.mjs";
+export type { XAxisLabelOptions, YAxisLabelOptions } from "@/components/axisLabel.mjs";
 
 export { renderBoundsGroup } from "@/components/boundsGroup.mjs";
 

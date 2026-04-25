@@ -1,9 +1,14 @@
 import type { Margins, SVGSelection } from "@/types/index.mjs";
 
-/** Options shared between X and Y axis label renderers. */
-export interface AxisLabelOptions {
+export interface XAxisLabelOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
+  readonly label?: string;
+  readonly margins: Margins;
+}
+
+export interface YAxisLabelOptions {
+  readonly innerHeight: number;
   readonly label?: string;
   readonly margins: Margins;
 }
@@ -27,7 +32,7 @@ export const renderXAxisLabel = (
     innerWidth,
     label,
     margins,
-  }: AxisLabelOptions = {} as AxisLabelOptions,
+  }: XAxisLabelOptions = {} as XAxisLabelOptions,
 ): void => {
   svg
     .selectAll<SVGTextElement, null>("text.x-axis-label")
@@ -60,7 +65,7 @@ export const renderYAxisLabel = (
     innerHeight,
     label,
     margins,
-  }: AxisLabelOptions = {} as AxisLabelOptions,
+  }: YAxisLabelOptions = {} as YAxisLabelOptions,
 ): void => {
   svg
     .selectAll<SVGTextElement, null>("text.y-axis-label")

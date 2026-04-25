@@ -2,18 +2,11 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { select } from "d3";
 
+import { createMockSVG } from "@/__tests__/helpers/createMockSVG.mjs";
 import { renderBoundsGroup } from "@/components/boundsGroup.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
 
 describe("renderContentGroup", () => {
-  const createMockSVG = () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    container.appendChild(svg);
-    return select(svg as SVGSVGElement);
-  };
-
   afterEach(() => {
     document.body.innerHTML = "";
   });

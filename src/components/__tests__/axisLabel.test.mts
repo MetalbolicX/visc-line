@@ -2,17 +2,10 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { select } from "d3";
 
+import { createMockSVG } from "@/__tests__/helpers/createMockSVG.mjs";
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 
 describe("renderXAxisLabel", () => {
-  const createMockSVG = () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    container.appendChild(svg);
-    return select(svg as SVGSVGElement);
-  };
-
   afterEach(() => {
     document.body.innerHTML = "";
   });
@@ -39,7 +32,7 @@ describe("renderXAxisLabel", () => {
 
   it("positions label below innerHeight + margins.top offset", () => {
     const svg = createMockSVG();
-    const opts = { innerHeight: 400, innerWidth: 800, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Y Label" };
+    const opts = { innerHeight: 400, innerWidth: 800, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Time (s)" };
     renderXAxisLabel(svg, opts);
     const text = svg.select<SVGTextElement>("text.x-axis-label");
     expect(text.attr("y")).toBe(String(20 + 400 + 40));
@@ -79,14 +72,6 @@ describe("renderXAxisLabel", () => {
 });
 
 describe("renderYAxisLabel", () => {
-  const createMockSVG = () => {
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    container.appendChild(svg);
-    return select(svg as SVGSVGElement);
-  };
-
   afterEach(() => {
     document.body.innerHTML = "";
   });

@@ -2,17 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { select } from "d3";
 
+import { createMockContainer } from "@/__tests__/helpers/createMockSVG.mjs";
 import { renderSVG } from "@/components/SVG.mjs";
 
 describe("renderSVG", () => {
-  const createMockContainer = () => {
-    const el = document.createElement("div");
-    Object.defineProperty(el, "clientWidth", { value: 800, writable: true });
-    Object.defineProperty(el, "clientHeight", { value: 400, writable: true });
-    document.body.appendChild(el);
-    return el;
-  };
-
   beforeEach(() => {
     Object.defineProperty(window, "matchMedia", {
       writable: true,

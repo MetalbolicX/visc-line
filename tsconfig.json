@@ -36,5 +36,5 @@
     "examples/**/*.mts",
     "docs/**/*.js"
   ],
-  "exclude": ["node_modules", "dist", "src/components/__tests__/**"]
+  "exclude": ["node_modules", "dist", "src/**/__tests__/**"]
 }
