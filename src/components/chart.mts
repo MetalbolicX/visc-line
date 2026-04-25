@@ -47,7 +47,10 @@ export interface WithTitleOptions {
 }
 
 export interface WithLegendOptions {
-  readonly items: readonly Readonly<{ readonly color: string; readonly label: string }>[];
+  readonly items: readonly Readonly<{
+    readonly color: string;
+    readonly label: string;
+  }>[];
 }
 
 export interface WithZoomPanOptions {
@@ -84,37 +87,38 @@ const LEGEND_TOP_OFFSET = 12;
 const LEGEND_WIDTH = 90;
 
 const areTitleOptionsEqual = (
-  a: null | WithTitleOptions,
-  b: WithTitleOptions,
-): boolean => a?.title === b.title;
+  previous: null | WithTitleOptions,
+  next: WithTitleOptions,
+): boolean => previous?.title === next.title;
 
 const areLegendOptionsEqual = (
-  a: null | WithLegendOptions,
-  b: WithLegendOptions,
+  previous: null | WithLegendOptions,
+  next: WithLegendOptions,
 ): boolean => {
-  if (!a) return false;
-  if (a.items.length !== b.items.length) return false;
-  for (let index = 0; index < a.items.length; index += 1) {
-    const left = a.items[index];
-    const right = b.items[index];
-    if (!left || !right) return false;
-    if (left.color !== right.color || left.label !== right.label) return false;
+  if (!previous) return false;
+  if (previous.items.length !== next.items.length) return false;
+  for (let i = 0; i < previous.items.length; i += 1) {
+    const prevItem = previous.items[i];
+    const nextItem = next.items[i];
+    if (!prevItem || !nextItem) return false;
+    if (prevItem.color !== nextItem.color || prevItem.label !== nextItem.label)
+      return false;
   }
   return true;
 };
 
 const areTooltipOptionsEqual = (
-  a: WithTooltipOptions,
-  b: WithTooltipOptions,
+  previous: WithTooltipOptions,
+  next: WithTooltipOptions,
 ): boolean =>
-  a.formatX === b.formatX &&
-  a.formatY === b.formatY &&
-  a.stylesheetUrl === b.stylesheetUrl;
+  previous.formatX === next.formatX &&
+  previous.formatY === next.formatY &&
+  previous.stylesheetUrl === next.stylesheetUrl;
 
 const areZoomPanOptionsEqual = (
-  a: WithZoomPanOptions,
-  b: WithZoomPanOptions,
-): boolean => a.onZoom === b.onZoom;
+  previous: WithZoomPanOptions,
+  next: WithZoomPanOptions,
+): boolean => previous.onZoom === next.onZoom;
 
 /**
  * Create and mount a responsive SVG chart into the provided container.
@@ -252,7 +256,9 @@ export const createChart = <T,>(
     }
 
     if (hasGrid) {
-      content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
+      content
+        .call(renderXGrid, xScale, yScale)
+        .call(renderYGrid, xScale, yScale);
     }
 
     if (hasPoints) {
@@ -309,7 +315,9 @@ export const createChart = <T,>(
               renderYAxis(bounds, newY);
             }
             if (hasGrid) {
-              content.call(renderXGrid, newX, newY).call(renderYGrid, newX, newY);
+              content
+                .call(renderXGrid, newX, newY)
+                .call(renderYGrid, newX, newY);
             }
             renderLine<T>(
               content,
@@ -382,7 +390,8 @@ export const createChart = <T,>(
     },
     withLegend: (options: WithLegendOptions): ChartInstance<T> => {
       ensureActive();
-      if (hasLegend && areLegendOptionsEqual(legendOptions, options)) return chart;
+      if (hasLegend && areLegendOptionsEqual(legendOptions, options))
+        return chart;
       hasLegend = true;
       legendOptions = options;
       render();
@@ -405,7 +414,8 @@ export const createChart = <T,>(
     },
     withTooltip: (options: WithTooltipOptions = {}): ChartInstance<T> => {
       ensureActive();
-      if (hasTooltip && areTooltipOptionsEqual(tooltipOptions, options)) return chart;
+      if (hasTooltip && areTooltipOptionsEqual(tooltipOptions, options))
+        return chart;
       hasTooltip = true;
       tooltipOptions = options;
       render();
@@ -413,7 +423,8 @@ export const createChart = <T,>(
     },
     withZoomPan: (options: WithZoomPanOptions = {}): ChartInstance<T> => {
       ensureActive();
-      if (hasZoomPan && areZoomPanOptionsEqual(zoomPanOptions, options)) return chart;
+      if (hasZoomPan && areZoomPanOptionsEqual(zoomPanOptions, options))
+        return chart;
       hasZoomPan = true;
       zoomPanOptions = options;
       render();
