@@ -13,7 +13,7 @@ type AxisCompatibleScale = AnyScale & Readonly<{
 }>;
 
 /** Options for {@link renderYAxis}. */
-interface RenderYAxisOptions {
+export interface RenderYAxisOptions {
   /** Preferred number of ticks to request from the axis generator. */
   readonly tickCount?: number;
   /** Optional formatter for tick labels. */

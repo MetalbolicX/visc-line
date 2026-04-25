@@ -2,6 +2,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
+  clean: true,
   deps: {
     alwaysBundle: ["tipviz"],
   },
@@ -18,5 +19,6 @@ export default defineConfig({
     name: "ViscLine",
   },
   platform: "browser",
+  sourcemap: true,
   tsconfig: true,
 });

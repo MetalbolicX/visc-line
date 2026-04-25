@@ -83,16 +83,9 @@ const extentCache = new Map<
 /**
  * Create a stable cache key for a collection of processed series.
  *
- * The key is formed from each series' label and the number of points in its
- * `data` array. Labels are URI-encoded to avoid accidental separator
- * collisions (labels containing ':' or '|' would otherwise corrupt the key).
- *
- * Notes:
- * - The function is deterministic for the same array contents and order.
- * - If two different label/length combinations produce the same encoded
- *   string (extremely unlikely) the cache may collide; callers should avoid
- *   mutating labels or reusing labels across distinct series when caching is
- *   important. (PERF)
+ * The key is formed from each series' label, data length, and a simple hash
+ * of the first/last data point values. This avoids collisions when different
+ * series share the same label length pattern but have distinct data.
  *
  * @template T - Datum type for the series data arrays.
  * @param processedSeries - Array of processed series to derive the key from.
@@ -100,9 +93,12 @@ const extentCache = new Map<
  */
 const extentCacheKey = <T,>(processedSeries: readonly ProcessedSeries<T>[]): string =>
   processedSeries
-    .map(
-      (s) => `${encodeURIComponent(s.label)}:${String(s.data.length)}`,
-    )
+    .map((s) => {
+      const len = s.data.length;
+      const front = len > 0 ? String(s.data[0]).slice(0, 8) : "e";
+      const back = len > 1 ? String(s.data[len - 1]).slice(0, 8) : "e";
+      return `${encodeURIComponent(s.label)}:${len}:${front}:${back}`;
+    })
     .join("|");
 
 /**

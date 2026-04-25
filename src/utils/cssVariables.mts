@@ -59,4 +59,12 @@ export const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
     style.setProperty("--vl-tooltip-font-size", `${String(theme.tooltip.fontSize)}px`);
     style.setProperty("--vl-tooltip-color", theme.tooltip.color);
   }
+
+  if (theme.accessibility?.highContrast) {
+    style.setProperty("--vl-grid-stroke", "#000000");
+    style.setProperty("--vl-axis-color", "#000000");
+    style.setProperty("--vl-line-stroke-width", "3");
+    style.setProperty("--vl-point-stroke-width", "2");
+    style.setProperty("--vl-text", "#000000");
+  }
 };

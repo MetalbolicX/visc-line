@@ -14,7 +14,7 @@ export interface LegendItem {
 }
 
 /** Options for {@link renderLegend}. */
-interface RenderLegendOptions {
+export interface RenderLegendOptions {
   /** Array of items to render in order. */
   readonly items: readonly LegendItem[];
   /** X offset applied to the legend group (default: 0). */

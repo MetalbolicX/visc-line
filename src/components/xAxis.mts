@@ -18,7 +18,7 @@ type AxisCompatibleScale = AnyScale & Readonly<{
 }>;
 
 /** Options for {@link renderXAxis}. */
-interface RenderXAxisOptions {
+export interface RenderXAxisOptions {
   /** Preferred number of axis ticks (positive integer). D3 may adjust this value. */
   readonly tickCount?: number;
   /** Optional formatter for tick labels. */

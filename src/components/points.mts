@@ -7,6 +7,7 @@ import type {
   BoundsSelection,
   ProcessedSeries,
 } from "@/types/index.mjs";
+import { asScaleNumber } from "@/utils/scaleCast.mjs";
 
 /**
  * Renders point markers for one or more series into the provided bounds group.
@@ -59,9 +60,9 @@ export const renderPoints = <T,>(
         .data(serie.data, xAccessor as never)
         .join("circle")
         .attr("class", "point")
-        .attr("cx", (d) => (xScale as (v: unknown) => number)(xAccessor(d)))
+        .attr("cx", (d) => asScaleNumber(xScale)(xAccessor(d)))
         .attr("cy", (d) =>
-          (yScale as (v: unknown) => number)(serie.accessor(d)),
+          asScaleNumber(yScale)(serie.accessor(d)),
         )
         .attr("r", radius)
         .attr("fill", serie.stroke ?? "var(--vl-point-fill, #ffffff)")

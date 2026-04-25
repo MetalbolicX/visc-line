@@ -18,22 +18,33 @@ export default tseslint.config(
   ...tseslint.configs.stylisticTypeChecked,
   perfectionist.configs["recommended-natural"],
   {
+languageOptions: {
+      parserOptions: {
+        ecmaVersion: 2024,
+      },
+    },
+    rules: {
+      // Allow test files to use describe/it/beforeEach/afterEach without imports
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    },
+  },
+  {
+    files: ["src/**/*.test.mts", "src/**/*.test.ts"],
     languageOptions: {
       parserOptions: {
         ecmaVersion: 2024,
-        projectService: {
-          allowDefaultProject: [
-            "eslint.config.mjs",
-            "tsdown.config.mjs",
-            "vite.config.mjs",
-            "vitest.config.mts",
-            "docs/docsify.js",
-          ],
-        },
-        tsconfigRootDir: import.meta.dirname, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       },
     },
-    plugins: {
+    rules: {
+      // Relax some rules for test files
+      "max-params": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "functional/immutable-data": "off",
+    },
+  },
+  {
+    files: ["src/**/*.mjs", "src/**/*.mts"],
+    languageOptions: {
       functional,
       immutable,
       unicorn,

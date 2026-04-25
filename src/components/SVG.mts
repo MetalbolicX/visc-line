@@ -11,14 +11,24 @@ import type { SVGSelection } from "@/types/index.mjs";
  * written by {@link applyThemeCssVars}.
  *
  * @param container - The DOM element that will contain the SVG.
+ * @param ariaLabel - Optional ARIA label for accessibility.
  * @returns D3 selection for the created or updated `<svg>` element.
  */
-export const renderSVG = (container: HTMLElement): SVGSelection =>
-  select(container)
+export const renderSVG = (
+  container: HTMLElement,
+  ariaLabel?: string,
+): SVGSelection => {
+  const selection = select(container)
     .selectAll<SVGSVGElement, null>("svg")
     .data([null])
     .join("svg")
     .attr("width", container.clientWidth)
     .attr("height", container.clientHeight)
     .style("background", "var(--vl-background, white)")
-    .style("overflow", "visible");
+    .style("overflow", "visible")
+    .attr("role", "img");
+  if (ariaLabel) {
+    selection.attr("aria-label", ariaLabel);
+  }
+  return selection;
+};

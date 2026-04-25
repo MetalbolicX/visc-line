@@ -1,12 +1,6 @@
-import type {
-  AnyScale,
-  BoundsSelection,
-  TickableScale,
-} from "@/types/index.mjs";
+import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
-/** Cast an AnyScale into a TickableScale for tick generation. */
-const asTickableScale = (scale: AnyScale): TickableScale =>
-  scale as unknown as TickableScale;
+import { asTickable } from "@/utils/scaleCast.mjs";
 
 /**
  * Render horizontal grid lines (left-to-right) across the chart area.
@@ -37,11 +31,11 @@ export const renderXGrid = (
   xScale: AnyScale,
   yScale: AnyScale,
 ): void => {
-  const xTickableScale = asTickableScale(xScale);
-  const yTickableScale = asTickableScale(yScale);
+  const xTickableScale = asTickable(xScale);
+  const yTickableScale = asTickable(yScale);
   const [xMin, xMax] = xTickableScale.domain();
 
-  if (xMin === undefined || xMax === undefined) {
+  if (xMin == null || xMax == null) {
     return;
   }
 
@@ -86,11 +80,11 @@ export const renderYGrid = (
   xScale: AnyScale,
   yScale: AnyScale,
 ): void => {
-  const xTickableScale = asTickableScale(xScale);
-  const yTickableScale = asTickableScale(yScale);
+  const xTickableScale = asTickable(xScale);
+  const yTickableScale = asTickable(yScale);
   const [yMin, yMax] = yTickableScale.domain();
 
-  if (yMin === undefined || yMax === undefined) {
+  if (yMin == null || yMax == null) {
     return;
   }
 

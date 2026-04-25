@@ -1,7 +1,7 @@
 import type { Margins, SVGSelection } from "@/types/index.mjs";
 
 /** Options shared between X and Y axis label renderers. */
-interface AxisLabelOptions {
+export interface AxisLabelOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
   readonly label?: string;

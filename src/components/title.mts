@@ -1,7 +1,7 @@
 import type { Margins, SVGSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderTitle}. */
-interface RenderTitleOptions {
+export interface RenderTitleOptions {
   /** Layout margins used for positioning. */
   readonly margins: Margins;
   /** The title text to render. */

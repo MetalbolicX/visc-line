@@ -8,6 +8,7 @@ import type {
   BoundsSelection,
   ProcessedSeries,
 } from "@/types/index.mjs";
+import { asInvertibleScale, asScaleNumber } from "@/utils/scaleCast.mjs";
 
 // ── Per-chart tooltip instances ───────────────────────────────────────────────
 
@@ -70,13 +71,11 @@ const sortDataByX = <T,>(
 
 // ── Public data types ─────────────────────────────────────────────────────────
 
-/** Data passed to the tooltip renderer. */
 export interface TooltipData {
   readonly rows: readonly TooltipRow[];
   readonly xLabel: string;
 }
 
-/** One value row in the tooltip body. */
 export interface TooltipRow {
   readonly color: string;
   readonly label: string;
@@ -155,8 +154,7 @@ const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
 
 // ── Options ─────────────────────────────────────────────────────────────────
 
-/** Options for the {@link addTooltip} function. */
-interface AddTooltipOptions {
+export interface AddTooltipOptions {
   readonly formatX?: (v: unknown) => string;
   readonly formatY?: (v: unknown) => string;
   readonly innerHeight: number;
@@ -202,7 +200,10 @@ export const addTooltip = <T,>(
     tooltipHtml = defaultTooltipHtml,
   }: AddTooltipOptions = { innerHeight: 0, innerWidth: 0 },
 ): TipVizTooltip => {
-  const boundsEl = boundsGroup.node()!;
+  const boundsEl = boundsGroup.node();
+  if (!boundsEl) {
+    throw new Error("addTooltip: boundsGroup must be attached to the DOM");
+  }
   const referenceData = sortDataByX(series[0]?.data ?? [], xAccessor);
   const sortedSeriesByLabel = new Map(
     series.map((serie) => [serie.label, sortDataByX(serie.data, xAccessor)]),
@@ -267,11 +268,7 @@ export const addTooltip = <T,>(
     .attr("fill", "transparent")
     .on("mousemove", (event: MouseEvent) => {
       const [mx] = pointer(event);
-      const xVal = (
-        xScale as unknown as Readonly<{
-          readonly invert: (v: number) => unknown;
-        }>
-      ).invert(mx);
+      const xVal = asInvertibleScale(xScale).invert(mx);
       const comparableXVal = toComparableX(xVal);
       const idx = Math.max(
         0,
@@ -283,7 +280,7 @@ export const addTooltip = <T,>(
       const refDatum = referenceData[idx];
       if (!refDatum) return;
 
-      const cx = (xScale as (v: unknown) => number)(xAccessor(refDatum));
+      const cx = asScaleNumber(xScale)(xAccessor(refDatum));
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
       const rows: TooltipRow[] = [];
@@ -312,9 +309,15 @@ export const addTooltip = <T,>(
         const datum = sortedSeries[si];
         if (!datum) return;
 
+        const xNumScale = asScaleNumber(xScale);
+        const yNumScale = asScaleNumber(yScale);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const dot = select(this)
-          .attr("cx", (xScale as (v: unknown) => number)(xAccessor(datum)))
-          .attr("cy", (yScale as (v: unknown) => number)(serie.accessor(datum)))
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .attr("cx", (d: any) => xNumScale(xAccessor(d)))
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .attr("cy", (d: any) => yNumScale(serie.accessor(d)))
           .attr("display", null)
           .node();
 

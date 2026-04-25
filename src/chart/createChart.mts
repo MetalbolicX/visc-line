@@ -68,10 +68,20 @@ export const createChart = <T,>(
     xType = "time",
   }: ChartOptions = {},
 ): ChartInstance<T> => {
+  if (container == null) {
+    throw new Error("createChart: container must be a non-null HTMLElement");
+  }
+  if (!Array.isArray(config.data)) {
+    throw new Error("createChart: config.data must be an array");
+  }
+  if (!Array.isArray(config.ySeries) || config.ySeries.length === 0) {
+    throw new Error("createChart: config.ySeries must be a non-empty array");
+  }
+
   const resolvedTheme = mergeTheme(defaultTheme, theme);
   applyThemeCssVars(container, resolvedTheme);
 
-  const svg = renderSVG(container);
+  const svg = renderSVG(container, "Interactive line chart");
   const bounds = renderBoundsGroup(svg, margins);
 
   const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
@@ -140,7 +150,7 @@ export const createChart = <T,>(
       disposeTooltip(bounds);
     },
     get series() {
-      return state.currentSeries;
+      return Object.freeze([...state.currentSeries]);
     },
     svg,
     update: (newData: readonly T[]): void => {

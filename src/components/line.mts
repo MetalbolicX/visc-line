@@ -2,16 +2,12 @@ import type { CurveFactory, Selection } from "d3";
 
 import { line, select } from "d3";
 
-import type {
-  AnyScale,
-  BoundsSelection,
-  CurvePreset,
-  ProcessedSeries,
-} from "@/types/index.mjs";
+import type { AnyScale, BoundsSelection, CurvePreset, ProcessedSeries } from "@/types/index.mjs";
 import { resolveCurve } from "@/utils/index.mjs";
+import { asScaleNumber } from "@/utils/scaleCast.mjs";
 
 /** Options for {@link renderLine}. */
-interface RenderLineOptions {
+export interface RenderLineOptions {
   /**
    * D3 curve factory or preset name used by the line generator.
    * Defaults to `"linear"`. Accepts any {@link CurvePreset} string or a
@@ -73,8 +69,8 @@ export const renderLine = <T,>(
   const buildPath = (serie: ProcessedSeries<T>): null | string =>
     line<T>()
       .curve(curveFactory)
-      .x((d) => (xScale as (v: unknown) => number)(xAccessor(d)))
-      .y((d) => (yScale as (v: unknown) => number)(serie.accessor(d)))(
+      .x((d) => asScaleNumber(xScale)(xAccessor(d)))
+      .y((d) => asScaleNumber(yScale)(serie.accessor(d)))(
       serie.data,
     );
 

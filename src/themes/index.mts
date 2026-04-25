@@ -1,1 +1,1 @@
-export * from "./defaultTheme.mjs";
+export { defaultTheme } from "@/themes/defaultTheme.mjs";
