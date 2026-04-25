@@ -96,9 +96,30 @@ interface ChartInternals {
   readonly yScale: AnyScale;
 }
 
-const chartInternalsRegistry = new WeakMap<ChartInstance<unknown>, ChartInternals>();
+const chartInternalsRegistry = new WeakMap<
+  ChartInstance<unknown>,
+  ChartInternals
+>();
 
-const getChartInternals = (instance: ChartInstance<unknown>): ChartInternals => {
+/**
+ * Retrieve the internal chart data associated with a ChartInstance.
+ *
+ * Why: internals are stored in a WeakMap to avoid leaking memory when
+ * chart instances are discarded. Consumers should call this helper when
+ * they need access to low-level bounds, scales, or dimensions.
+ *
+ * Invariant: a ChartInstance passed here MUST have been registered via
+ * chartInternalsRegistry; otherwise this function throws. This enforces
+ * a clear lifetime boundary between publicly-held instances and their
+ * private internals.
+ *
+ * @param instance - The chart instance whose internals are requested.
+ * @returns The ChartInternals tied to the provided instance.
+ * @throws {Error} If no internals are registered for the given instance.
+ */
+const getChartInternals = (
+  instance: ChartInstance<unknown>,
+): ChartInternals => {
   const internals = chartInternalsRegistry.get(instance);
   if (!internals) {
     throw new Error("Chart internals are unavailable.");
