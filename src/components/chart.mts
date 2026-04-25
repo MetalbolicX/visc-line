@@ -86,18 +86,34 @@ const DEFAULT_MARGINS: Margins = { bottom: 70, left: 55, right: 60, top: 50 };
 const LEGEND_TOP_OFFSET = 12;
 const LEGEND_WIDTH = 90;
 
+/**
+ * Compare title option objects for identity of rendered title.
+ *
+ * Only the string value of `title` matters for deciding whether the
+ * title layer must be re-rendered. `previous` may be null when no title
+ * was previously applied.
+ */
 const areTitleOptionsEqual = (
   previous: null | WithTitleOptions,
   next: WithTitleOptions,
 ): boolean => previous?.title === next.title;
 
+/**
+ * Deep-ish equality check for legend options.
+ *
+ * Returns true when the previous legend configuration matches the next one
+ * so the legend layer can be left untouched. Comparison rules:
+ * - `previous` may be null which always yields `false` (legend needs render)
+ * - items arrays must be equal length
+ * - each corresponding item must match both `color` and `label`
+ */
 const areLegendOptionsEqual = (
   previous: null | WithLegendOptions,
   next: WithLegendOptions,
 ): boolean => {
   if (!previous) return false;
   if (previous.items.length !== next.items.length) return false;
-  for (let i = 0; i < previous.items.length; i += 1) {
+  for (let i = 0; i < previous.items.length; i++) {
     const prevItem = previous.items[i];
     const nextItem = next.items[i];
     if (!prevItem || !nextItem) return false;
@@ -107,6 +123,16 @@ const areLegendOptionsEqual = (
   return true;
 };
 
+/**
+ * Shallow equality for tooltip configuration options.
+ *
+ * This compares the observable parts of WithTooltipOptions only: the
+ * formatting callbacks and the stylesheet URL. Comparison is by
+ * referential equality for functions (formatX/formatY) and by string
+ * equality for stylesheetUrl. Two absent/undefined properties compare
+ * equal. This is intentionally lightweight to avoid deep-cloning
+ * closures or comparing implementation details of formatter functions.
+ */
 const areTooltipOptionsEqual = (
   previous: WithTooltipOptions,
   next: WithTooltipOptions,
@@ -115,6 +141,13 @@ const areTooltipOptionsEqual = (
   previous.formatY === next.formatY &&
   previous.stylesheetUrl === next.stylesheetUrl;
 
+/**
+ * Equality check for zoom/pan options.
+ *
+ * Only the `onZoom` callback identity is relevant for deciding whether
+ * to reattach zoom behaviour. Uses referential equality: if the same
+ * function reference is provided, no rebind is necessary.
+ */
 const areZoomPanOptionsEqual = (
   previous: WithZoomPanOptions,
   next: WithZoomPanOptions,
