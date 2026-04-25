@@ -1,4 +1,5 @@
 export * from "./accessibility/index.mjs";
+export * from "./chart/index.mjs";
 export * from "./components/index.mjs";
 export * from "./interactivity/index.mjs";
 export * from "./services/index.mjs";

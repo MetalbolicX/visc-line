@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import type { ChartConfig, Theme } from "../../types/index.mjs";
-import { createChart } from "../chart.mjs";
 import { defaultTheme } from "../../themes/defaultTheme.mjs";
+import { createChart } from "../createChart.mjs";
 
 interface TestData {
   date: Date;
