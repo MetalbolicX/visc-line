@@ -342,3 +342,22 @@ export const addTooltip = <T,>(
 };
 
 export { safeColor, sortDataByX, toComparableX };
+
+/**
+ * Removes the tooltip element associated with a bounds group from the DOM
+ * and cleans up the registry entry.
+ *
+ * Call this when disposing a chart instance to prevent memory leaks from
+ * accumulated tooltip elements in the document body.
+ *
+ * @param boundsGroup - D3 selection of the chart's bounds `<g>` element.
+ */
+export const disposeTooltip = (boundsGroup: BoundsSelection): void => {
+  const boundsEl = boundsGroup.node();
+  if (!boundsEl) return;
+  const entry = tooltipRegistry.get(boundsEl);
+  if (entry) {
+    entry.tooltip.remove();
+    tooltipRegistry.delete(boundsEl);
+  }
+};

@@ -4,29 +4,31 @@ import type { ProcessedSeries, SeriesDescriptor } from "@/types/index.mjs";
 
 /**
  * @internal
- * Determines whether a value is a valid, finite number.
- * Treats null, undefined, NaN, and Infinity as invalid.
+ * Determines whether a value is a valid, finite number or a Date.
+ * Treats null, undefined, NaN, Infinity, and non-date strings as invalid.
  *
  * @param v - Any value to validate.
- * @returns True if v is a usable numeric value, false otherwise.
+ * @returns True if v is a usable numeric value or a Date, false otherwise.
  */
 const isValidNumber = (v: unknown): boolean =>
   v !== null &&
   v !== undefined &&
-  !Number.isNaN(Number(v)) &&
-  Number.isFinite(Number(v));
+  (v instanceof Date
+    ? !Number.isNaN(v.getTime())
+    : !Number.isNaN(Number(v)) && Number.isFinite(Number(v)));
 
 /**
  * Filters an array of data items, keeping only those where both the x and y values
- * (obtained via the provided accessor functions) are valid numbers.
+ * (obtained via the provided accessor functions) are valid numbers or Dates.
  *
- * Uses isValidNumber to validate each accessed value.
+ * Uses isValidNumber to validate each accessed value. Date objects are accepted
+ * for x-axis values (time scales); numeric values are accepted for both axes.
  *
  * @template T
  * @param rawData - Array of raw data items to filter.
- * @param xAccessor - Function that returns the x value for an item.
- * @param yAccessor - Function that returns the y value for an item.
- * @returns Array of data items for which both xAccessor(item) and yAccessor(item) are valid numbers.
+ * @param xAccessor - Function that returns the x value for an item (number or Date).
+ * @param yAccessor - Function that returns the y value for an item (must be number).
+ * @returns Array of data items for which both xAccessor(item) and yAccessor(item) are valid.
  */
 export const processNumericData = <T,>(
   rawData: readonly T[],
@@ -59,13 +61,6 @@ export const processAllSeries = <T,>(
     data: processNumericData(rawData, xAccessor, serie.accessor),
   }));
 
-/**
- * Compute combined x and y extents for multiple series.
- *
- * @param processedSeries - Array of series objects with `data` and `accessor`.
- * @param xAccessor - Function that extracts the x value from a datum.
- * @returns An object with xDomain and yDomain two-element extent arrays.
- */
 /**
  * In-memory cache for multi-series extents keyed by `extentCacheKey`.
  *
@@ -160,4 +155,20 @@ export const getMultiSeriesExtents = <T,>(
 
   extentCache.set(cacheKey, result);
   return result;
+};
+
+/**
+ * Clears the module-level extent cache.
+ *
+ * Call this before recomputing extents with new data to avoid returning
+ * stale cached values when data arrays have the same length but different content.
+ *
+ * @example
+ * ```ts
+ * clearExtentCache();
+ * const { xDomain, yDomain } = getMultiSeriesExtents(newSeries, accessor);
+ * ```
+ */
+export const clearExtentCache = (): void => {
+  extentCache.clear();
 };

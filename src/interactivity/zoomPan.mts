@@ -1,6 +1,6 @@
-import type { ZoomBehavior } from "d3";
+import type { ZoomBehavior, ZoomTransform } from "d3";
 
-import { zoom } from "d3";
+import { zoom, zoomIdentity } from "d3";
 
 import type { AnyScale, SVGSelection } from "@/types/index.mjs";
 
@@ -32,16 +32,10 @@ interface AddZoomPanOptions {
  * @param options - Configuration options.
  * @returns The configured D3 zoom behavior augmented with a `reset()` method.
  */
-export /**
-        *
-        */
-const addZoomPan = (
+export const addZoomPan = (
   svg: SVGSelection,
   { innerHeight, innerWidth, onZoom, xScale, yScale }: AddZoomPanOptions,
 ): ZoomBehaviorWithReset => {
-  /**
-   *
-   */
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.5, 32])
     .extent([
@@ -66,8 +60,7 @@ const addZoomPan = (
       svg.call(
         // eslint-disable-next-line @typescript-eslint/unbound-method
         zoomBehavior.transform as never,
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        zoom<SVGSVGElement, unknown>().transform,
+        zoomIdentity as unknown as ZoomTransform,
       ),
   });
 

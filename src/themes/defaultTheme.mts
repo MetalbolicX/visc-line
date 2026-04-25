@@ -5,10 +5,7 @@ import type { Theme } from "@/types/index.mjs";
  * when no override is provided.  Pass a `ThemeOverride` to `mergeTheme` to
  * customize only the tokens you care about.
  */
-export /**
-        *
-        */
-const defaultTheme: Theme = {
+export const defaultTheme: Theme = {
   accessibility: {
     highContrast: false,
     reducedMotion: true,

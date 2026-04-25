@@ -25,9 +25,10 @@ import {
   renderYAxisLabel,
   renderYGrid,
 } from "@/components/index.mjs";
-import { addTooltip, addZoomPan } from "@/interactivity/index.mjs";
+import { addTooltip, addZoomPan, disposeTooltip } from "@/interactivity/index.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import {
+  clearExtentCache,
   createScales,
   getDimensions,
   getMultiSeriesExtents,
@@ -238,6 +239,7 @@ export const createChart = <T,>(
       .remove();
     svg.on(".zoom", null);
     zoomBehavior = null;
+    disposeTooltip(bounds);
   };
 
   const render = (): void => {
@@ -400,6 +402,7 @@ export const createChart = <T,>(
     svg,
     update: (newData: readonly T[]): void => {
       ensureActive();
+      clearExtentCache();
       currentSeries = processAllSeries<T>(
         newData,
         config.xSerie.accessor,

@@ -27,12 +27,6 @@ const scaleFactories: Record<ScaleType, (exp?: number) => AnyScale> = {
   time: () => scaleTime(),
 };
 
-/** The pair of configured D3 scales returned by {@link createScales}. */
-export interface ChartScales {
-  readonly xScale: AnyScale;
-  readonly yScale: AnyScale;
-}
-
 /**
  * Pair of configured D3 scales used for chart coordinate transforms.
  *
@@ -68,6 +62,23 @@ export interface CreateScalesOptions {
 }
 
 /**
+ * Validates that a numeric domain is suitable for a given scale type.
+ * Log and pow scales require strictly positive domains.
+ *
+ * @param domain - A two-element domain tuple.
+ * @param scaleType - The scale type to validate for.
+ * @returns True if the domain is valid for the scale type.
+ */
+const isDomainValidForScale = (
+  domain: readonly number[],
+  scaleType: ScaleType,
+): boolean => {
+  if (scaleType !== "log" && scaleType !== "pow") return true;
+  const [min, max] = domain.map(Number);
+  return isFinite(min) && isFinite(max) && min > 0 && max > 0;
+};
+
+/**
  * Create configured X and Y scales for charts.
  *
  * This factory returns fresh, pre-configured AnyScale instances whose domains
@@ -79,6 +90,8 @@ export interface CreateScalesOptions {
  * - xExponent/yExponent are only applied when the corresponding type is "pow".
  * - For time scales, supply Date values for xDomain; numeric domains are used
  *   for linear/log/pow scales.
+ * - Log and pow scales fall back to linear if the domain contains non-positive values,
+ *   which would otherwise cause a runtime error.
  *
  * @param options.createScales - Options object (see CreateScalesOptions).
  * @returns A ChartScales pair containing xScale and yScale.
@@ -97,8 +110,11 @@ export const createScales = ({
   yExponent = 2,
   yType = "linear",
 }: CreateScalesOptions): ChartScales => {
-  const xFactory = scaleFactories[xType] ?? scaleFactories.linear;
-  const yFactory = scaleFactories[yType] ?? scaleFactories.linear;
+  const xSafeType = isDomainValidForScale(xDomain as readonly number[], xType) ? xType : "linear";
+  const ySafeType = isDomainValidForScale(yDomain as readonly number[], yType) ? yType : "linear";
+
+  const xFactory = scaleFactories[xSafeType] ?? scaleFactories.linear;
+  const yFactory = scaleFactories[ySafeType] ?? scaleFactories.linear;
   const xScale = (
     xFactory(xExponent) as ScaleLinear<number, number>
   )

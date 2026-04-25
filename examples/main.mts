@@ -139,9 +139,6 @@ export const main = (container: HTMLElement): void => {
     addZoomPan(svg, {
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
-      /**
-       *
-       */
       onZoom: (newX, newY) => {
         renderXAxis(bounds, newX, dims.innerHeight);
         renderYAxis(bounds, newY);

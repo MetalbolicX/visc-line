@@ -28,22 +28,10 @@ const deepMerge = <T extends PlainObject>(
   base: T,
   override: PlainObject,
 ): T => {
-  /**
-   *
-   */
   const result: PlainObject = { ...base };
 
-  for (/**
-        *
-        */
-  const key of Object.keys(override)) {
-    /**
-     *
-     */
+  for (const key of Object.keys(override)) {
     const overrideVal = override[key];
-    /**
-     *
-     */
     const baseVal = base[key];
 
     if (overrideVal === undefined) continue;
@@ -72,10 +60,7 @@ const deepMerge = <T extends PlainObject>(
  * @example
  * const theme = mergeTheme(defaultTheme, { line: { strokeWidth: 3 } });
  */
-export /**
-        *
-        */
-const mergeTheme = (base: Theme, override?: ThemeOverride): Theme => {
+export const mergeTheme = (base: Theme, override?: ThemeOverride): Theme => {
   if (!override) return base;
   return deepMerge(
     base as unknown as PlainObject,

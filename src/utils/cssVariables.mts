@@ -12,13 +12,7 @@ import type { Theme } from "@/types/index.mjs";
  * applyThemeCssVars(chartContainer, theme);
  * // then in CSS: .my-line { stroke: var(--vl-axis-color); }
  */
-export /**
-        *
-        */
-const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
-  /**
-   *
-   */
+export const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
   const { style } = root;
 
   style.setProperty("--vl-background", theme.colors.background);
