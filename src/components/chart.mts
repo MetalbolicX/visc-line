@@ -2,10 +2,8 @@ import type { CurveFactory } from "d3";
 
 import type {
   AnyScale,
-  BoundsSelection,
   ChartConfig,
   CurvePreset,
-  Dimensions,
   ProcessedSeries,
   Theme,
 } from "@/types/index.mjs";
@@ -15,9 +13,11 @@ import { observeResize } from "@/accessibility/index.mjs";
 import {
   renderBoundsGroup,
   renderContentGroup,
+  renderLegend,
   renderLine,
   renderPoints,
   renderSVG,
+  renderTitle,
   renderXAxis,
   renderXAxisLabel,
   renderXGrid,
@@ -25,7 +25,8 @@ import {
   renderYAxisLabel,
   renderYGrid,
 } from "@/components/index.mjs";
-import { addTooltip } from "@/interactivity/index.mjs";
+import { addTooltip, addZoomPan } from "@/interactivity/index.mjs";
+import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import {
   createScales,
   getDimensions,
@@ -35,20 +36,26 @@ import {
 import { defaultTheme } from "@/themes/index.mjs";
 import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 
+export interface WithTooltipOptions {
+  readonly formatX?: (v: unknown) => string;
+  readonly formatY?: (v: unknown) => string;
+  readonly stylesheetUrl?: string;
+}
+
+export interface WithTitleOptions {
+  readonly title: string;
+}
+
+export interface WithLegendOptions {
+  readonly items: readonly Readonly<{ readonly color: string; readonly label: string }>[];
+}
+
+export interface WithZoomPanOptions {
+  readonly onZoom?: (newX: AnyScale, newY: AnyScale) => void;
+}
+
 /**
  * A live, mounted chart handle returned by createChart.
- *
- * Template T is the raw datum type used to produce rendered series. Consumers
- * must call dispose() when the chart is no longer needed to remove observers
- * and event handlers and avoid memory leaks.
- *
- * Invariants:
- * - `container` must remain attached to the document for layout/measurement
- *   helpers (getDimensions) to produce correct values.
- * - `series` reflects the most recently processed series produced from the
- *   last call to update() or the initial config data.
- *
- * @template T - datum type for the underlying data array
  */
 export interface ChartInstance<T> {
   readonly container: HTMLElement;
@@ -56,197 +63,65 @@ export interface ChartInstance<T> {
   readonly series: readonly ProcessedSeries<T>[];
   readonly svg: ReturnType<typeof renderSVG>;
   readonly update: (newData: readonly T[]) => void;
+  readonly withAxes: () => ChartInstance<T>;
+  readonly withGrid: () => ChartInstance<T>;
+  readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
+  readonly withPoints: () => ChartInstance<T>;
+  readonly withTitle: (options: WithTitleOptions) => ChartInstance<T>;
+  readonly withTooltip: (options?: WithTooltipOptions) => ChartInstance<T>;
+  readonly withZoomPan: (options?: WithZoomPanOptions) => ChartInstance<T>;
 }
 
-/**
- * Curve preset name or D3 CurveFactory for the line generator.
- * When omitted, falls back to `theme.line.curve` (default: `"linear"`).
- */
-/**
- * Optional configuration for createChart.
- *
- * Type-first notes:
- * - `curve`: either a D3 CurveFactory or a named CurvePreset. If omitted the
- *   resolved curve is taken from the merged theme (theme.line.curve).
- * - `margins`: layout margins in pixels. Defaults to { bottom:70, left:55,
- *   right:60, top:50 } and only affects SVG group placement.
- * - `theme`: a partial Theme object merged with the library defaultTheme.
- * - `xType`: the x-axis scale type. Supported values are 'linear', 'log',
- *   'pow', and 'time' (default: 'time').
- */
-interface ChartOptions {
+export interface ChartOptions {
   readonly curve?: CurveFactory | CurvePreset;
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
   readonly xType?: "linear" | "log" | "pow" | "time";
 }
-
-interface MinimalChartOptions {
-  readonly curve?: CurveFactory | CurvePreset;
-  readonly margins?: Margins;
-  readonly theme?: Partial<Theme>;
-  readonly xType?: "linear" | "log" | "pow" | "time";
-}
-
-interface ChartInternals {
-  readonly bounds: BoundsSelection;
-  readonly content: BoundsSelection;
-  readonly dims: Dimensions;
-  readonly xScale: AnyScale;
-  readonly yScale: AnyScale;
-}
-
-const chartInternalsRegistry = new WeakMap<
-  ChartInstance<unknown>,
-  ChartInternals
->();
-
-/**
- * Retrieve the internal chart data associated with a ChartInstance.
- *
- * Why: internals are stored in a WeakMap to avoid leaking memory when
- * chart instances are discarded. Consumers should call this helper when
- * they need access to low-level bounds, scales, or dimensions.
- *
- * Invariant: a ChartInstance passed here MUST have been registered via
- * chartInternalsRegistry; otherwise this function throws. This enforces
- * a clear lifetime boundary between publicly-held instances and their
- * private internals.
- *
- * @param instance - The chart instance whose internals are requested.
- * @returns The ChartInternals tied to the provided instance.
- * @throws {Error} If no internals are registered for the given instance.
- */
-const getChartInternals = (
-  instance: ChartInstance<unknown>,
-): ChartInternals => {
-  const internals = chartInternalsRegistry.get(instance);
-  if (!internals) {
-    throw new Error("Chart internals are unavailable.");
-  }
-  return internals;
-};
 
 const DEFAULT_MARGINS: Margins = { bottom: 70, left: 55, right: 60, top: 50 };
+const LEGEND_TOP_OFFSET = 12;
+const LEGEND_WIDTH = 90;
 
-export const createMinimalChart = <T,>(
-  container: HTMLElement,
-  config: ChartConfig<T>,
-  {
-    curve,
-    margins = DEFAULT_MARGINS,
-    theme,
-    xType = "time",
-  }: MinimalChartOptions = {},
-): ChartInstance<T> => {
-  const resolvedTheme = mergeTheme(defaultTheme, theme);
-  applyThemeCssVars(container, resolvedTheme);
-  const svg = renderSVG(container);
-  const bounds = renderBoundsGroup(svg, margins);
-  let currentSeries = processAllSeries<T>(
-    config.data,
-    config.xSerie.accessor,
-    config.ySeries,
-  );
+const areTitleOptionsEqual = (
+  a: null | WithTitleOptions,
+  b: WithTitleOptions,
+): boolean => a?.title === b.title;
 
-  const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
-  const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
-
-  const disposePlaceholder = (): void => {};
-
-  let disposeResize = disposePlaceholder;
-
-  const instance: ChartInstance<T> = {
-    container,
-    dispose: (): void => {
-      disposeResize();
-      chartInternalsRegistry.delete(instance as ChartInstance<unknown>);
-    },
-    get series() {
-      return currentSeries;
-    },
-    svg,
-    update: (newData: readonly T[]): void => {
-      currentSeries = processAllSeries<T>(
-        newData,
-        config.xSerie.accessor,
-        config.ySeries,
-      );
-      render();
-    },
-  };
-
-  const render = (): void => {
-    const dims = getDimensions(container, margins);
-    const content = renderContentGroup(bounds, svg, {
-      innerHeight: dims.innerHeight,
-      innerWidth: dims.innerWidth,
-    });
-    const { xDomain, yDomain } = getMultiSeriesExtents(
-      currentSeries,
-      config.xSerie.accessor,
-    );
-    const { xScale, yScale } = createScales({
-      innerHeight: dims.innerHeight,
-      innerWidth: dims.innerWidth,
-      xDomain: xDomain as Parameters<typeof createScales>[0]["xDomain"],
-      xType,
-      yDomain,
-    });
-
-    renderLine<T>(
-      content,
-      currentSeries,
-      xScale,
-      yScale,
-      config.xSerie.accessor,
-      { curve: resolvedCurve, reducedMotion },
-    );
-
-    chartInternalsRegistry.set(instance as ChartInstance<unknown>, {
-      bounds,
-      content,
-      dims,
-      xScale,
-      yScale,
-    });
-  };
-
-  render();
-  disposeResize = observeResize(container, render);
-
-  return instance;
+const areLegendOptionsEqual = (
+  a: null | WithLegendOptions,
+  b: WithLegendOptions,
+): boolean => {
+  if (!a) return false;
+  if (a.items.length !== b.items.length) return false;
+  for (let index = 0; index < a.items.length; index += 1) {
+    const left = a.items[index];
+    const right = b.items[index];
+    if (!left || !right) return false;
+    if (left.color !== right.color || left.label !== right.label) return false;
+  }
+  return true;
 };
+
+const areTooltipOptionsEqual = (
+  a: WithTooltipOptions,
+  b: WithTooltipOptions,
+): boolean =>
+  a.formatX === b.formatX &&
+  a.formatY === b.formatY &&
+  a.stylesheetUrl === b.stylesheetUrl;
+
+const areZoomPanOptionsEqual = (
+  a: WithZoomPanOptions,
+  b: WithZoomPanOptions,
+): boolean => a.onZoom === b.onZoom;
 
 /**
  * Create and mount a responsive SVG chart into the provided container.
  *
- * Key behaviors and side effects:
- * - Renders axes, grids, lines and points into an internal SVG appended to
- *   `container` and registers resize observers + tooltip handlers. Call
- *   `dispose()` on the returned ChartInstance to remove those observers.
- * - The chart measures layout using getDimensions; `container` must be
- *   attached to the document for correct measurement and grid/axis placement.
- * - `update(newData)` will re-process the series and re-render; the returned
- *   instance exposes the latest processed series via the `series` getter.
- *
- * Type parameters and arguments are intentionally explicit: the function does
- * not accept `any` and preserves the generic datum type T across processing
- * and interactivity handlers.
- *
- * @template T - the raw data item type supplied to the chart (used by accessors)
- * @param {HTMLElement} container - DOM element to append the SVG into. Must be
- *   attached to document for measurement.
- * @param {ChartConfig<T>} config - chart configuration (xSerie, ySeries, data)
- * @param {ChartOptions} [options] - optional rendering overrides (curve, margins, theme, xType)
- * @returns {ChartInstance<T>} a live chart handle. Call dispose() to teardown.
- * @example
- * ```ts
- * const chart = createChart(document.getElementById('root'), config);
- * // later
- * chart.update(newData);
- * chart.dispose();
- * ```
+ * Base behavior renders only the non-optional layers (theme vars, svg,
+ * bounds/content groups, and line series). Additional features are enabled
+ * incrementally via fluent `with*` methods.
  */
 export const createChart = <T,>(
   container: HTMLElement,
@@ -258,44 +133,79 @@ export const createChart = <T,>(
     xType = "time",
   }: ChartOptions = {},
 ): ChartInstance<T> => {
-  const minimalChart = createMinimalChart(container, config, {
-    curve,
-    margins,
-    theme,
-    xType,
-  });
-  const { bounds } = getChartInternals(minimalChart as ChartInstance<unknown>);
-  const { svg } = minimalChart;
-  minimalChart.dispose();
-  svg.selectAll<SVGPathElement, unknown>("path.chart-line").remove();
-
   const resolvedTheme = mergeTheme(defaultTheme, theme);
-  let currentSeries = minimalChart.series;
+  applyThemeCssVars(container, resolvedTheme);
+
+  const svg = renderSVG(container);
+  const bounds = renderBoundsGroup(svg, margins);
 
   const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
   const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
 
-  /**
-   * Re-render the entire chart into the existing SVG container.
-   *
-   * Notes / invariants:
-   * - Expects `container` to be attached to the document so measurements (getDimensions)
-   *   return correct values. If the container is detached, grid/axis placement may be wrong.
-   * - Idempotent in the sense that calling it repeatedly will reconcile the SVG content
-   *   by delegating to the renderer helpers (renderLine, renderPoints, renderAxis/grid helpers).
-   * - Side effects: mutates the SVG DOM (axes, grid, lines, points) and registers tooltip
-   *   event handlers via addTooltip. It does not close over external mutable state other than
-   *   `currentSeries`, `resolvedCurve` and `reducedMotion` which influence rendering output.
-   * - Performance: this is a hot path (called on resize and data updates). Consider memoizing
-   *   expensive scale/extent calculations if rendering becomes a bottleneck. (PERF)
-   *
-   * @remarks
-   * Uses the helper pipeline: measure -> create content group -> compute multi-series extents ->
-   * create scales -> render axes and grids -> draw lines & points -> attach axis labels & tooltip.
-   *
-   * @returns void
-   */
+  let hasAxes = false;
+  let hasGrid = false;
+  let hasPoints = false;
+  let hasTooltip = false;
+  let hasTitle = false;
+  let hasLegend = false;
+  let hasZoomPan = false;
+
+  let titleOptions: null | WithTitleOptions = null;
+  let legendOptions: null | WithLegendOptions = null;
+  let tooltipOptions: WithTooltipOptions = {};
+  let zoomPanOptions: WithZoomPanOptions = {};
+
+  let zoomBehavior: null | ZoomBehaviorWithReset = null;
+  let currentSeries = processAllSeries<T>(
+    config.data,
+    config.xSerie.accessor,
+    config.ySeries,
+  );
+  let isDisposed = false;
+
+  const clearOptionalNodes = (): void => {
+    if (!hasAxes) {
+      bounds.selectAll("g.x-axis, g.y-axis").remove();
+      svg.selectAll("text.x-axis-label, text.y-axis-label").remove();
+    }
+    if (!hasGrid) {
+      bounds.selectAll("line.grid-x, line.grid-y").remove();
+    }
+    if (!hasPoints) {
+      bounds.selectAll("g.point-series").remove();
+    }
+    if (!hasTitle) {
+      svg.selectAll("text.chart-title").remove();
+    }
+    if (!hasLegend) {
+      svg.selectAll("g.legend").remove();
+    }
+    if (!hasTooltip) {
+      bounds
+        .on("mousemove.tooltip", null)
+        .on("mouseleave.tooltip", null)
+        .selectAll("line.tooltip-cursor, circle.tooltip-dot")
+        .remove();
+    }
+    if (!hasZoomPan) {
+      svg.on(".zoom", null);
+      zoomBehavior = null;
+    }
+  };
+
+  const cleanupAllEnhancements = (): void => {
+    bounds
+      .on("mousemove.tooltip", null)
+      .on("mouseleave.tooltip", null)
+      .selectAll("line.tooltip-cursor, circle.tooltip-dot")
+      .remove();
+    svg.on(".zoom", null);
+    zoomBehavior = null;
+  };
+
   const render = (): void => {
+    if (isDisposed) return;
+
     const dims = getDimensions(container, margins);
     const content = renderContentGroup(bounds, svg, {
       innerHeight: dims.innerHeight,
@@ -313,12 +223,6 @@ export const createChart = <T,>(
       yDomain,
     });
 
-    bounds
-      .call(renderXAxis, xScale, dims.innerHeight)
-      .call(renderYAxis, yScale);
-
-    content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
-
     renderLine<T>(
       content,
       currentSeries,
@@ -327,49 +231,134 @@ export const createChart = <T,>(
       config.xSerie.accessor,
       { curve: resolvedCurve, reducedMotion },
     );
-    renderPoints<T>(
-      content,
-      currentSeries,
-      xScale,
-      yScale,
-      config.xSerie.accessor,
-    );
 
-    svg
-      .call(renderXAxisLabel, {
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-        label: config.xSerie.label,
+    if (hasAxes) {
+      bounds
+        .call(renderXAxis, xScale, dims.innerHeight)
+        .call(renderYAxis, yScale);
+      svg
+        .call(renderXAxisLabel, {
+          innerHeight: dims.innerHeight,
+          innerWidth: dims.innerWidth,
+          label: config.xSerie.label,
+          margins: dims.margins,
+        })
+        .call(renderYAxisLabel, {
+          innerHeight: dims.innerHeight,
+          innerWidth: dims.innerWidth,
+          label: "Value",
+          margins: dims.margins,
+        });
+    }
+
+    if (hasGrid) {
+      content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
+    }
+
+    if (hasPoints) {
+      renderPoints<T>(
+        content,
+        currentSeries,
+        xScale,
+        yScale,
+        config.xSerie.accessor,
+      );
+    }
+
+    if (hasTooltip) {
+      addTooltip<T>(
+        bounds,
+        currentSeries,
+        xScale,
+        yScale,
+        config.xSerie.accessor,
+        {
+          ...tooltipOptions,
+          innerHeight: dims.innerHeight,
+          innerWidth: dims.innerWidth,
+        },
+      );
+    }
+
+    if (hasTitle && titleOptions) {
+      svg.call(renderTitle, {
         margins: dims.margins,
-      })
-      .call(renderYAxisLabel, {
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-        label: "Value",
-        margins: dims.margins,
+        title: titleOptions.title,
+        width: dims.width,
       });
+    }
 
-    addTooltip<T>(
-      bounds,
-      currentSeries,
-      xScale,
-      yScale,
-      config.xSerie.accessor,
-      { innerHeight: dims.innerHeight, innerWidth: dims.innerWidth },
-    );
+    if (hasLegend && legendOptions) {
+      svg.call(renderLegend, {
+        items: legendOptions.items,
+        x: margins.left + dims.innerWidth - LEGEND_WIDTH,
+        y: margins.top + LEGEND_TOP_OFFSET,
+      });
+    }
+
+    if (hasZoomPan) {
+      svg.on(".zoom", null);
+      zoomBehavior = addZoomPan(svg, {
+        innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
+        onZoom:
+          zoomPanOptions.onZoom ??
+          ((newX: AnyScale, newY: AnyScale): void => {
+            if (hasAxes) {
+              renderXAxis(bounds, newX, dims.innerHeight);
+              renderYAxis(bounds, newY);
+            }
+            if (hasGrid) {
+              content.call(renderXGrid, newX, newY).call(renderYGrid, newX, newY);
+            }
+            renderLine<T>(
+              content,
+              currentSeries,
+              newX,
+              newY,
+              config.xSerie.accessor,
+              { curve: resolvedCurve, reducedMotion },
+            );
+            if (hasPoints) {
+              renderPoints<T>(
+                content,
+                currentSeries,
+                newX,
+                newY,
+                config.xSerie.accessor,
+              );
+            }
+          }),
+        xScale,
+        yScale,
+      });
+    }
+
+    clearOptionalNodes();
   };
 
-  render();
-  const dispose = observeResize(container, render);
+  const disposeResize = observeResize(container, render);
 
-  return {
+  const ensureActive = (): void => {
+    if (isDisposed) {
+      throw new Error("Cannot operate on a disposed chart instance.");
+    }
+  };
+
+  const chart: ChartInstance<T> = {
     container,
-    dispose,
+    dispose: (): void => {
+      if (isDisposed) return;
+      isDisposed = true;
+      disposeResize();
+      cleanupAllEnhancements();
+    },
     get series() {
       return currentSeries;
     },
     svg,
     update: (newData: readonly T[]): void => {
+      ensureActive();
       currentSeries = processAllSeries<T>(
         newData,
         config.xSerie.accessor,
@@ -377,5 +366,61 @@ export const createChart = <T,>(
       );
       render();
     },
+    withAxes: (): ChartInstance<T> => {
+      ensureActive();
+      if (hasAxes) return chart;
+      hasAxes = true;
+      render();
+      return chart;
+    },
+    withGrid: (): ChartInstance<T> => {
+      ensureActive();
+      if (hasGrid) return chart;
+      hasGrid = true;
+      render();
+      return chart;
+    },
+    withLegend: (options: WithLegendOptions): ChartInstance<T> => {
+      ensureActive();
+      if (hasLegend && areLegendOptionsEqual(legendOptions, options)) return chart;
+      hasLegend = true;
+      legendOptions = options;
+      render();
+      return chart;
+    },
+    withPoints: (): ChartInstance<T> => {
+      ensureActive();
+      if (hasPoints) return chart;
+      hasPoints = true;
+      render();
+      return chart;
+    },
+    withTitle: (options: WithTitleOptions): ChartInstance<T> => {
+      ensureActive();
+      if (hasTitle && areTitleOptionsEqual(titleOptions, options)) return chart;
+      hasTitle = true;
+      titleOptions = options;
+      render();
+      return chart;
+    },
+    withTooltip: (options: WithTooltipOptions = {}): ChartInstance<T> => {
+      ensureActive();
+      if (hasTooltip && areTooltipOptionsEqual(tooltipOptions, options)) return chart;
+      hasTooltip = true;
+      tooltipOptions = options;
+      render();
+      return chart;
+    },
+    withZoomPan: (options: WithZoomPanOptions = {}): ChartInstance<T> => {
+      ensureActive();
+      if (hasZoomPan && areZoomPanOptionsEqual(zoomPanOptions, options)) return chart;
+      hasZoomPan = true;
+      zoomPanOptions = options;
+      render();
+      return chart;
+    },
   };
+
+  render();
+  return chart;
 };

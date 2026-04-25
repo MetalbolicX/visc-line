@@ -22,31 +22,30 @@ pnpm add visc-line
 
 ### Quick builders
 
-`visc-line` now exposes two high-level helpers:
+`visc-line` now exposes a fluent high-level builder:
 
-- `createChart(container, config, options)`: full chart (axes, grid, points, labels, tooltip)
-- `createMinimalChart(container, config, options)`: minimal chart (theme + svg + bounds/content + line only)
+- `createChart(container, config, options)`: base chart (theme + svg + bounds/content + line)
 
 ```ts
-import { createChart, createMinimalChart } from "visc-line";
+import { createChart } from "visc-line";
 
-// Full chart
-const full = createChart(container, config, { xType: "time" });
-
-// Minimal chart (line-only baseline)
-const minimal = createMinimalChart(container, config, { xType: "time" });
+const chart = createChart(container, config, { xType: "time" })
+  .withAxes()
+  .withGrid()
+  .withPoints()
+  .withTooltip();
 
 // Later
-full.update(newData);
-minimal.dispose();
+chart.update(newData);
+chart.dispose();
 ```
 
 Use the example `main` to mount a chart into an existing container — the example shows the recommended integration pattern. The runnable example is at [examples/main.mts](examples/main.mts).
 
 Builder examples:
 
-- Full helper: [examples/chart-builder.mts](examples/chart-builder.mts)
-- Minimal helper: [examples/minimal-chart-builder.mts](examples/minimal-chart-builder.mts)
+- Full composition: [examples/chart-builder.mts](examples/chart-builder.mts)
+- Base line-only chart: [examples/minimal-chart-builder.mts](examples/minimal-chart-builder.mts)
 
 From a local development HTML page (ES module):
 
@@ -67,7 +66,6 @@ import {
   addTooltip,
   addZoomPan,
   createChart,
-  createMinimalChart,
   createScales,
   processAllSeries,
   renderBoundsGroup,

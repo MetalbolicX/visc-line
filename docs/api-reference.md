@@ -8,7 +8,9 @@ This page documents the core functions, types, and CSS custom properties exposed
 
 ### `createChart`
 
-The recommended entry point. Mounts a fully-featured line chart into a container element, manages resize observation, and returns an update/dispose handle.
+The recommended entry point. Mounts a base line chart into a container element,
+manages resize observation, and returns an update/dispose handle with fluent
+`with*` methods to opt into optional features.
 
 ```ts
 createChart<T>(
@@ -44,6 +46,13 @@ createChart<T>(
 | `series` | `readonly ProcessedSeries<T>[]` | Current processed series snapshot |
 | `update(newData)` | `(readonly T[]) => void` | Re-render with new data |
 | `dispose()` | `() => void` | Tear down resize observer |
+| `withAxes()` | `() => ChartInstance<T>` | Enable x/y axes and axis labels |
+| `withGrid()` | `() => ChartInstance<T>` | Enable x/y grid lines |
+| `withPoints()` | `() => ChartInstance<T>` | Enable point markers |
+| `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>` | Enable tooltip interactivity |
+| `withTitle(options)` | `(WithTitleOptions) => ChartInstance<T>` | Enable chart title |
+| `withLegend(options)` | `(WithLegendOptions) => ChartInstance<T>` | Enable legend |
+| `withZoomPan(options?)` | `(WithZoomPanOptions?) => ChartInstance<T>` | Enable zoom/pan behavior |
 
 ---
 
