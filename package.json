@@ -60,7 +60,7 @@
     }
   },
   "dependencies": {
-    "tipviz": "^2.3.0"
+    "tipviz": "^2.3.1"
   },
   "peerDependencies": {
     "d3": "^7.9.0",
