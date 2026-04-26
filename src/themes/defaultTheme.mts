@@ -8,7 +8,7 @@ import type { Theme } from "@/types/index.mjs";
 export const defaultTheme: Theme = {
   accessibility: {
     highContrast: false,
-    reducedMotion: true,
+    reducedMotion: false,
   },
   axis: {
     color: "#333333",

@@ -2,15 +2,8 @@ import type { AxisDomain } from "d3";
 
 import { axisLeft } from "d3";
 
+import { asAxisScale } from "@/utils/axisScale.mjs";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
-
-/**
- * A scale compatible with D3 axis generators used in this module.
- */
-type AxisCompatibleScale = AnyScale & Readonly<{
-  readonly copy: () => unknown;
-  readonly range: () => readonly number[];
-}>;
 
 /** Options for {@link renderYAxis}. */
 export interface RenderYAxisOptions {
@@ -19,8 +12,6 @@ export interface RenderYAxisOptions {
   /** Optional formatter for tick labels. */
   readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
-
-const asAxisScale = (scale: AnyScale): AxisCompatibleScale => scale;
 
 /**
  * Render a left-oriented Y axis into the provided bounds group.

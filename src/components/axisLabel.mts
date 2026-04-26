@@ -32,7 +32,7 @@ export const renderXAxisLabel = (
     innerWidth,
     label,
     margins,
-  }: XAxisLabelOptions = {} as XAxisLabelOptions,
+  }: XAxisLabelOptions,
 ): void => {
   svg
     .selectAll<SVGTextElement, null>("text.x-axis-label")
@@ -65,7 +65,7 @@ export const renderYAxisLabel = (
     innerHeight,
     label,
     margins,
-  }: YAxisLabelOptions = {} as YAxisLabelOptions,
+  }: YAxisLabelOptions,
 ): void => {
   svg
     .selectAll<SVGTextElement, null>("text.y-axis-label")

@@ -66,6 +66,7 @@ export const createChart = <T,>(
     margins = DEFAULT_MARGINS,
     theme,
     xType = "time",
+    yLabel,
   }: ChartOptions = {},
 ): ChartInstance<T> => {
   if (container == null) {
@@ -121,6 +122,7 @@ export const createChart = <T,>(
         svg,
         xType,
         reducedMotion,
+        yLabel,
       },
       {
         onZoomBehaviorChange: (nextZoomBehavior): void => {

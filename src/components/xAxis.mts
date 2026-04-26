@@ -2,20 +2,8 @@ import type { AxisDomain } from "d3";
 
 import { axisBottom } from "d3";
 
+import { asAxisScale } from "@/utils/axisScale.mjs";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
-
-/**
- * Narrow view of a D3 scale sufficient for axis generators used here.
- *
- * We require `copy()` because D3 axis constructors call it internally
- * and `range()` to determine pixel extents. This intentionally omits other
- * scale methods to remain permissive over different scale kinds (linear,
- * time, band, etc.).
- */
-type AxisCompatibleScale = AnyScale & Readonly<{
-  readonly copy: () => unknown;
-  readonly range: () => readonly number[];
-}>;
 
 /** Options for {@link renderXAxis}. */
 export interface RenderXAxisOptions {
@@ -24,8 +12,6 @@ export interface RenderXAxisOptions {
   /** Optional formatter for tick labels. */
   readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
-
-const asAxisScale = (scale: AnyScale): AxisCompatibleScale => scale;
 
 /**
  * Render or update an X axis inside the provided bounds group.

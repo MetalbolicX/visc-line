@@ -8,6 +8,7 @@ import type {
   Theme,
 } from "@/types/index.mjs";
 import type { Margins } from "@/types/index.mjs";
+import type { LegendItem } from "@/components/legend.mjs";
 
 import type { CurvePreset } from "@/types/index.mjs";
 
@@ -22,10 +23,7 @@ export interface WithTitleOptions {
 }
 
 export interface WithLegendOptions {
-  readonly items: readonly Readonly<{
-    readonly color: string;
-    readonly label: string;
-  }>[];
+  readonly items: readonly LegendItem[];
 }
 
 export interface WithZoomPanOptions {
@@ -55,4 +53,5 @@ export interface ChartOptions {
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
   readonly xType?: ScaleType;
+  readonly yLabel?: string;
 }

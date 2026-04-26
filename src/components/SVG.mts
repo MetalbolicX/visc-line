@@ -28,7 +28,9 @@ export const renderSVG = (
     .style("overflow", "visible")
     .attr("role", "img");
   if (ariaLabel) {
-    selection.attr("aria-label", ariaLabel);
+    selection.attr("aria-label", ariaLabel).attr("aria-hidden", null);
+  } else {
+    selection.attr("aria-hidden", "true");
   }
   return selection;
 };

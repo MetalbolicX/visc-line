@@ -76,7 +76,8 @@ export const renderLine = <T,>(
 
   const shouldReduceMotion: boolean =
     reducedMotionOption ??
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    (typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   return boundsGroup
     .selectAll<SVGPathElement, ProcessedSeries<T>>("path.chart-line")

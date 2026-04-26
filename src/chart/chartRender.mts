@@ -70,6 +70,7 @@ export interface RenderContext<T> {
   readonly svg: SVGSelection;
   readonly xType: ScaleType;
   readonly reducedMotion: boolean;
+  readonly yLabel?: string;
 }
 
 /**
@@ -167,7 +168,7 @@ export const renderChart = <T,>(
       .call(renderYAxisLabel, {
         innerHeight: dims.innerHeight,
         innerWidth: dims.innerWidth,
-        label: "Value",
+        label: context.yLabel ?? context.config.ySeries[0]?.label ?? "Value",
         margins: dims.margins,
       });
   }
