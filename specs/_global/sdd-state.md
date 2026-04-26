@@ -66,19 +66,19 @@
 
 | Feature ID | Feature Name | Status |
 |------------|--------------|--------|
-| F001 | Theme System | pending |
-| F002 | Layout | pending |
-| F003 | SVG/Bounds | pending |
-| F004 | Accessibility | pending |
-| F005 | Data Services | pending |
-| F006 | Line Rendering | pending |
-| F007 | Axis System | pending |
-| F008 | Grid System | pending |
-| F009 | Points | pending |
-| F010 | Title | pending |
-| F011 | Legend | pending |
-| F012 | Tooltip | pending |
-| F013 | Zoom/Pan | pending |
+| F001 | Theme System | completed |
+| F002 | Layout | completed |
+| F003 | SVG/Bounds | completed |
+| F004 | Accessibility | completed |
+| F005 | Data Services | completed |
+| F006 | Line Rendering | completed |
+| F007 | Axis System | completed |
+| F008 | Grid System | completed |
+| F009 | Points | completed |
+| F010 | Title | completed |
+| F011 | Legend | completed |
+| F012 | Tooltip | completed |
+| F013 | Zoom/Pan | completed |
 
 ## Decision History
 
@@ -88,3 +88,22 @@
 
 - **Created**: 2026-04-25
 - **Last Updated**: 2026-04-25
+
+## Feature Detail Log
+
+### F001 — Theme System
+
+| Step | Status | Started | Completed | Notes |
+|------|--------|---------|-----------|-------|
+| specify | completed | 2026-04-25 | 2026-04-25 | 7 FRs, 9 SCs, 6 edge cases |
+| plan | completed | 2026-04-25 | 2026-04-25 | 1 plan, 1 data-model, 1 contract |
+| tasks | completed | 2026-04-25 | 2026-04-25 | 8 tasks |
+| analyze | completed | 2026-04-25 | 2026-04-25 | No cross-Feature issues (standalone) |
+| implement | completed | 2026-04-25 | 2026-04-25 | 5 source files verified, demo created |
+| verify | completed | 2026-04-25 | 2026-04-25 | type-check ✅, 274 tests ✅, SC-001-009 verified |
+| merge | completed | 2026-04-25 | 2026-04-25 | No cross-Feature dependencies |
+| tasks | pending | | | |
+| analyze | pending | | | |
+| implement | pending | | | |
+| verify | pending | | | |
+| merge | pending | | | |
