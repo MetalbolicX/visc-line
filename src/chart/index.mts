@@ -7,3 +7,4 @@ export type {
   WithTooltipOptions,
   WithZoomPanOptions,
 } from "@/chart/chartTypes.mjs";
+export type { CustomCallback, CustomContext } from "@/types/index.mjs";

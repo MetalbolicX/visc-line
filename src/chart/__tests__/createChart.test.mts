@@ -198,6 +198,177 @@ describe("createChart", () => {
     });
   });
 
+  describe("withCustom", () => {
+    it("callback runs after render and appends custom DOM", () => {
+      createChart(container, config).withCustom((ctx) => {
+        ctx.content
+          .append("line")
+          .attr("class", "custom-line")
+          .attr("x1", 0)
+          .attr("x2", ctx.dims.innerWidth)
+          .attr("y1", ctx.yScale(120))
+          .attr("y2", ctx.yScale(120))
+          .attr("stroke", "red");
+      });
+
+      expect(container.querySelector("line.custom-line")).toBeTruthy();
+    });
+
+    it("callback receives correct context properties", () => {
+      createChart(container, config).withCustom((ctx) => {
+        expect(ctx.svg).toBeDefined();
+        expect(ctx.bounds).toBeDefined();
+        expect(ctx.content).toBeDefined();
+        expect(typeof ctx.xScale).toBe("function");
+        expect(typeof ctx.yScale).toBe("function");
+        expect(typeof ctx.dims.innerWidth).toBe("number");
+        expect(typeof ctx.dims.innerHeight).toBe("number");
+      });
+    });
+
+    it("cleanup function is called on re-render", () => {
+      let cleaned = false;
+      const chart = createChart(container, config).withCustom((ctx) => {
+        ctx.content
+          .append("circle")
+          .attr("class", "custom-circle")
+          .attr("r", 5);
+        return () => {
+          cleaned = true;
+        };
+      });
+
+      chart.withCustom((ctx) => {
+        ctx.content
+          .append("circle")
+          .attr("class", "custom-circle-v2")
+          .attr("r", 5);
+      });
+
+      expect(cleaned).toBe(true);
+    });
+
+    it("last-write-wins: only latest callback's elements exist", () => {
+      const chart = createChart(container, config).withCustom((ctx) => {
+        ctx.content
+          .append("circle")
+          .attr("class", "custom-old");
+        return () => {
+          ctx.content.selectAll("circle.custom-old").remove();
+        };
+      });
+
+      chart.withCustom((ctx) => {
+        ctx.content
+          .append("circle")
+          .attr("class", "custom-new");
+      });
+
+      expect(container.querySelector("circle.custom-old")).toBeNull();
+      expect(container.querySelector("circle.custom-new")).toBeTruthy();
+    });
+
+    it("withCustom(null) clears callback and runs cleanup", () => {
+      let cleaned = false;
+      const chart = createChart(container, config).withCustom((ctx) => {
+        ctx.content
+          .append("circle")
+          .attr("class", "custom-dot")
+          .attr("r", 3);
+        return () => {
+          ctx.content.selectAll("circle.custom-dot").remove();
+          cleaned = true;
+        };
+      });
+
+      expect(container.querySelector("circle.custom-dot")).toBeTruthy();
+      chart.withCustom(null);
+      expect(cleaned).toBe(true);
+      expect(container.querySelector("circle.custom-dot")).toBeNull();
+    });
+
+    it("cleanup runs on dispose", () => {
+      let cleaned = false;
+      const chart = createChart(container, config).withCustom((ctx) => {
+        ctx.content
+          .append("circle")
+          .attr("class", "dispose-dot")
+          .attr("r", 3);
+        return () => {
+          cleaned = true;
+        };
+      });
+
+      chart.dispose();
+      expect(cleaned).toBe(true);
+    });
+
+    it("withCustom throws on disposed chart", () => {
+      const chart = createChart(container, config);
+      chart.dispose();
+      expect(() => chart.withCustom(() => {})).toThrow("disposed");
+    });
+
+    it("withCustom(null) does not throw on disposed chart", () => {
+      const chart = createChart(container, config);
+      chart.dispose();
+      // withCustom(null) calls ensureActive() internally and will throw too
+      expect(() => chart.withCustom(null)).toThrow("disposed");
+    });
+
+    it("supports method chaining", () => {
+      createChart(container, config)
+        .withAxes()
+        .withGrid()
+        .withCustom((ctx) => {
+          ctx.content
+            .append("line")
+            .attr("class", "chained-line")
+            .attr("x1", 0)
+            .attr("x2", ctx.dims.innerWidth)
+            .attr("y1", ctx.yScale(90))
+            .attr("y2", ctx.yScale(90))
+            .attr("stroke", "green");
+        });
+
+      expect(container.querySelector("g.x-axis")).toBeTruthy();
+      expect(container.querySelector("line.grid-x")).toBeTruthy();
+      expect(container.querySelector("line.chained-line")).toBeTruthy();
+    });
+
+    it("withCustom returns stable chart instance", () => {
+      const chart = createChart(container, config);
+      expect(chart.withCustom(() => {})).toBe(chart);
+    });
+
+    it("custom elements are re-created on update() with fresh scales", () => {
+      const chart = createChart(container, config).withCustom((ctx) => {
+        ctx.content
+          .append("line")
+          .attr("class", "update-test-line")
+          .attr("x1", 0)
+          .attr("x2", ctx.dims.innerWidth)
+          .attr("y1", ctx.yScale(120))
+          .attr("y2", ctx.yScale(120))
+          .attr("stroke", "purple");
+        return () => {
+          ctx.content.selectAll("line.update-test-line").remove();
+        };
+      });
+
+      const initialLines = container.querySelectorAll("line.update-test-line").length;
+      expect(initialLines).toBe(1);
+
+      chart.update([
+        { date: new Date("2023-06-01"), revenue: 500, cost: 50 },
+        { date: new Date("2023-06-02"), revenue: 600, cost: 60 },
+      ]);
+
+      const updatedLines = container.querySelectorAll("line.update-test-line").length;
+      expect(updatedLines).toBe(1);
+    });
+  });
+
   describe("theme override", () => {
     it("custom background color is applied as a CSS var", () => {
       createChart(container, config, {

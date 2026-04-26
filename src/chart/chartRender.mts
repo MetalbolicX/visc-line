@@ -4,6 +4,7 @@ import type {
   AnyScale,
   BoundsSelection,
   ChartConfig,
+  CustomContext,
   SVGSelection,
   ScaleType,
 } from "@/types/index.mjs";
@@ -91,6 +92,11 @@ export interface RenderCallbacks {
   readonly onZoomBehaviorChange: (
     zoomBehavior: null | ZoomBehaviorWithReset,
   ) => void;
+  /**
+   * Invoked whenever the custom cleanup function changes.
+   * @param {(() => void) | null} cleanup - New cleanup function, or null to clear.
+   */
+  readonly onCustomCleanupChange: (cleanup: (() => void) | null) => void;
 }
 
 /**
@@ -262,6 +268,20 @@ export const renderChart = <T,>(
     });
 
     callbacks.onZoomBehaviorChange(zoomBehavior);
+  }
+
+  if (context.state.customCallback && context.flags.hasCustom) {
+    const customCtx: CustomContext = {
+      bounds: context.bounds,
+      content,
+      dims,
+      svg: context.svg,
+      xScale,
+      yScale,
+    };
+    context.state.customCleanup?.();
+    const cleanup = context.state.customCallback(customCtx);
+    callbacks.onCustomCleanupChange(typeof cleanup === "function" ? cleanup : null);
   }
 
   clearOptionalNodes(context.bounds, context.svg, context.flags, () => {

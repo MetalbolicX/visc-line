@@ -94,7 +94,10 @@ export const createChart = <T,>(
       config.xSerie.accessor,
       config.ySeries,
     ),
+    customCallback: null,
+    customCleanup: null,
     hasAxes: false,
+    hasCustom: false,
     hasGrid: false,
     hasLegend: false,
     hasPoints: false,
@@ -128,6 +131,9 @@ export const createChart = <T,>(
         onZoomBehaviorChange: (nextZoomBehavior): void => {
           state.zoomBehavior = nextZoomBehavior;
         },
+        onCustomCleanupChange: (cleanup): void => {
+          state.customCleanup = cleanup;
+        },
       },
     );
   };
@@ -145,6 +151,7 @@ export const createChart = <T,>(
     dispose: (): void => {
       if (state.isDisposed) return;
       state.isDisposed = true;
+      state.customCleanup?.();
       disposeResize();
       cleanupAllEnhancements(bounds, svg, () => {
         state.zoomBehavior = null;
@@ -169,6 +176,21 @@ export const createChart = <T,>(
       ensureActive();
       if (state.hasAxes) return chart;
       state.hasAxes = true;
+      render();
+      return chart;
+    },
+    withCustom: (callback): ChartInstance<T> => {
+      ensureActive();
+      if (callback === null) {
+        state.customCleanup?.();
+        state.customCleanup = null;
+        state.customCallback = null;
+        state.hasCustom = false;
+        render();
+        return chart;
+      }
+      state.customCallback = callback;
+      state.hasCustom = true;
       render();
       return chart;
     },

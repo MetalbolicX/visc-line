@@ -7,6 +7,7 @@ import type {
   WithTooltipOptions,
   WithZoomPanOptions,
 } from "@/chart/chartTypes.mjs";
+import type { CustomCallback } from "@/types/index.mjs";
 
 /**
  * Compact, read-only view of which visual features are enabled on a chart.
@@ -19,6 +20,7 @@ import type {
  */
 export interface FeatureFlags {
   readonly hasAxes: boolean;
+  readonly hasCustom: boolean;
   readonly hasGrid: boolean;
   readonly hasLegend: boolean;
   readonly hasPoints: boolean;
@@ -40,7 +42,10 @@ export interface FeatureFlags {
  */
 export interface ChartState<T> {
   currentSeries: readonly ProcessedSeries<T>[];
+  customCallback: null | CustomCallback;
+  customCleanup: null | (() => void);
   hasAxes: boolean;
+  hasCustom: boolean;
   hasGrid: boolean;
   hasLegend: boolean;
   hasPoints: boolean;
@@ -80,6 +85,7 @@ export interface ChartState<T> {
  */
 export const getFeatureFlags = <T,>(state: ChartState<T>): FeatureFlags => ({
   hasAxes: state.hasAxes,
+  hasCustom: state.hasCustom,
   hasGrid: state.hasGrid,
   hasLegend: state.hasLegend,
   hasPoints: state.hasPoints,

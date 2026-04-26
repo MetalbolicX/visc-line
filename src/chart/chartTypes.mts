@@ -2,6 +2,7 @@ import type { CurveFactory } from "d3";
 
 import type {
   AnyScale,
+  CustomCallback,
   ProcessedSeries,
   ScaleType,
   SVGSelection,
@@ -40,6 +41,7 @@ export interface ChartInstance<T> {
   readonly svg: SVGSelection;
   readonly update: (newData: readonly T[]) => void;
   readonly withAxes: () => ChartInstance<T>;
+  readonly withCustom: (callback: null | CustomCallback) => ChartInstance<T>;
   readonly withGrid: () => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
   readonly withPoints: () => ChartInstance<T>;
