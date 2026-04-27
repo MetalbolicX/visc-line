@@ -45,6 +45,12 @@ export const defaultTheme: Theme = {
     position: "right",
     symbolSize: 12,
   },
+  label: {
+    color: "#222222",
+    fontSize: 12,
+    fontWeight: 400,
+    padding: 8,
+  },
   line: {
     curve: "linear",
     opacity: 1,

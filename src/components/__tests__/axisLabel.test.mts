@@ -47,13 +47,19 @@ describe("renderXAxisLabel", () => {
   it("applies font-size from CSS variable", () => {
     const svg = createMockSVG();
     renderXAxisLabel(svg, { innerHeight: 400, innerWidth: 800, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Test" });
-    expect(svg.select<SVGTextElement>("text.x-axis-label").style("font-size")).toBe("var(--vl-axis-font-size, 12px)");
+    expect(svg.select<SVGTextElement>("text.x-axis-label").style("font-size")).toBe("var(--vl-label-font-size, 12px)");
   });
 
   it("applies fill color from CSS variable", () => {
     const svg = createMockSVG();
     renderXAxisLabel(svg, { innerHeight: 400, innerWidth: 800, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Test" });
-    expect(svg.select<SVGTextElement>("text.x-axis-label").style("fill")).toBe("var(--vl-axis-color, #333333)");
+    expect(svg.select<SVGTextElement>("text.x-axis-label").style("fill")).toBe("var(--vl-label-color, #222222)");
+  });
+
+  it("applies font-weight from CSS variable", () => {
+    const svg = createMockSVG();
+    renderXAxisLabel(svg, { innerHeight: 400, innerWidth: 800, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Test" });
+    expect(svg.select<SVGTextElement>("text.x-axis-label").style("font-weight")).toBe("var(--vl-label-font-weight, 400)");
   });
 
   it("renders empty string when label is undefined", () => {
@@ -114,13 +120,19 @@ describe("renderYAxisLabel", () => {
   it("applies font-size from CSS variable", () => {
     const svg = createMockSVG();
     renderYAxisLabel(svg, { innerHeight: 400, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Test" });
-    expect(svg.select<SVGTextElement>("text.y-axis-label").style("font-size")).toBe("var(--vl-axis-font-size, 12px)");
+    expect(svg.select<SVGTextElement>("text.y-axis-label").style("font-size")).toBe("var(--vl-label-font-size, 12px)");
   });
 
   it("applies fill color from CSS variable", () => {
     const svg = createMockSVG();
     renderYAxisLabel(svg, { innerHeight: 400, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Test" });
-    expect(svg.select<SVGTextElement>("text.y-axis-label").style("fill")).toBe("var(--vl-axis-color, #333333)");
+    expect(svg.select<SVGTextElement>("text.y-axis-label").style("fill")).toBe("var(--vl-label-color, #222222)");
+  });
+
+  it("applies font-weight from CSS variable", () => {
+    const svg = createMockSVG();
+    renderYAxisLabel(svg, { innerHeight: 400, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Test" });
+    expect(svg.select<SVGTextElement>("text.y-axis-label").style("font-weight")).toBe("var(--vl-label-font-weight, 400)");
   });
 
   it("renders empty string when label is undefined", () => {

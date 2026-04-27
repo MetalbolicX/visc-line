@@ -10,6 +10,8 @@ import { DEFAULT_MARGINS } from "@/chart/chartConstants.mjs";
 import { cleanupAllEnhancements } from "@/chart/chartLifecycle.mjs";
 import { renderChart } from "@/chart/chartRender.mjs";
 import {
+  areAxesOptionsEqual,
+  areGridOptionsEqual,
   areLegendOptionsEqual,
   areTitleOptionsEqual,
   areTooltipOptionsEqual,
@@ -105,6 +107,8 @@ export const createChart = <T,>(
     hasTooltip: false,
     hasZoomPan: false,
     isDisposed: false,
+    axesOptions: {},
+    gridOptions: {},
     legendOptions: null,
     titleOptions: null,
     tooltipOptions: {},
@@ -172,10 +176,13 @@ export const createChart = <T,>(
       );
       render();
     },
-    withAxes: (): ChartInstance<T> => {
+    withAxes: (options = {}): ChartInstance<T> => {
       ensureActive();
-      if (state.hasAxes) return chart;
+      if (state.hasAxes && areAxesOptionsEqual(state.axesOptions, options)) {
+        return chart;
+      }
       state.hasAxes = true;
+      state.axesOptions = options;
       render();
       return chart;
     },
@@ -194,10 +201,13 @@ export const createChart = <T,>(
       render();
       return chart;
     },
-    withGrid: (): ChartInstance<T> => {
+    withGrid: (options = {}): ChartInstance<T> => {
       ensureActive();
-      if (state.hasGrid) return chart;
+      if (state.hasGrid && areGridOptionsEqual(state.gridOptions, options)) {
+        return chart;
+      }
       state.hasGrid = true;
+      state.gridOptions = options;
       render();
       return chart;
     },

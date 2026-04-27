@@ -64,6 +64,12 @@ export interface Theme {
     readonly position: "bottom" | "left" | "right" | "top";
     readonly symbolSize: number;
   }>;
+  readonly label: Readonly<{
+    readonly color: string;
+    readonly fontSize: number;
+    readonly fontWeight: number;
+    readonly padding: number;
+  }>;
   readonly line: Readonly<{ readonly curve: CurvePreset; readonly opacity: number; readonly strokeWidth: number; }>;
   readonly points: Readonly<{
     readonly fill: string;

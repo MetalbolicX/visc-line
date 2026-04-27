@@ -90,6 +90,22 @@ describe("applyThemeCssVars", () => {
     );
   });
 
+  it("writes label CSS vars", () => {
+    applyThemeCssVars(container, defaultTheme);
+    expect(container.style.getPropertyValue("--vl-label-color")).toBe(
+      defaultTheme.label.color,
+    );
+    expect(container.style.getPropertyValue("--vl-label-font-size")).toBe(
+      `${String(defaultTheme.label.fontSize)}px`,
+    );
+    expect(container.style.getPropertyValue("--vl-label-font-weight")).toBe(
+      String(defaultTheme.label.fontWeight),
+    );
+    expect(container.style.getPropertyValue("--vl-label-padding")).toBe(
+      `${String(defaultTheme.label.padding)}px`,
+    );
+  });
+
   it("writes --vl-grid-opacity", () => {
     applyThemeCssVars(container, defaultTheme);
     expect(container.style.getPropertyValue("--vl-grid-opacity")).toBe(

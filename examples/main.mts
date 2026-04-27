@@ -23,7 +23,7 @@ import {
   renderYAxis,
   renderYAxisLabel,
   renderYGrid,
-} from "../src/index.mjs";
+} from "../src/internal.mjs";
 import { chartConfig, type DataRecord } from "./data.mjs";
 
 /** Chart margins used to compute inner drawing area. */

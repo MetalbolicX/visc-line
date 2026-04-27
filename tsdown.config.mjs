@@ -1,24 +1,37 @@
 "use strict";
 import { defineConfig } from "tsdown";
 
-export default defineConfig({
-  clean: true,
+const shared = {
   deps: {
     alwaysBundle: ["tipviz"],
   },
-  dts: true,
-  entry: "./src/index.mts",
   fixedExtension: true,
-  format: ["cjs", "es", "umd"],
   minify: true,
-  outDir: "./dist",
-  outputOptions: {
-    globals: {
-      d3: "d3",
-    },
-    name: "ViscLine",
-  },
   platform: "browser",
   sourcemap: true,
   tsconfig: true,
-});
+};
+
+export default [
+  defineConfig({
+    ...shared,
+    clean: true,
+    dts: true,
+    entry: "./src/index.mts",
+    format: ["cjs", "es", "umd"],
+    outDir: "./dist",
+    outputOptions: {
+      globals: {
+        d3: "d3",
+      },
+      name: "ViscLine",
+    },
+  }),
+  defineConfig({
+    ...shared,
+    dts: true,
+    entry: "./src/internal.mts",
+    format: ["cjs", "es"],
+    outDir: "./dist",
+  }),
+];

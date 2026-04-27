@@ -160,9 +160,22 @@ export const renderChart = <T,>(
   );
 
   if (context.flags.hasAxes) {
+    const {
+      xTickCount,
+      xTickFormat,
+      yTickCount,
+      yTickFormat,
+    } = context.state.axesOptions;
+
     context.bounds
-      .call(renderXAxis, xScale, dims.innerHeight)
-      .call(renderYAxis, yScale);
+      .call(renderXAxis, xScale, dims.innerHeight, {
+        tickCount: xTickCount,
+        tickFormat: xTickFormat,
+      })
+      .call(renderYAxis, yScale, {
+        tickCount: yTickCount,
+        tickFormat: yTickFormat,
+      });
 
     context.svg
       .call(renderXAxisLabel, {
@@ -180,7 +193,17 @@ export const renderChart = <T,>(
   }
 
   if (context.flags.hasGrid) {
-    content.call(renderXGrid, xScale, yScale).call(renderYGrid, xScale, yScale);
+    const { showX = true, showY = true } = context.state.gridOptions;
+    if (showX) {
+      content.call(renderXGrid, xScale, yScale);
+    } else {
+      content.selectAll("line.grid-x").remove();
+    }
+    if (showY) {
+      content.call(renderYGrid, xScale, yScale);
+    } else {
+      content.selectAll("line.grid-y").remove();
+    }
   }
 
   if (context.flags.hasPoints) {
@@ -233,12 +256,34 @@ export const renderChart = <T,>(
         context.state.zoomPanOptions.onZoom ??
         ((newX: AnyScale, newY: AnyScale): void => {
           if (context.flags.hasAxes) {
-            renderXAxis(context.bounds, newX, dims.innerHeight);
-            renderYAxis(context.bounds, newY);
+            const {
+              xTickCount,
+              xTickFormat,
+              yTickCount,
+              yTickFormat,
+            } = context.state.axesOptions;
+            renderXAxis(context.bounds, newX, dims.innerHeight, {
+              tickCount: xTickCount,
+              tickFormat: xTickFormat,
+            });
+            renderYAxis(context.bounds, newY, {
+              tickCount: yTickCount,
+              tickFormat: yTickFormat,
+            });
           }
 
           if (context.flags.hasGrid) {
-            content.call(renderXGrid, newX, newY).call(renderYGrid, newX, newY);
+            const { showX = true, showY = true } = context.state.gridOptions;
+            if (showX) {
+              content.call(renderXGrid, newX, newY);
+            } else {
+              content.selectAll("line.grid-x").remove();
+            }
+            if (showY) {
+              content.call(renderYGrid, newX, newY);
+            } else {
+              content.selectAll("line.grid-y").remove();
+            }
           }
 
           renderLine<T>(

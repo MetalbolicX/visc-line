@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  areAxesOptionsEqual,
+  areGridOptionsEqual,
   areLegendOptionsEqual,
   areTitleOptionsEqual,
   areTooltipOptionsEqual,
@@ -8,6 +10,45 @@ import {
 } from "../optionComparators.mjs";
 
 describe("optionComparators", () => {
+  describe("areAxesOptionsEqual", () => {
+    it("returns true when axis options match", () => {
+      const xTickFormat = (v: unknown): string => String(v);
+      const yTickFormat = (v: unknown): string => String(v);
+      expect(
+        areAxesOptionsEqual(
+          { xTickCount: 6, yTickCount: 4, xTickFormat, yTickFormat },
+          { xTickCount: 6, yTickCount: 4, xTickFormat, yTickFormat },
+        ),
+      ).toBe(true);
+    });
+
+    it("returns false when any axis option differs", () => {
+      expect(
+        areAxesOptionsEqual(
+          { xTickCount: 6 },
+          { xTickCount: 5 },
+        ),
+      ).toBe(false);
+    });
+  });
+
+  describe("areGridOptionsEqual", () => {
+    it("treats undefined as true for both directions", () => {
+      expect(
+        areGridOptionsEqual({}, { showX: true, showY: true }),
+      ).toBe(true);
+    });
+
+    it("returns false when show flags differ", () => {
+      expect(
+        areGridOptionsEqual(
+          { showX: true, showY: true },
+          { showX: false, showY: true },
+        ),
+      ).toBe(false);
+    });
+  });
+
   describe("areTitleOptionsEqual", () => {
     it("returns true when titles match", () => {
       expect(
@@ -104,6 +145,15 @@ describe("optionComparators", () => {
         areTooltipOptionsEqual(
           { stylesheetUrl: "a.css" },
           { stylesheetUrl: "b.css" },
+        ),
+      ).toBe(false);
+    });
+
+    it("returns false when tooltipHtml differs", () => {
+      expect(
+        areTooltipOptionsEqual(
+          { tooltipHtml: () => "a" },
+          { tooltipHtml: () => "b" },
         ),
       ).toBe(false);
     });

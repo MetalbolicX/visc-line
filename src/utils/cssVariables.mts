@@ -46,6 +46,11 @@ export const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
   style.setProperty("--vl-legend-item-spacing", `${String(theme.legend.itemSpacing)}px`);
   style.setProperty("--vl-legend-symbol-size", `${String(theme.legend.symbolSize)}px`);
 
+  style.setProperty("--vl-label-color", theme.label.color);
+  style.setProperty("--vl-label-font-size", `${String(theme.label.fontSize)}px`);
+  style.setProperty("--vl-label-font-weight", String(theme.label.fontWeight));
+  style.setProperty("--vl-label-padding", `${String(theme.label.padding)}px`);
+
   style.setProperty("--vl-title-font-size", `${String(theme.title.fontSize)}px`);
   style.setProperty("--vl-title-font-weight", String(theme.title.fontWeight));
   style.setProperty("--vl-title-color", theme.title.color);

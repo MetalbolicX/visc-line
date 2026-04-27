@@ -1,6 +1,6 @@
 # API Reference
 
-This page documents the core functions, types, and CSS custom properties exposed by visc-line.
+This page documents the stable public API exported from `visc-line`.
 
 ---
 
@@ -9,8 +9,8 @@ This page documents the core functions, types, and CSS custom properties exposed
 ### `createChart`
 
 The recommended entry point. Mounts a base line chart into a container element,
-manages resize observation, and returns an update/dispose handle with fluent
-`with*` methods to opt into optional features.
+manages resize observation, and returns a fluent handle with `with*` methods
+to opt into optional features.
 
 ```ts
 createChart<T>(
@@ -25,7 +25,7 @@ createChart<T>(
 | Field | Type | Description |
 |---|---|---|
 | `data` | `readonly T[]` | Raw data array |
-| `xSerie` | `{ accessor: (d: T) => Date \| number; label: string }` | X-axis accessor and axis label |
+| `xSerie` | `{ accessor: (d: T) => unknown; label: string }` | X-axis accessor and axis label |
 | `ySeries` | `readonly SeriesDescriptor<T>[]` | One entry per line series |
 
 **`ChartOptions`**
@@ -36,6 +36,7 @@ createChart<T>(
 | `margins` | `Margins` | `{ top: 50, right: 60, bottom: 70, left: 55 }` | SVG margin box |
 | `theme` | `ThemeOverride` | `{}` | Deep-partial theme override merged over `defaultTheme` |
 | `xType` | `"linear" \| "log" \| "pow" \| "time"` | `"time"` | D3 scale type for the x-axis |
+| `yLabel` | `string` | `undefined` | Optional Y-axis label text |
 
 **`ChartInstance<T>`**
 
@@ -45,22 +46,73 @@ createChart<T>(
 | `svg` | `SVGSelection` | D3 selection of the root `<svg>` |
 | `series` | `readonly ProcessedSeries<T>[]` | Current processed series snapshot |
 | `update(newData)` | `(readonly T[]) => void` | Re-render with new data |
-| `dispose()` | `() => void` | Tear down resize observer |
+| `dispose()` | `() => void` | Tear down resize observer, enhancements, and listeners |
 | `withAxes()` | `() => ChartInstance<T>` | Enable x/y axes and axis labels |
+| `withCustom(callback)` | `(CustomCallback \| null) => ChartInstance<T>` | Inject custom D3 drawing code (see below) |
 | `withGrid()` | `() => ChartInstance<T>` | Enable x/y grid lines |
-| `withPoints()` | `() => ChartInstance<T>` | Enable point markers |
-| `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>` | Enable tooltip interactivity |
-| `withTitle(options)` | `(WithTitleOptions) => ChartInstance<T>` | Enable chart title |
 | `withLegend(options)` | `(WithLegendOptions) => ChartInstance<T>` | Enable legend |
+| `withPoints()` | `() => ChartInstance<T>` | Enable point markers |
+| `withTitle(options)` | `(WithTitleOptions) => ChartInstance<T>` | Enable chart title |
+| `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>` | Enable tooltip interactivity |
 | `withZoomPan(options?)` | `(WithZoomPanOptions?) => ChartInstance<T>` | Enable zoom/pan behavior |
+
+All fluent methods return `this` for chaining. After `dispose()`, all methods throw.
+
+---
+
+### `withCustom` — The Escape Hatch
+
+`withCustom` gives you raw access to the chart's internal rendering context inside
+the render cycle, allowing you to draw anything D3 can produce on top of the chart.
+
+```ts
+type CustomCallback = (ctx: CustomContext) => (() => void) | void
+```
+
+```ts
+interface CustomContext {
+  readonly bounds: BoundsSelection;   // <g class="bounds"> — margin-translated origin
+  readonly content: BoundsSelection;  // <g class="content"> — clipped drawing area
+  readonly dims: Dimensions;          // Current chart dimensions
+  readonly svg: SVGSelection;         // Root <svg> element selection
+  readonly xScale: AnyScale;          // Current x scale
+  readonly yScale: AnyScale;          // Current y scale
+}
+```
+
+Return a cleanup function to tear down what you added when the chart disposes or
+the callback is replaced by a new `withCustom` call.
+
+---
+
+### `update`
+
+Replace the chart data without rebuilding. The chart re-processes all series and
+re-renders every component.
+
+```ts
+chart.update(newData);
+```
+
+---
+
+### `dispose`
+
+Clean up all resources: resize observer, tooltip DOM elements, zoom behavior,
+and custom callback cleanup.
+
+```ts
+chart.dispose();
+```
 
 ---
 
 ## Theme
 
-### `Theme`
-
-All visual properties are expressed as theme tokens that are written to `--vl-*` CSS custom properties before rendering. Pass a `ThemeOverride` (deep-partial) to `createChart` to override only the tokens you need.
+All visual properties are expressed as theme tokens that are written to `--vl-*`
+CSS custom properties when `createChart` is called. Pass a `ThemeOverride`
+(deep-partial) to `createChart`'s `theme` option to override only the tokens
+you need.
 
 ```ts
 interface Theme {
@@ -84,19 +136,16 @@ The built-in default. Every chart falls back to these values unless overridden.
 import { defaultTheme } from "visc-line";
 ```
 
-### `mergeTheme`
-
-Deep-merges a partial override on top of a base theme.
-
-```ts
-mergeTheme(base: Theme, override?: ThemeOverride): Theme
-```
+Example: inspect the default palette colors or override a specific token via
+the `theme` option in `createChart`.
 
 ---
 
 ## CSS Custom Properties
 
-`applyThemeCssVars` writes the following variables onto the chart container. Override them with CSS after the chart is mounted, or supply a `ThemeOverride` to `createChart`.
+`createChart` writes the following CSS custom properties onto the chart container.
+Override them with CSS after the chart is mounted, or supply a `ThemeOverride`
+to `createChart`.
 
 ### Colors
 
@@ -160,7 +209,7 @@ mergeTheme(base: Theme, override?: ThemeOverride): Theme
 | `--vl-title-color` | `title.color` | Title text color |
 | `--vl-title-padding` | `title.padding` | Title bottom padding (`px` suffix) |
 
-### Tooltip (optional — only written when `theme.tooltip` is defined)
+### Tooltip (optional — only when `theme.tooltip` is provided)
 
 | Variable | Source token | Description |
 |---|---|---|
@@ -175,7 +224,8 @@ mergeTheme(base: Theme, override?: ThemeOverride): Theme
 
 ## Per-Series Overrides
 
-`SeriesStyle` keys applied on a `SeriesDescriptor` take precedence over the equivalent theme tokens for that series only.
+`SeriesStyle` keys applied on a `SeriesDescriptor` take precedence over the
+equivalent theme tokens for that series only.
 
 ```ts
 interface SeriesStyle {
@@ -207,7 +257,8 @@ Union of all 18 supported D3 curve names:
 
 ### `CURVE_PRESETS`
 
-Immutable map from every `CurvePreset` string to its D3 `CurveFactory`. Useful for enumerating valid names or resolving presets independently.
+Immutable map from every `CurvePreset` string to its D3 `CurveFactory`.
+Useful for enumerating valid names or resolving presets independently.
 
 ```ts
 const CURVE_PRESETS: Readonly<Record<CurvePreset, CurveFactory>>;
@@ -215,7 +266,8 @@ const CURVE_PRESETS: Readonly<Record<CurvePreset, CurveFactory>>;
 
 ### `resolveCurve`
 
-Resolves a `CurvePreset` string to a `CurveFactory`, or passes a factory through unchanged. Throws an `Error` for unknown string inputs.
+Resolves a `CurvePreset` string to a `CurveFactory`, or passes a factory through
+unchanged. Throws an `Error` for unknown string inputs.
 
 ```ts
 resolveCurve(input: CurveFactory | CurvePreset): CurveFactory
@@ -223,146 +275,78 @@ resolveCurve(input: CurveFactory | CurvePreset): CurveFactory
 
 ---
 
-## Theme Utilities
+## Public Types Reference
 
-### `applyThemeCssVars`
+Exported type aliases and interfaces available from `visc-line`.
 
-Writes all theme tokens as `--vl-*` CSS custom properties onto a root element. Called automatically by `createChart`; call manually when using individual renderers.
+### Chart & Data
 
-```ts
-applyThemeCssVars(root: HTMLElement, theme: Theme): void
-```
+| Name | Kind | Description |
+|---|---|---|
+| `ChartConfig<T>` | `interface` | Input configuration for `createChart` |
+| `ChartInstance<T>` | `interface` | Live chart handle returned by `createChart` |
+| `ChartOptions` | `interface` | Optional rendering options for `createChart` |
+| `ProcessedSeries<T>` | `interface` | Series descriptor with filtered `data` attached |
+| `SeriesDescriptor<T>` | `interface` | Describes a single line series |
+| `WithTooltipOptions` | `interface` | Options for `withTooltip` |
+| `WithTitleOptions` | `interface` | Options for `withTitle` |
+| `WithLegendOptions` | `interface` | Options for `withLegend` |
+| `WithZoomPanOptions` | `interface` | Options for `withZoomPan` |
 
----
+### Layout & Scales
 
-## Low-Level Renderers
+| Name | Kind | Description |
+|---|---|---|
+| `AnyScale` | `type` | Union of supported D3 scale instances |
+| `ScaleType` | `type` | `"linear" \| "log" \| "pow" \| "time"` |
+| `BoundsSelection` | `type` | D3 selection of a bounds `<g>` element |
+| `SVGSelection` | `type` | D3 selection of an `<svg>` element |
+| `Dimensions` | `interface` | Computed outer and inner dimensions |
+| `Margins` | `interface` | Margin values for the drawing area |
 
-All renderers are idempotent — they select existing DOM nodes before appending, so calling them multiple times on the same container is safe.
+### Theme & Style
 
-> **Styling**: all visual attributes reference `var(--vl-*)` CSS variables. Call `applyThemeCssVars` on the container before calling any renderer.
+| Name | Kind | Description |
+|---|---|---|
+| `Theme` | `interface` | Full theme token object |
+| `ThemeOverride` | `type` | Deep-partial theme override |
+| `DeepPartial<T>` | `type` | Recursive partial type utility |
+| `SeriesStyle` | `interface` | Per-series visual overrides |
+| `CurvePreset` | `type` | Union of 18 supported D3 curve names |
 
-### `renderSVG`
+### Custom Hooks
 
-Creates or selects the root `<svg>` element inside the container.
+| Name | Kind | Description |
+|---|---|---|
+| `CustomCallback` | `type` | User-provided drawing callback for `withCustom` |
+| `CustomContext` | `interface` | Context object passed to `CustomCallback` |
 
-```ts
-renderSVG(container: HTMLElement): SVGSelection
-```
+### Interactivity Options
 
-### `renderBoundsGroup`
+| Name | Kind | Description |
+|---|---|---|
+| `WithTooltipOptions` | `interface` | Options for `withTooltip` |
+| `WithZoomPanOptions` | `interface` | Options for `withZoomPan` |
 
-Creates or selects the `<g class="bounds">` translated by the margin box.
+### Legend
 
-```ts
-renderBoundsGroup(svg: SVGSelection, margins: Margins): BoundsSelection
-```
-
-### `renderContentGroup`
-
-Creates or selects the `<g class="content">` clip-path layer inside bounds. Must be called on every render cycle (dimensions may change).
-
-```ts
-renderContentGroup(
-  bounds: BoundsSelection,
-  svg: SVGSelection,
-  dims: { innerWidth: number; innerHeight: number },
-): ContentSelection
-```
-
-### `renderLine`
-
-Renders animated line paths for each series.
-
-```ts
-renderLine<T>(
-  content: ContentSelection,
-  series: readonly ProcessedSeries<T>[],
-  xScale: AnyScale,
-  yScale: AnyScale,
-  xAccessor: (d: T) => Date | number,
-  options?: { curve?: CurveFactory; reducedMotion?: boolean; transitionDuration?: number },
-): void
-```
-
-### `renderPoints`
-
-Renders optional data-point circles for each series.
-
-```ts
-renderPoints<T>(
-  content: ContentSelection,
-  series: readonly ProcessedSeries<T>[],
-  xScale: AnyScale,
-  yScale: AnyScale,
-  xAccessor: (d: T) => Date | number,
-): void
-```
-
-### `renderXAxis` / `renderYAxis`
-
-Render D3 axes. Tick size and padding are read from `--vl-axis-tick-size` / `--vl-axis-tick-padding` via `getComputedStyle`.
-
-```ts
-renderXAxis(bounds: BoundsSelection, xScale: AnyScale, innerHeight: number): void
-renderYAxis(bounds: BoundsSelection, yScale: AnyScale): void
-```
-
-### `renderXAxisLabel` / `renderYAxisLabel`
-
-Render axis label text elements.
-
-```ts
-renderXAxisLabel(svg: SVGSelection, opts: { label: string; innerHeight: number; innerWidth: number; margins: Margins }): void
-renderYAxisLabel(svg: SVGSelection, opts: { label: string; innerHeight: number; innerWidth: number; margins: Margins }): void
-```
-
-### `renderXGrid` / `renderYGrid`
-
-Render dashed grid lines behind the chart content.
-
-```ts
-renderXGrid(content: ContentSelection, xScale: AnyScale, yScale: AnyScale): void
-renderYGrid(content: ContentSelection, xScale: AnyScale, yScale: AnyScale): void
-```
-
-### `renderTitle`
-
-Renders a chart title above the SVG.
-
-```ts
-renderTitle(svg: SVGSelection, title: string, innerWidth: number): void
-```
+| Name | Kind | Description |
+|---|---|---|
+| `LegendItem` | `interface` | A single legend entry |
 
 ---
 
-## Interactivity
+## For Advanced Users
 
-### `addTooltip`
-
-Attaches a hover tooltip powered by tipviz to the bounds group.
-
-```ts
-addTooltip<T>(
-  bounds: BoundsSelection,
-  series: readonly ProcessedSeries<T>[],
-  xScale: AnyScale,
-  yScale: AnyScale,
-  xAccessor: (d: T) => Date | number,
-  dims: { innerWidth: number; innerHeight: number },
-  options?: { formatX?: (x: Date | number) => string; stylesheetUrl?: string },
-): void
-```
-
-### `addZoomPan`
-
-Attaches D3 zoom/pan behavior and returns the augmented zoom instance (with a `.reset()` helper).
+If you need access to individual renderers, services, interactivity functions, or
+theme utilities (e.g., to compose a custom chart without the builder, or wrap
+visc-line in a framework component), import from `visc-line/internal`:
 
 ```ts
-addZoomPan(opts: {
-  innerHeight: number;
-  innerWidth: number;
-  onZoom: (newX: AnyScale, newY: AnyScale) => void;
-  xScale: AnyScale;
-  yScale: AnyScale;
-}): ZoomBehaviorWithReset
+import { renderLine, renderXAxis, createScales } from "visc-line/internal";
 ```
+
+> **Warning**: This API surface carries **no stability guarantees**. Functions,
+> signatures, and types exported from `visc-line/internal` may change without a
+> major version bump. Use this module only if you accept coupling to internals.
+> For the stable public API, use `createChart` from `visc-line`.

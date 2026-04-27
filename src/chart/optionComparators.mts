@@ -1,9 +1,27 @@
 import type {
+  WithAxesOptions,
+  WithGridOptions,
   WithLegendOptions,
   WithTitleOptions,
   WithTooltipOptions,
   WithZoomPanOptions,
 } from "@/chart/chartTypes.mjs";
+
+export const areAxesOptionsEqual = (
+  previous: WithAxesOptions,
+  next: WithAxesOptions,
+): boolean =>
+  previous.xTickCount === next.xTickCount &&
+  previous.xTickFormat === next.xTickFormat &&
+  previous.yTickCount === next.yTickCount &&
+  previous.yTickFormat === next.yTickFormat;
+
+export const areGridOptionsEqual = (
+  previous: WithGridOptions,
+  next: WithGridOptions,
+): boolean =>
+  (previous.showX ?? true) === (next.showX ?? true) &&
+  (previous.showY ?? true) === (next.showY ?? true);
 
 /**
  * Compare title options for shallow equality.
@@ -104,7 +122,8 @@ export const areTooltipOptionsEqual = (
 ): boolean =>
   previous.formatX === next.formatX &&
   previous.formatY === next.formatY &&
-  previous.stylesheetUrl === next.stylesheetUrl;
+  previous.stylesheetUrl === next.stylesheetUrl &&
+  previous.tooltipHtml === next.tooltipHtml;
 
 /**
  * Compare zoom/pan options for shallow equality.

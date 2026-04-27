@@ -2,6 +2,8 @@ import type { ProcessedSeries } from "@/types/index.mjs";
 
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type {
+  WithAxesOptions,
+  WithGridOptions,
   WithLegendOptions,
   WithTitleOptions,
   WithTooltipOptions,
@@ -53,6 +55,8 @@ export interface ChartState<T> {
   hasTooltip: boolean;
   hasZoomPan: boolean;
   isDisposed: boolean;
+  axesOptions: WithAxesOptions;
+  gridOptions: WithGridOptions;
   legendOptions: null | WithLegendOptions;
   titleOptions: null | WithTitleOptions;
   tooltipOptions: WithTooltipOptions;

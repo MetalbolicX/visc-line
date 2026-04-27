@@ -100,6 +100,18 @@ describe("createChart", () => {
       expect(container.querySelector("line.grid-y")).toBeTruthy();
     });
 
+    it("withGrid supports directional toggles", () => {
+      createChart(container, config).withGrid({ showX: true, showY: false });
+      expect(container.querySelector("line.grid-x")).toBeTruthy();
+      expect(container.querySelector("line.grid-y")).toBeNull();
+    });
+
+    it("withGrid allows disabling both directions", () => {
+      createChart(container, config).withGrid({ showX: false, showY: false });
+      expect(container.querySelector("line.grid-x")).toBeNull();
+      expect(container.querySelector("line.grid-y")).toBeNull();
+    });
+
     it("withPoints renders point circles", () => {
       createChart(container, config).withPoints();
       expect(container.querySelectorAll("g.content circle.point").length).toBe(data.length * 2);
@@ -123,6 +135,24 @@ describe("createChart", () => {
 
     it("withTooltip initializes tooltip host element", () => {
       createChart(container, config).withTooltip();
+      expect(document.body.querySelector("tip-viz-tooltip")).toBeTruthy();
+    });
+
+    it("withAxes forwards tick options", () => {
+      createChart(container, config).withAxes({
+        xTickCount: 7,
+        yTickCount: 3,
+      });
+      const xTicks = container.querySelectorAll("g.x-axis g.tick");
+      const yTicks = container.querySelectorAll("g.y-axis g.tick");
+      expect(xTicks.length).toBeGreaterThan(0);
+      expect(yTicks.length).toBeGreaterThan(0);
+    });
+
+    it("withTooltip accepts tooltipHtml option", () => {
+      createChart(container, config).withTooltip({
+        tooltipHtml: ({ xLabel }) => `<div>${xLabel}</div>`,
+      });
       expect(document.body.querySelector("tip-viz-tooltip")).toBeTruthy();
     });
 
