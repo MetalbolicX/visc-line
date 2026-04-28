@@ -16,6 +16,8 @@ interface AddZoomPanOptions {
   readonly onZoom: (newX: AnyScale, newY: AnyScale) => void;
   readonly xScale: AnyScale;
   readonly yScale: AnyScale;
+  /** Minimum and maximum zoom levels (default: [0.5, 32]). */
+  readonly scaleExtent?: readonly [number, number];
 }
 
 /**
@@ -34,10 +36,10 @@ interface AddZoomPanOptions {
  */
 export const addZoomPan = (
   svg: SVGSelection,
-  { innerHeight, innerWidth, onZoom, xScale, yScale }: AddZoomPanOptions,
+  { innerHeight, innerWidth, onZoom, scaleExtent = [0.5, 32], xScale, yScale }: AddZoomPanOptions,
 ): ZoomBehaviorWithReset => {
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
-    .scaleExtent([0.5, 32])
+    .scaleExtent([scaleExtent[0], scaleExtent[1]])
     .extent([
       [0, 0],
       [innerWidth, innerHeight],
@@ -52,7 +54,7 @@ export const addZoomPan = (
 
   svg.call(zoomBehavior as never);
 
-  const augmented = zoomBehavior as ZoomBehaviorWithReset;
+  const augmented = zoomBehavior as unknown as ZoomBehaviorWithReset;
 
   Object.defineProperty(augmented, "reset", {
     configurable: true,

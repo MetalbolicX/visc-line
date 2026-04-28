@@ -63,9 +63,16 @@ You can also import helpers directly (useful for embedding in apps or building c
 
 ```js
 import {
+  createChart,
+  CURVE_PRESETS,
+  defaultTheme,
+  resolveCurve,
+} from "visc-line";
+
+// Advanced: individual renderers and utilities (no stability guarantees)
+import {
   addTooltip,
   addZoomPan,
-  createChart,
   createScales,
   processAllSeries,
   renderBoundsGroup,
@@ -80,7 +87,7 @@ import {
   renderYAxis,
   renderYAxisLabel,
   renderYGrid,
-} from "visc-line";
+} from "visc-line/internal";
 ```
 
 ## API / Source Reference

@@ -38,8 +38,8 @@ export const renderXAxis = (
 ): void => {
   const node = boundsGroup.node();
   const cs = node ? getComputedStyle(node) : null;
-  const tickSize = cs ? parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6 : 6;
-  const tickPadding = cs ? parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8 : 8;
+  const tickSize = cs ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6) : 6;
+  const tickPadding = cs ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8) : 8;
 
   const axis = axisBottom(asAxisScale(xScale))
     .ticks(tickCount)

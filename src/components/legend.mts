@@ -51,10 +51,10 @@ export const renderLegend = (
   const node = svg.node();
   const cs = node ? getComputedStyle(node) : null;
   const symbolSize = cs
-    ? parseFloat(cs.getPropertyValue("--vl-legend-symbol-size")) || 12
+    ? (parseFloat(cs.getPropertyValue("--vl-legend-symbol-size")) || 12)
     : 12;
   const itemSpacing = cs
-    ? parseFloat(cs.getPropertyValue("--vl-legend-item-spacing")) || 8
+    ? (parseFloat(cs.getPropertyValue("--vl-legend-item-spacing")) || 8)
     : 8;
   const rowHeight = symbolSize + itemSpacing;
 
@@ -79,7 +79,7 @@ export const renderLegend = (
     .attr("class", "swatch")
     .attr("width", symbolSize)
     .attr("height", symbolSize)
-    .attr("rx", 2)
+    .attr("rx", "var(--vl-legend-symbol-rx, 2)")
     .attr("fill", (d) => d.color);
 
   entries

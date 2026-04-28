@@ -35,7 +35,7 @@ describe("renderXAxisLabel", () => {
     const opts = { innerHeight: 400, innerWidth: 800, margins: { top: 20, right: 20, bottom: 40, left: 60 }, label: "Time (s)" };
     renderXAxisLabel(svg, opts);
     const text = svg.select<SVGTextElement>("text.x-axis-label");
-    expect(text.attr("y")).toBe(String(20 + 400 + 40));
+    expect(text.attr("y")).toBe(String(20 + 400 + 34));
   });
 
   it("sets text-anchor middle", () => {
@@ -107,7 +107,7 @@ describe("renderYAxisLabel", () => {
     renderYAxisLabel(svg, opts);
     const text = svg.select<SVGTextElement>("text.y-axis-label");
     const transform = text.attr("transform") ?? "";
-    expect(transform).toContain("translate(20,220)");
+    expect(transform).toContain("translate(26,220)");
     expect(transform).toContain("rotate(-90)");
   });
 

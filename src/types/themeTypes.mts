@@ -61,6 +61,7 @@ export interface Theme {
   readonly legend: Readonly<{
     readonly fontSize: number;
     readonly itemSpacing: number;
+    /** @deprecated Not used by renderLegend — position is controlled via chartRender.mts coordinates. */
     readonly position: "bottom" | "left" | "right" | "top";
     readonly symbolSize: number;
   }>;

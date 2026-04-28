@@ -2,7 +2,6 @@ export { createChart } from "@/chart/createChart.mjs";
 export type {
   ChartInstance,
   ChartOptions,
-  TooltipTemplateData,
   WithAxesOptions,
   WithGridOptions,
   WithLegendOptions,

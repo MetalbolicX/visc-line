@@ -37,9 +37,21 @@ export const renderXAxisLabel = (
   }: XAxisLabelOptions,
 ): void => {
   const node = svg.node();
-  const padding = node
-    ? parseFloat(getComputedStyle(node).getPropertyValue("--vl-label-padding")) || 8
+  const cs = node ? getComputedStyle(node) : null;
+  const rawPadding = cs
+    ? parseFloat(cs.getPropertyValue("--vl-label-padding"))
+    : NaN;
+  const padding = Number.isNaN(rawPadding) ? 8 : rawPadding;
+  const axisTickSize = cs
+    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6)
+    : 6;
+  const axisTickPadding = cs
+    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8)
     : 8;
+  const axisFontSize = cs
+    ? (parseFloat(cs.getPropertyValue("--vl-axis-font-size")) || 12)
+    : 12;
+  const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
 
   svg
     .selectAll<SVGTextElement, null>("text.x-axis-label")
@@ -47,7 +59,7 @@ export const renderXAxisLabel = (
     .join("text")
     .attr("class", "x-axis-label")
     .attr("x", margins.left + innerWidth / 2)
-    .attr("y", margins.top + innerHeight + 32 + padding)
+    .attr("y", margins.top + innerHeight + axisLabelSpacing + padding)
     .attr("text-anchor", "middle")
     .style("font-size", "var(--vl-label-font-size, 12px)")
     .style("font-weight", "var(--vl-label-font-weight, 400)")
@@ -78,9 +90,21 @@ export const renderYAxisLabel = (
   }: YAxisLabelOptions,
 ): void => {
   const node = svg.node();
-  const padding = node
-    ? parseFloat(getComputedStyle(node).getPropertyValue("--vl-label-padding")) || 8
+  const cs = node ? getComputedStyle(node) : null;
+  const rawPadding = cs
+    ? parseFloat(cs.getPropertyValue("--vl-label-padding"))
+    : NaN;
+  const padding = Number.isNaN(rawPadding) ? 8 : rawPadding;
+  const axisTickSize = cs
+    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6)
+    : 6;
+  const axisTickPadding = cs
+    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8)
     : 8;
+  const axisFontSize = cs
+    ? (parseFloat(cs.getPropertyValue("--vl-axis-font-size")) || 12)
+    : 12;
+  const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
 
   svg
     .selectAll<SVGTextElement, null>("text.y-axis-label")
@@ -89,7 +113,7 @@ export const renderYAxisLabel = (
     .attr("class", "y-axis-label")
     .attr(
       "transform",
-      `translate(${String(margins.left - (32 + padding))},${String(margins.top + innerHeight / 2)}) rotate(-90)`,
+      `translate(${String(margins.left - (axisLabelSpacing + padding))},${String(margins.top + innerHeight / 2)}) rotate(-90)`,
     )
     .attr("text-anchor", "middle")
     .style("font-size", "var(--vl-label-font-size, 12px)")

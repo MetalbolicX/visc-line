@@ -1,33 +1,23 @@
-import type { CurveFactory } from "d3";
+import type { CurveFactory, AxisDomain } from "d3";
 
 import type {
   AnyScale,
   CustomCallback,
+  CurvePreset,
+  Margins,
   ProcessedSeries,
   ScaleType,
   SVGSelection,
   Theme,
 } from "@/types/index.mjs";
-import type { Margins } from "@/types/index.mjs";
 import type { LegendItem } from "@/components/legend.mjs";
-
-import type { CurvePreset } from "@/types/index.mjs";
-import type { AxisDomain } from "d3";
-
-export interface TooltipTemplateData {
-  readonly rows: readonly Readonly<{
-    readonly color: string;
-    readonly label: string;
-    readonly value: string;
-  }>[];
-  readonly xLabel: string;
-}
+import type { TooltipData } from "@/interactivity/tooltip.mjs";
 
 export interface WithTooltipOptions {
   readonly formatX?: (v: unknown) => string;
   readonly formatY?: (v: unknown) => string;
   readonly stylesheetUrl?: string;
-  readonly tooltipHtml?: (data: TooltipTemplateData) => string;
+  readonly tooltipHtml?: (data: TooltipData) => string;
 }
 
 export interface WithTitleOptions {
@@ -40,6 +30,8 @@ export interface WithLegendOptions {
 
 export interface WithZoomPanOptions {
   readonly onZoom?: (newX: AnyScale, newY: AnyScale) => void;
+  /** Minimum and maximum zoom levels (default: [0.5, 32]). */
+  readonly scaleExtent?: readonly [number, number];
 }
 
 export interface WithAxesOptions {

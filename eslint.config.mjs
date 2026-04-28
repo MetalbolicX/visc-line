@@ -44,7 +44,7 @@ languageOptions: {
   },
   {
     files: ["src/**/*.mjs", "src/**/*.mts"],
-    languageOptions: {
+    plugins: {
       functional,
       immutable,
       unicorn,

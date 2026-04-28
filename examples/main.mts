@@ -65,10 +65,12 @@ export const main = (container: HTMLElement): void => {
 
   const svg = renderSVG(container);
   const bounds = renderBoundsGroup(svg, margins);
+  const clipPathId = `example-clip-${crypto.randomUUID().slice(0, 8)}`;
 
   const render = (): void => {
     const dims = getDimensions(container, margins);
     const content = renderContentGroup(bounds, svg, {
+      clipPathId,
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
     });

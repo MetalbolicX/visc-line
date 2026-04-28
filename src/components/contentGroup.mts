@@ -1,12 +1,17 @@
 import type { BoundsSelection, SVGSelection } from "@/types/index.mjs";
 
-/** Unique id for the chart content clip-path. */
-const CLIP_PATH_ID = "chart-content-clip";
-
-/** Options for {@link renderContentGroup}. */
+/**
+ * Options for {@link renderContentGroup}.
+ */
 interface RenderContentGroupOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
+  /**
+   * A stable, document-unique identifier for the clip path.
+   * Passed from the container element to avoid collisions when
+   * multiple chart instances exist on the same page.
+   */
+  readonly clipPathId: string;
 }
 
 /**
@@ -26,7 +31,7 @@ interface RenderContentGroupOptions {
 export const renderContentGroup = (
   bounds: BoundsSelection,
   svg: SVGSelection,
-  { innerHeight, innerWidth }: RenderContentGroupOptions,
+  { innerHeight, innerWidth, clipPathId }: RenderContentGroupOptions,
 ): BoundsSelection => {
   // Upsert <defs> + <clipPath> on the root SVG.
   const defs = svg
@@ -35,10 +40,10 @@ export const renderContentGroup = (
     .join("defs");
 
   defs
-    .selectAll<SVGClipPathElement, null>(`clipPath#${CLIP_PATH_ID}`)
+    .selectAll<SVGClipPathElement, null>(`clipPath#${clipPathId}`)
     .data([null])
     .join("clipPath")
-    .attr("id", CLIP_PATH_ID)
+    .attr("id", clipPathId)
     .selectAll<SVGRectElement, null>("rect")
     .data([null])
     .join("rect")
@@ -50,5 +55,5 @@ export const renderContentGroup = (
     .data([null])
     .join("g")
     .attr("class", "content")
-    .attr("clip-path", `url(#${CLIP_PATH_ID})`) as BoundsSelection;
+    .attr("clip-path", `url(#${clipPathId})`) as BoundsSelection;
 };

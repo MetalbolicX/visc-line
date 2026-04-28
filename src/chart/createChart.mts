@@ -84,11 +84,12 @@ export const createChart = <T,>(
   const resolvedTheme = mergeTheme(defaultTheme, theme);
   applyThemeCssVars(container, resolvedTheme);
 
-  const svg = renderSVG(container, "Interactive line chart");
-  const bounds = renderBoundsGroup(svg, margins);
-
   const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
   const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
+  const clipPathId = `visc-clip-${crypto.randomUUID().slice(0, 8)}`;
+
+  const svg = renderSVG(container, "Interactive line chart");
+  const bounds = renderBoundsGroup(svg, margins);
 
   const state: ChartState<T> = {
     currentSeries: processAllSeries<T>(
@@ -120,6 +121,7 @@ export const createChart = <T,>(
     renderChart(
       {
         bounds,
+        clipPathId,
         config,
         container,
         flags: getFeatureFlags(state),

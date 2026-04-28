@@ -62,7 +62,7 @@ export const renderLine = <T,>(
     reducedMotion: reducedMotionOption,
     transitionDuration = 1000,
   }: RenderLineOptions = {},
-): Selection<SVGPathElement, ProcessedSeries<T>, SVGGElement, null> => {
+): Selection<SVGPathElement, { s: ProcessedSeries<T>; i: number }, SVGGElement, unknown> => {
   const curveFactory = resolveCurve(curve);
 
   /** Build a path `d` attribute for a series using the configured curve factory. */
@@ -79,24 +79,26 @@ export const renderLine = <T,>(
     (typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
+  // Index-preserving data join so palette index is stable across re-renders.
+  const indexedSeries = series.map((s, i) => ({ s, i }));
   return boundsGroup
-    .selectAll<SVGPathElement, ProcessedSeries<T>>("path.chart-line")
-    .data(series, ({ label }) => label)
+    .selectAll<SVGPathElement, (typeof indexedSeries)[number]>("path.chart-line")
+    .data(indexedSeries, ({ s: { label } }) => label)
     .join(
       (enter) =>
         enter
           .append("path")
-          .attr("class", ({ label }) => `chart-line chart-line--${label}`)
+          .attr("class", ({ s: { label } }) => `chart-line chart-line--${label}`)
           .attr("fill", "none")
           .attr(
             "stroke",
-            ({ stroke }) => stroke ?? "var(--vl-palette-0, steelblue)",
+            ({ s, i }) => s.stroke ?? `var(--vl-palette-${i}, steelblue)`,
           )
-          .attr("stroke-width", (d) => d.strokeWidth ?? "var(--vl-line-stroke-width, 2)")
-          .attr("opacity", (d) => d.opacity ?? "var(--vl-line-opacity, 1)")
+          .attr("stroke-width", ({ s }) => s.strokeWidth ?? "var(--vl-line-stroke-width, 2)")
+          .attr("opacity", ({ s }) => s.opacity ?? "var(--vl-line-opacity, 1)")
           .attr("stroke-linejoin", "round")
           .attr("stroke-linecap", "round")
-          .attr("d", buildPath)
+          .attr("d", ({ s }) => buildPath(s))
           .each(function () {
             if (shouldReduceMotion) return;
             const path = select(this);
@@ -109,16 +111,18 @@ export const renderLine = <T,>(
               .attr("stroke-dashoffset", 0);
           }),
       (update) =>
-        update.each(function (d) {
+        update.each(function (datum) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { s, i } = datum as any;
           const path = select(this);
-          const newPathD = buildPath(d);
+          const newPathD = buildPath(s);
           const totalLength = this.getTotalLength();
           path
             .attr("stroke-dasharray", totalLength)
             .attr("stroke-dashoffset", totalLength)
             .attr("d", newPathD)
-            .attr("stroke", d.stroke ?? "var(--vl-palette-0, steelblue)")
-            .attr("opacity", d.opacity ?? "var(--vl-line-opacity, 1)")
+            .attr("stroke", s.stroke ?? `var(--vl-palette-${i}, steelblue)`)
+            .attr("opacity", s.opacity ?? "var(--vl-line-opacity, 1)")
             .transition()
             .duration(shouldReduceMotion ? 0 : transitionDuration)
             .attr("stroke-dashoffset", 0);

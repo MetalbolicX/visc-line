@@ -46,7 +46,7 @@ export const renderPoints = <T,>(
 ): Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null> => {
   const node = boundsGroup.node();
   const radius = node
-    ? parseFloat(getComputedStyle(node).getPropertyValue("--vl-point-radius")) || 3
+    ? (parseFloat(getComputedStyle(node).getPropertyValue("--vl-point-radius")) || 3)
     : 3;
 
   return boundsGroup
@@ -64,9 +64,9 @@ export const renderPoints = <T,>(
         .attr("cy", (d) =>
           asScaleNumber(yScale)(serie.accessor(d)),
         )
-        .attr("r", radius)
-        .attr("fill", serie.stroke ?? "var(--vl-point-fill, #ffffff)")
-        .attr("stroke", "var(--vl-point-stroke, #333333)")
+        .attr("r", serie.pointRadius ?? radius)
+        .attr("fill", serie.pointFill ?? serie.stroke ?? "var(--vl-point-fill, #ffffff)")
+        .attr("stroke", serie.pointStroke ?? "var(--vl-point-stroke, #333333)")
         .attr("stroke-width", "var(--vl-point-stroke-width, 1)")
         .attr("opacity", "var(--vl-point-opacity, 0.85)");
     });

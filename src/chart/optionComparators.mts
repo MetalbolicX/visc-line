@@ -10,11 +10,18 @@ import type {
 export const areAxesOptionsEqual = (
   previous: WithAxesOptions,
   next: WithAxesOptions,
-): boolean =>
-  previous.xTickCount === next.xTickCount &&
-  previous.xTickFormat === next.xTickFormat &&
-  previous.yTickCount === next.yTickCount &&
-  previous.yTickFormat === next.yTickFormat;
+): boolean => {
+  const prevX = previous.xTickCount ?? 5;
+  const prevY = previous.yTickCount ?? 5;
+  const nextX = next.xTickCount ?? 5;
+  const nextY = next.yTickCount ?? 5;
+  return (
+    prevX === nextX &&
+    previous.xTickFormat === next.xTickFormat &&
+    prevY === nextY &&
+    previous.yTickFormat === next.yTickFormat
+  );
+};
 
 export const areGridOptionsEqual = (
   previous: WithGridOptions,

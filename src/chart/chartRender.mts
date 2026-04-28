@@ -62,6 +62,7 @@ import type { Margins } from "@/types/index.mjs";
  */
 export interface RenderContext<T> {
   readonly bounds: BoundsSelection;
+  readonly clipPathId: string;
   readonly config: ChartConfig<T>;
   readonly container: HTMLElement;
   readonly state: ChartState<T>;
@@ -133,6 +134,7 @@ export const renderChart = <T,>(
   const dims = getDimensions(context.container, context.margins);
 
   const content = renderContentGroup(context.bounds, context.svg, {
+    clipPathId: context.clipPathId,
     innerHeight: dims.innerHeight,
     innerWidth: dims.innerWidth,
   });
@@ -252,6 +254,7 @@ export const renderChart = <T,>(
     const zoomBehavior = addZoomPan(context.svg, {
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
+      scaleExtent: context.state.zoomPanOptions.scaleExtent,
       onZoom:
         context.state.zoomPanOptions.onZoom ??
         ((newX: AnyScale, newY: AnyScale): void => {

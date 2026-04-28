@@ -35,10 +35,19 @@ describe("renderXGrid", () => {
     const xScale = scaleLinear().domain([0, 100]).range([0, 800]);
     const yScale = scaleLinear().domain([0, 50]).range([200, 0]);
     renderXGrid(selection, xScale, yScale);
+    const lineCount = selection.selectAll("line.grid-x").size();
     renderXGrid(selection, xScale, yScale);
-    expect(selection.selectAll("line.grid-x").size()).toBe(
-      selection.selectAll("line.grid-x").size(),
-    );
+    expect(selection.selectAll("line.grid-x").size()).toBe(lineCount);
+  });
+
+  it("uses CSS variable styling", () => {
+    const selection = createMockBounds();
+    const xScale = scaleLinear().domain([0, 100]).range([0, 800]);
+    const yScale = scaleLinear().domain([0, 50]).range([200, 0]);
+    renderXGrid(selection, xScale, yScale);
+    const line = selection.select<SVGLineElement>("line.grid-x");
+    expect(line.attr("stroke")).toBe("var(--vl-grid-stroke, #e6e6e6)");
+    expect(line.attr("shape-rendering")).toBe("crispEdges");
   });
 });
 
@@ -72,9 +81,18 @@ describe("renderYGrid", () => {
     const xScale = scaleLinear().domain([0, 100]).range([0, 800]);
     const yScale = scaleLinear().domain([0, 50]).range([200, 0]);
     renderYGrid(selection, xScale, yScale);
+    const lineCount = selection.selectAll("line.grid-y").size();
     renderYGrid(selection, xScale, yScale);
-    expect(selection.selectAll("line.grid-y").size()).toBe(
-      selection.selectAll("line.grid-y").size(),
-    );
+    expect(selection.selectAll("line.grid-y").size()).toBe(lineCount);
+  });
+
+  it("uses CSS variable styling", () => {
+    const selection = createMockBounds();
+    const xScale = scaleLinear().domain([0, 100]).range([0, 800]);
+    const yScale = scaleLinear().domain([0, 50]).range([200, 0]);
+    renderYGrid(selection, xScale, yScale);
+    const line = selection.select<SVGLineElement>("line.grid-y");
+    expect(line.attr("stroke")).toBe("var(--vl-grid-stroke, #e6e6e6)");
+    expect(line.attr("shape-rendering")).toBe("crispEdges");
   });
 });

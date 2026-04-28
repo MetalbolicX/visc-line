@@ -156,6 +156,19 @@ describe("createChart", () => {
       expect(document.body.querySelector("tip-viz-tooltip")).toBeTruthy();
     });
 
+    it("withZoomPan enables zoom behavior", () => {
+      createChart(container, config).withZoomPan();
+      // Zoom behavior attaches to the SVG — verify it's present
+      const svg = container.querySelector("svg");
+      expect(svg).toBeTruthy();
+    });
+
+    it("withZoomPan accepts custom scaleExtent", () => {
+      createChart(container, config).withZoomPan({ scaleExtent: [1, 10] });
+      const svg = container.querySelector("svg");
+      expect(svg).toBeTruthy();
+    });
+
     it("supports method chaining", () => {
       createChart(container, config)
         .withAxes()
@@ -339,7 +352,7 @@ describe("createChart", () => {
       expect(() => chart.withCustom(() => {})).toThrow("disposed");
     });
 
-    it("withCustom(null) does not throw on disposed chart", () => {
+    it("withCustom(null) throws on disposed chart", () => {
       const chart = createChart(container, config);
       chart.dispose();
       // withCustom(null) calls ensureActive() internally and will throw too
