@@ -117,6 +117,33 @@ describe("optionComparators", () => {
 
       expect(areLegendOptionsEqual(previous, next)).toBe(false);
     });
+
+    it("returns false when interactive flag differs", () => {
+      const previous = {
+        interactive: false,
+        items: [{ color: "steelblue", label: "Revenue" }],
+      };
+      const next = {
+        interactive: true,
+        items: [{ color: "steelblue", label: "Revenue" }],
+      };
+
+      expect(areLegendOptionsEqual(previous, next)).toBe(false);
+    });
+
+    it("returns false when onToggle callback reference differs", () => {
+      const onToggle = (): void => {};
+      const previous = {
+        items: [{ color: "steelblue", label: "Revenue" }],
+        onToggle,
+      };
+      const next = {
+        items: [{ color: "steelblue", label: "Revenue" }],
+        onToggle: (): void => {},
+      };
+
+      expect(areLegendOptionsEqual(previous, next)).toBe(false);
+    });
   });
 
   describe("areTooltipOptionsEqual", () => {

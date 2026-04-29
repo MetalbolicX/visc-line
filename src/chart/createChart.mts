@@ -3,7 +3,11 @@ import type { ChartConfig } from "@/types/index.mjs";
 import { observeResize } from "@/accessibility/index.mjs";
 import { renderBoundsGroup, renderSVG } from "@/components/index.mjs";
 import { disposeTooltip } from "@/interactivity/index.mjs";
-import { clearExtentCache, processAllSeries } from "@/services/index.mjs";
+import {
+  clearExtentCache,
+  getMultiSeriesExtents,
+  processAllSeries,
+} from "@/services/index.mjs";
 import { defaultTheme } from "@/themes/index.mjs";
 import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 import { DEFAULT_MARGINS } from "@/chart/chartConstants.mjs";
@@ -81,6 +85,15 @@ export const createChart = <T,>(
     throw new Error("createChart: config.ySeries must be a non-empty array");
   }
 
+  const duplicateLabels = config.ySeries
+    .map(({ label }) => label)
+    .filter((label, index, labels) => labels.indexOf(label) !== index);
+  if (duplicateLabels.length > 0) {
+    throw new Error(
+      `createChart: duplicated ySeries labels are not allowed. Duplicates: ${duplicateLabels.join(", ")}`,
+    );
+  }
+
   const resolvedTheme = mergeTheme(defaultTheme, theme);
   applyThemeCssVars(container, resolvedTheme);
 
@@ -91,12 +104,40 @@ export const createChart = <T,>(
   const svg = renderSVG(container, "Interactive line chart");
   const bounds = renderBoundsGroup(svg, margins);
 
+  const filterSeriesByLabels = (
+    allSeries: readonly ReturnType<typeof processAllSeries<T>>[number][],
+    visibleLabels: ReadonlySet<string>,
+  ) => allSeries.filter(({ label }) => visibleLabels.has(label));
+
+  const assertValidVisibleLabels = (
+    labels: readonly string[],
+    allSeries: readonly ReturnType<typeof processAllSeries<T>>[number][],
+    caller: "updateVisibleSeries" | "withVisibleSeries",
+  ): void => {
+    const validLabels = new Set(allSeries.map(({ label }) => label));
+    const invalidLabels = labels.filter((label) => !validLabels.has(label));
+    if (invalidLabels.length > 0) {
+      throw new Error(
+        `createChart.${caller}: Unknown series labels [${invalidLabels.join(", ")}]. Valid labels: [${Array.from(validLabels).join(", ")}]`,
+      );
+    }
+  };
+
+  const allSeries = processAllSeries<T>(
+    config.data,
+    config.xSerie.accessor,
+    config.ySeries,
+  );
+  const allSeriesExtents = getMultiSeriesExtents(
+    allSeries,
+    config.xSerie.accessor,
+  );
+  const defaultVisibleLabels = new Set(allSeries.map(({ label }) => label));
+
   const state: ChartState<T> = {
-    currentSeries: processAllSeries<T>(
-      config.data,
-      config.xSerie.accessor,
-      config.ySeries,
-    ),
+    allSeries,
+    allSeriesExtents,
+    currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
     hasAxes: false,
@@ -113,6 +154,7 @@ export const createChart = <T,>(
     legendOptions: null,
     titleOptions: null,
     tooltipOptions: {},
+    visibleLabels: defaultVisibleLabels,
     zoomBehavior: null,
     zoomPanOptions: {},
   };
@@ -153,6 +195,9 @@ export const createChart = <T,>(
   };
 
   const chart: ChartInstance<T> = {
+    get allSeries() {
+      return Object.freeze([...state.allSeries]);
+    },
     container,
     dispose: (): void => {
       if (state.isDisposed) return;
@@ -171,11 +216,34 @@ export const createChart = <T,>(
     update: (newData: readonly T[]): void => {
       ensureActive();
       clearExtentCache();
-      state.currentSeries = processAllSeries<T>(
+      state.allSeries = processAllSeries<T>(
         newData,
         config.xSerie.accessor,
         config.ySeries,
       );
+      state.allSeriesExtents = getMultiSeriesExtents(
+        state.allSeries,
+        config.xSerie.accessor,
+      );
+      const nextVisibleLabels = new Set(
+        [...state.visibleLabels].filter((label) =>
+          state.allSeries.some((serie) => serie.label === label),
+        ),
+      );
+      state.visibleLabels = nextVisibleLabels;
+      state.currentSeries = filterSeriesByLabels(
+        state.allSeries,
+        state.visibleLabels,
+      );
+      render();
+    },
+    updateVisibleSeries: (labels): void => {
+      ensureActive();
+      assertValidVisibleLabels(labels, state.allSeries, "updateVisibleSeries");
+      clearExtentCache();
+      state.visibleLabels = new Set(labels);
+      state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.zoomBehavior?.reset();
       render();
     },
     withAxes: (options = {}): ChartInstance<T> => {
@@ -230,6 +298,24 @@ export const createChart = <T,>(
       ensureActive();
       if (state.hasPoints) return chart;
       state.hasPoints = true;
+      render();
+      return chart;
+    },
+    withVisibleSeries: (labels): ChartInstance<T> => {
+      ensureActive();
+      assertValidVisibleLabels(labels, state.allSeries, "withVisibleSeries");
+      const nextLabels = new Set(labels);
+      const hasSameSize = state.visibleLabels.size === nextLabels.size;
+      const hasSameMembers = hasSameSize
+        ? [...nextLabels].every((label) => state.visibleLabels.has(label))
+        : false;
+      if (hasSameMembers) {
+        return chart;
+      }
+      clearExtentCache();
+      state.visibleLabels = nextLabels;
+      state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.zoomBehavior?.reset();
       render();
       return chart;
     },

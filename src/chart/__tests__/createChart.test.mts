@@ -76,6 +76,12 @@ describe("createChart", () => {
       expect(container.querySelector("circle.point")).toBeNull();
       expect(container.querySelector("text.chart-title")).toBeNull();
     });
+
+    it("exposes allSeries and series with all visible by default", () => {
+      const chart = createChart(container, config);
+      expect(chart.allSeries.length).toBe(2);
+      expect(chart.series.length).toBe(2);
+    });
   });
 
   describe("builder methods", () => {
@@ -84,6 +90,7 @@ describe("createChart", () => {
       expect(chart.withAxes()).toBe(chart);
       expect(chart.withGrid()).toBe(chart);
       expect(chart.withPoints()).toBe(chart);
+      expect(chart.withVisibleSeries(["Revenue"])).toBe(chart);
     });
 
     it("withAxes renders both axis groups and labels", () => {
@@ -171,6 +178,7 @@ describe("createChart", () => {
 
     it("supports method chaining", () => {
       createChart(container, config)
+        .withVisibleSeries(["Revenue", "Cost"])
         .withAxes()
         .withGrid()
         .withPoints()
@@ -211,6 +219,47 @@ describe("createChart", () => {
       expect(container.querySelector("text.chart-title")?.textContent).toBe("Revenue");
       expect(container.querySelectorAll("g.legend-entry").length).toBe(2);
     });
+
+    it("withVisibleSeries renders only selected series", () => {
+      createChart(container, config).withVisibleSeries(["Revenue"]);
+      const lines = container.querySelectorAll("g.content path.chart-line");
+      expect(lines.length).toBe(1);
+      expect(lines[0]?.getAttribute("class")?.includes("Revenue")).toBe(true);
+    });
+
+    it("withVisibleSeries accepts empty list and renders empty plot", () => {
+      const chart = createChart(container, config).withPoints().withVisibleSeries([]);
+      expect(chart.series.length).toBe(0);
+      expect(chart.allSeries.length).toBe(2);
+      expect(container.querySelectorAll("g.content path.chart-line").length).toBe(0);
+      expect(container.querySelectorAll("g.content circle.point").length).toBe(0);
+    });
+
+    it("withVisibleSeries throws on unknown label", () => {
+      const chart = createChart(container, config);
+      expect(() => chart.withVisibleSeries(["Unknown"])).toThrow("Unknown series labels");
+    });
+
+    it("withLegend interactive emits toggles", () => {
+      const calls: Array<{ label: string; isVisible: boolean }> = [];
+      createChart(container, config)
+        .withVisibleSeries(["Revenue"])
+        .withLegend({
+          interactive: true,
+          items: [
+            { color: "steelblue", label: "Revenue" },
+            { color: "tomato", label: "Cost" },
+          ],
+          onToggle: (label, isVisible) => {
+            calls.push({ isVisible, label });
+          },
+        });
+
+      const hiddenEntry = container.querySelector<SVGGElement>('g.legend-entry[data-label="Cost"]');
+      hiddenEntry?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+      expect(calls).toEqual([{ isVisible: true, label: "Cost" }]);
+    });
   });
 
   describe("lifecycle", () => {
@@ -228,6 +277,40 @@ describe("createChart", () => {
       expect(updatedCircles).toBe(4);
     });
 
+    it("update keeps visible series selection", () => {
+      const chart = createChart(container, config)
+        .withPoints()
+        .withVisibleSeries(["Revenue"]);
+
+      expect(chart.series.length).toBe(1);
+      expect(container.querySelectorAll("g.content path.chart-line").length).toBe(1);
+
+      chart.update([
+        { date: new Date("2023-03-01"), revenue: 300, cost: 40 },
+        { date: new Date("2023-03-02"), revenue: 250, cost: 35 },
+      ]);
+
+      expect(chart.allSeries.length).toBe(2);
+      expect(chart.series.length).toBe(1);
+      expect(container.querySelectorAll("g.content path.chart-line").length).toBe(1);
+      expect(container.querySelectorAll("g.content circle.point").length).toBe(2);
+    });
+
+    it("updateVisibleSeries updates rendered series", () => {
+      const chart = createChart(container, config).withVisibleSeries(["Revenue"]);
+      expect(container.querySelectorAll("g.content path.chart-line").length).toBe(1);
+
+      chart.updateVisibleSeries(["Cost"]);
+      expect(chart.series.length).toBe(1);
+      expect(chart.series[0]?.label).toBe("Cost");
+      expect(container.querySelectorAll("g.content path.chart-line").length).toBe(1);
+    });
+
+    it("updateVisibleSeries throws on unknown labels", () => {
+      const chart = createChart(container, config);
+      expect(() => chart.updateVisibleSeries(["Nope"])).toThrow("Unknown series labels");
+    });
+
     it("dispose disconnects safely", () => {
       const chart = createChart(container, config).withAxes().withGrid();
       expect(() => chart.dispose()).not.toThrow();
@@ -238,6 +321,13 @@ describe("createChart", () => {
       const chart = createChart(container, config);
       chart.dispose();
       expect(() => chart.update(data)).toThrow("disposed");
+    });
+
+    it("updateVisibleSeries throws after dispose", () => {
+      const chart = createChart(container, config);
+      chart.dispose();
+      expect(() => chart.updateVisibleSeries(["Revenue"]))
+        .toThrow("disposed");
     });
   });
 
@@ -425,6 +515,21 @@ describe("createChart", () => {
         theme: reducedMotionTheme,
       });
       expect(instance.series.length).toBe(2);
+    });
+  });
+
+  describe("validation", () => {
+    it("throws when ySeries labels are duplicated", () => {
+      const duplicatedConfig: ChartConfig<TestData> = {
+        ...config,
+        ySeries: [
+          { accessor: (d) => d.revenue, label: "Revenue" },
+          { accessor: (d) => d.cost, label: "Revenue" },
+        ],
+      };
+
+      expect(() => createChart(container, duplicatedConfig))
+        .toThrow("duplicated ySeries labels");
     });
   });
 });

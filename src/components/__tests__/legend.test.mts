@@ -72,4 +72,42 @@ describe("renderLegend", () => {
     const legend = svg.select<SVGGElement>("g.legend");
     expect(legend.attr("transform")).toBe("translate(100,50)");
   });
+
+  it("dims hidden legend entries when visibleLabels is provided", () => {
+    const svg = createMockSvg();
+    const items: LegendItem[] = [
+      { color: "#1f77b4", label: "Revenue" },
+      { color: "#ff7f0e", label: "Cost" },
+    ];
+
+    renderLegend(svg, {
+      items,
+      visibleLabels: new Set(["Revenue"]),
+    });
+
+    const entries = svg.selectAll<SVGGElement, LegendItem>("g.legend-entry");
+    const nodes = entries.nodes();
+    expect(nodes[0]?.style.opacity).toBe("1");
+    expect(nodes[1]?.style.opacity).toBe("0.45");
+  });
+
+  it("calls onToggle when interactive entry is clicked", () => {
+    const svg = createMockSvg();
+    const items: LegendItem[] = [{ color: "#1f77b4", label: "Revenue" }];
+    const calls: Array<{ label: string; isVisible: boolean }> = [];
+
+    renderLegend(svg, {
+      interactive: true,
+      items,
+      onToggle: (label, isVisible) => {
+        calls.push({ isVisible, label });
+      },
+      visibleLabels: new Set(["Revenue"]),
+    });
+
+    const entry = svg.select<SVGGElement>("g.legend-entry").node();
+    entry?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(calls).toEqual([{ isVisible: false, label: "Revenue" }]);
+  });
 });

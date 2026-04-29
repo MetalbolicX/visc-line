@@ -17,6 +17,12 @@ export interface LegendItem {
 export interface RenderLegendOptions {
   /** Array of items to render in order. */
   readonly items: readonly LegendItem[];
+  /** Enable click events for each legend item. */
+  readonly interactive?: boolean;
+  /** Active (visible) labels to render stateful legend styles. */
+  readonly visibleLabels?: ReadonlySet<string>;
+  /** Callback triggered when user toggles a legend item. */
+  readonly onToggle?: (label: string, isVisible: boolean) => void;
   /** X offset applied to the legend group (default: 0). */
   readonly x?: number;
   /** Y offset applied to the legend group (default: 0). */
@@ -46,7 +52,14 @@ export interface RenderLegendOptions {
  */
 export const renderLegend = (
   svg: SVGSelection,
-  { items, x = 0, y = 0 }: RenderLegendOptions,
+  {
+    items,
+    interactive = false,
+    visibleLabels,
+    onToggle,
+    x = 0,
+    y = 0,
+  }: RenderLegendOptions,
 ): void => {
   const node = svg.node();
   const cs = node ? getComputedStyle(node) : null;
@@ -70,7 +83,25 @@ export const renderLegend = (
     .data(items)
     .join("g")
     .attr("class", "legend-entry")
+    .attr("data-label", (d) => d.label)
     .attr("transform", (_, i) => `translate(0,${String(i * rowHeight)})`);
+
+  const isVisible = (label: string): boolean =>
+    visibleLabels == null || visibleLabels.has(label);
+
+  entries
+    .style("cursor", interactive ? "pointer" : "default")
+    .attr("aria-pressed", (d) => (isVisible(d.label) ? "true" : "false"))
+    .style("opacity", (d) => (isVisible(d.label) ? "1" : "0.45"));
+
+  if (interactive && onToggle) {
+    entries.on("click.legend", (_event, d) => {
+      const nextVisible = !isVisible(d.label);
+      onToggle(d.label, nextVisible);
+    });
+  } else {
+    entries.on("click.legend", null);
+  }
 
   entries
     .selectAll<SVGRectElement, LegendItem>("rect.swatch")

@@ -43,6 +43,11 @@ export interface FeatureFlags {
  *   present (e.g. `hasLegend` vs `legendOptions`).
  */
 export interface ChartState<T> {
+  allSeries: readonly ProcessedSeries<T>[];
+  allSeriesExtents: Readonly<{
+    readonly xDomain: readonly [undefined, undefined] | readonly [unknown, unknown];
+    readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
+  }>;
   currentSeries: readonly ProcessedSeries<T>[];
   customCallback: null | CustomCallback;
   customCleanup: null | (() => void);
@@ -60,6 +65,7 @@ export interface ChartState<T> {
   legendOptions: null | WithLegendOptions;
   titleOptions: null | WithTitleOptions;
   tooltipOptions: WithTooltipOptions;
+  visibleLabels: ReadonlySet<string>;
   zoomBehavior: null | ZoomBehaviorWithReset;
   zoomPanOptions: WithZoomPanOptions;
 }

@@ -26,6 +26,8 @@ export interface WithTitleOptions {
 
 export interface WithLegendOptions {
   readonly items: readonly LegendItem[];
+  readonly interactive?: boolean;
+  readonly onToggle?: (label: string, isVisible: boolean) => void;
 }
 
 export interface WithZoomPanOptions {
@@ -50,16 +52,19 @@ export interface WithGridOptions {
  * A live, mounted chart handle returned by createChart.
  */
 export interface ChartInstance<T> {
+  readonly allSeries: readonly ProcessedSeries<T>[];
   readonly container: HTMLElement;
   readonly dispose: () => void;
   readonly series: readonly ProcessedSeries<T>[];
   readonly svg: SVGSelection;
   readonly update: (newData: readonly T[]) => void;
+  readonly updateVisibleSeries: (labels: readonly string[]) => void;
   readonly withAxes: (options?: WithAxesOptions) => ChartInstance<T>;
   readonly withCustom: (callback: null | CustomCallback) => ChartInstance<T>;
   readonly withGrid: (options?: WithGridOptions) => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
   readonly withPoints: () => ChartInstance<T>;
+  readonly withVisibleSeries: (labels: readonly string[]) => ChartInstance<T>;
   readonly withTitle: (options: WithTitleOptions) => ChartInstance<T>;
   readonly withTooltip: (options?: WithTooltipOptions) => ChartInstance<T>;
   readonly withZoomPan: (options?: WithZoomPanOptions) => ChartInstance<T>;

@@ -1,4 +1,5 @@
 - [Home](/)
 - [Getting Started](/getting-started)
+- [Architecture](/architecture)
 - [API Reference](/api-reference)
 - [Tutorials](/tutorials)

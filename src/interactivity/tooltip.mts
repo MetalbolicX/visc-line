@@ -312,12 +312,9 @@ export const addTooltip = <T,>(
         const xNumScale = asScaleNumber(xScale);
         const yNumScale = asScaleNumber(yScale);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const dot = select(this)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .attr("cx", (d: any) => xNumScale(xAccessor(d)))
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .attr("cy", (d: any) => yNumScale(serie.accessor(d)))
+          .attr("cx", xNumScale(xAccessor(datum)))
+          .attr("cy", yNumScale(serie.accessor(datum)))
           .attr("display", null)
           .node();
 

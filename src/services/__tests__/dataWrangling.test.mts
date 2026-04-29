@@ -4,6 +4,11 @@ import type { ProcessedSeries } from "../../types/index.mjs";
 
 import { getMultiSeriesExtents, processNumericData } from "../../services/dataWrangling.mjs";
 
+interface SeriesPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
 describe("processNumericData", () => {
   it("keeps rows where both x and y are valid finite numbers", () => {
     /**
@@ -135,12 +140,13 @@ describe("getMultiSeriesExtents", () => {
    *
    */
   const makeSeries = (
-    data: readonly Readonly<{ readonly x: number; readonly y: number }>[],
-    accessor: (d: Readonly<{ readonly x: number; readonly y: number }>) => number,
-  ): ProcessedSeries<Readonly<{ readonly x: number; readonly y: number }>> => ({
+    data: readonly SeriesPoint[],
+    accessor: (d: SeriesPoint) => number,
+    label = "series",
+  ): ProcessedSeries<SeriesPoint> => ({
     accessor,
     data,
-    label: "series",
+    label,
     stroke: "steelblue",
   });
 
@@ -230,5 +236,24 @@ describe("getMultiSeriesExtents", () => {
     const result = getMultiSeriesExtents(series, (d) => d.x);
     expect(result.xDomain).toEqual([1, 4]);
     expect(result.yDomain).toEqual([10, 25]);
+  });
+
+  it("keeps cached extents isolated by label", () => {
+    const revenueSeries = makeSeries(
+      [{ x: 1, y: 10 }, { x: 2, y: 20 }],
+      (d) => d.y,
+      "Revenue",
+    );
+    const costSeries = makeSeries(
+      [{ x: 1, y: 100 }, { x: 2, y: 200 }],
+      (d) => d.y,
+      "Cost",
+    );
+
+    const all = getMultiSeriesExtents([revenueSeries, costSeries], (d) => d.x);
+    const onlyRevenue = getMultiSeriesExtents([revenueSeries], (d) => d.x);
+
+    expect(all.yDomain).toEqual([10, 200]);
+    expect(onlyRevenue.yDomain).toEqual([10, 20]);
   });
 });

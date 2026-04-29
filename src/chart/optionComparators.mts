@@ -82,6 +82,12 @@ export const areLegendOptionsEqual = (
   next: WithLegendOptions,
 ): boolean => {
   if (!previous) return false;
+  if ((previous.interactive ?? false) !== (next.interactive ?? false)) {
+    return false;
+  }
+  if (previous.onToggle !== next.onToggle) {
+    return false;
+  }
   if (previous.items.length !== next.items.length) return false;
 
   for (const [index, prevItem] of previous.items.entries()) {

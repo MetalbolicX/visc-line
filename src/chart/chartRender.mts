@@ -144,12 +144,25 @@ export const renderChart = <T,>(
     context.config.xSerie.accessor,
   );
 
+  const [visibleXMin, visibleXMax] = xDomain;
+  const [visibleYMin, visibleYMax] = yDomain;
+  const xDomainToUse =
+    visibleXMin !== undefined && visibleXMax !== undefined
+      ? xDomain
+      : context.state.allSeriesExtents.xDomain;
+  const isSingleSeriesVisible = context.state.currentSeries.length === 1;
+  const yDomainToUse = isSingleSeriesVisible &&
+    visibleYMin !== undefined &&
+    visibleYMax !== undefined
+    ? yDomain
+    : context.state.allSeriesExtents.yDomain;
+
   const { xScale, yScale } = createScales({
     innerHeight: dims.innerHeight,
     innerWidth: dims.innerWidth,
-    xDomain: xDomain as Parameters<typeof createScales>[0]["xDomain"],
+    xDomain: xDomainToUse as Parameters<typeof createScales>[0]["xDomain"],
     xType: context.xType,
-    yDomain,
+    yDomain: yDomainToUse,
   });
 
   renderLine<T>(
@@ -244,6 +257,9 @@ export const renderChart = <T,>(
   if (context.flags.hasLegend && context.state.legendOptions) {
     context.svg.call(renderLegend, {
       items: context.state.legendOptions.items,
+      interactive: context.state.legendOptions.interactive,
+      onToggle: context.state.legendOptions.onToggle,
+      visibleLabels: context.state.visibleLabels,
       x: context.margins.left + dims.innerWidth - LEGEND_WIDTH,
       y: context.margins.top + LEGEND_TOP_OFFSET,
     });
