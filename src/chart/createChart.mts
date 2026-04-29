@@ -240,7 +240,6 @@ export const createChart = <T,>(
     updateVisibleSeries: (labels): void => {
       ensureActive();
       assertValidVisibleLabels(labels, state.allSeries, "updateVisibleSeries");
-      clearExtentCache();
       state.visibleLabels = new Set(labels);
       state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
       state.zoomBehavior?.reset();
@@ -312,7 +311,6 @@ export const createChart = <T,>(
       if (hasSameMembers) {
         return chart;
       }
-      clearExtentCache();
       state.visibleLabels = nextLabels;
       state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
       state.zoomBehavior?.reset();

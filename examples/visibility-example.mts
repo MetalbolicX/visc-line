@@ -64,20 +64,19 @@ export const main = (container: HTMLElement): void => {
       label: s.label,
     })),
     onToggle: (label, isVisible) => {
-      // Toggle: if clicking a hidden series → show it; if clicking a visible one → hide it
       if (isVisible) {
-        // User wants to SHOW this series
-        // If "All Series" was selected, just keep it in the selection
+        // Clicked a hidden series → show it as the single visible
         selectedValue = label;
       } else {
-        // User wants to HIDE this series
-        // If only one was left visible, switch to "All Series" (or leave empty)
+        // Clicked a visible series → hide it
         if (selectedValue === "All Series") {
-          selectedValue = label; // switch to that single series
+          // Hide one from "All Series" → show only the complement
+          selectedValue = allLabels.find((l) => l !== label) ?? "All Series";
         } else if (selectedValue === label) {
-          selectedValue = "All Series"; // deselected the active one
+          // Hide the only visible series → go back to all
+          selectedValue = "All Series";
         }
-        // Otherwise, user is hiding a non-selected series → no change needed
+        // else: hiding a series that wasn't the active one → leave selection
       }
 
       // Sync dropdown

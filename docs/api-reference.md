@@ -44,16 +44,19 @@ createChart<T>(
 | ----------------------- | ---------------------------------------------- | ------------------------------------------------------ |
 | `container`             | `HTMLElement`                                  | The mounted container                                  |
 | `svg`                   | `SVGSelection`                                 | D3 selection of the root `<svg>`                       |
-| `series`                | `readonly ProcessedSeries<T>[]`                | Current processed series snapshot                      |
-| `update(newData)`       | `(readonly T[]) => void`                       | Re-render with new data                                |
+| `series`                | `readonly ProcessedSeries<T>[]`                | **Visible** processed series (filtered by visibility)  |
+| `allSeries`             | `readonly ProcessedSeries<T>[]`                | All processed series (unfiltered)                      |
+| `update(newData)`       | `(readonly T[]) => void`                       | Re-render with new data (preserves visibility)         |
+| `updateVisibleSeries(labels)` | `(readonly string[]) => void`            | Change visibility at runtime                           |
 | `dispose()`             | `() => void`                                   | Tear down resize observer, enhancements, and listeners |
 | `withAxes(options?)` | `(WithAxesOptions?) => ChartInstance<T>` | Enable x/y axes and axis labels                    |
 | `withCustom(callback)` | `(CustomCallback \| null) => ChartInstance<T>` | Inject custom D3 drawing code (see below)            |
 | `withGrid(options?)` | `(WithGridOptions?) => ChartInstance<T>` | Enable x/y grid lines                               |
-| `withLegend(options)`   | `(WithLegendOptions) => ChartInstance<T>`      | Enable legend                                          |
+| `withLegend(options)`   | `(WithLegendOptions) => ChartInstance<T>`      | Enable legend (optionally interactive)                 |
 | `withPoints()`          | `() => ChartInstance<T>`                       | Enable point markers                                   |
 | `withTitle(options)`    | `(WithTitleOptions) => ChartInstance<T>`       | Enable chart title                                     |
 | `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>`    | Enable tooltip interactivity                           |
+| `withVisibleSeries(labels)` | `(readonly string[]) => ChartInstance<T>`  | Declare which series to show (fluent, creation-time)   |
 | `withZoomPan(options?)` | `(WithZoomPanOptions?) => ChartInstance<T>`    | Enable zoom/pan behavior                               |
 
 All fluent methods return `this` for chaining. After `dispose()`, all methods throw.
@@ -88,7 +91,8 @@ the callback is replaced by a new `withCustom` call.
 ### `update`
 
 Replace the chart data without rebuilding. The chart re-processes all series and
-re-renders every component.
+re-renders every component. The current visibility selection is **preserved**
+across updates.
 
 ```ts
 chart.update(newData);
@@ -104,6 +108,74 @@ and custom callback cleanup.
 ```ts
 chart.dispose();
 ```
+
+---
+
+## Series Visibility (Controlled State)
+
+`visc-line` provides a **controlled visibility** model: the consumer owns which
+series are visible, and the library handles D3 enter/update/exit rendering.
+
+### `withVisibleSeries`
+
+Declarative fluent method — set initial visibility at creation time:
+
+```ts
+chart.withVisibleSeries(["Revenue"]);     // show only Revenue
+chart.withVisibleSeries(["Revenue", "Cost"]); // show both
+chart.withVisibleSeries([]);               // show none (empty chart)
+```
+
+Throws `Error` if any label does not match a `ySeries` entry.
+
+### `updateVisibleSeries`
+
+Change visibility at runtime without rebuilding the chart:
+
+```ts
+chart.updateVisibleSeries(["Cost"]);  // switch to Cost only
+chart.updateVisibleSeries([]);        // hide all
+chart.updateVisibleSeries(allLabels); // show all
+```
+
+Throws `Error` if any label is unknown. Resets zoom/pan on toggle.
+
+### `allSeries` property
+
+Returns the complete, unfiltered array of processed series. `series` returns
+only the **visible** subset.
+
+### Domain Behavior
+
+| Visible series count | Y-axis domain |
+|----------------------|--------------|
+| 0                    | Stays at previous domain |
+| 1                    | Rescales to that series' extent |
+| 2+                   | Uses global extent (all series) |
+
+This prevents visual confusion: when comparing multiple series the axes are
+stable; when isolating a single series it uses the full chart area.
+
+### Legend Interactivity
+
+The legend is an **event emitter** — it does not mutate chart state:
+
+```ts
+chart.withLegend({
+  interactive: true,
+  items: chart.allSeries.map(s => ({
+    color: s.stroke ?? "steelblue",
+    label: s.label,
+  })),
+  onToggle: (label, isVisible) => {
+    // Consumer decides what to do
+    chart.updateVisibleSeries(isVisible ? [label] : allLabels);
+  },
+});
+```
+
+Hidden legend entries are dimmed (opacity 0.45). The `onToggle` callback
+receives the label and the *next* visibility state for that label after the click.
 
 ---
 
@@ -328,9 +400,9 @@ Exported type aliases and interfaces available from `visc-line`.
 | `ChartOptions`        | `interface` | Optional rendering options for `createChart`    |
 | `ProcessedSeries<T>`  | `interface` | Series descriptor with filtered `data` attached |
 | `SeriesDescriptor<T>` | `interface` | Describes a single line series                  |
+| `WithLegendOptions`   | `interface` | Options for `withLegend` (includes `interactive`, `onToggle`, `items`) |
 | `WithTooltipOptions`  | `interface` | Options for `withTooltip`                       |
 | `WithTitleOptions`    | `interface` | Options for `withTitle`                         |
-| `WithLegendOptions`   | `interface` | Options for `withLegend`                        |
 | `WithZoomPanOptions`  | `interface` | Options for `withZoomPan`                       |
 
 ### Layout & Scales

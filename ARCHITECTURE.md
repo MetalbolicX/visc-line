@@ -224,16 +224,17 @@ flowchart TB
 
 Cada componente opcional tiene un flag booleano en `ChartState`:
 
-| Flag | Renderiza | Por defecto |
-|------|-----------|-------------|
+| Flag / Estado | Renderiza | Por defecto |
+|---------------|-----------|-------------|
 | `hasTitle` | Título | false |
 | `hasAxes` | Ejes X + Y | false |
 | `hasGrid` | Grid X + Y | false |
 | `hasPoints` | Puntos | false |
 | `hasTooltip` | Tooltip | false |
 | `hasZoomPan` | Zoom/Pan | false |
+| `visibleLabels` | Controla qué series se renderizan (no es flag booleano, es un `Set<string>` de labels activas) | Todas las labels |
 
-El flag se activa al llamar al método fluent correspondiente (`.withTitle()`, `.withAxes()`, etc.).
+Los flags se activan al llamar al método fluent correspondiente (`.withTitle()`, `.withAxes()`, etc.). La visibilidad de series se controla mediante `withVisibleSeries(labels)` y `updateVisibleSeries(labels)`, que mutan `state.visibleLabels` y filtran `state.allSeries` para producir `state.currentSeries`.
 
 ### 2.4 Decisión: ClipPath en Content, No en Bounds
 
@@ -462,14 +463,25 @@ Valores numéricos para D3 APIs
 Datos crudos (T[])
     ↓ ChartConfig { data, xSerie, ySeries[] }
     ↓ processAllSeries()
-ProcessedSeries<T>[] { data filtrado, descriptor de serie }
+allSeries — ProcessedSeries<T>[] { data filtrado, descriptor de serie }
+    ↓ filterSeriesByLabels(visibleLabels) — aplicado en createChart + updateVisibleSeries
+currentSeries — ProcessedSeries<T>[] (solo las series con label en visibleLabels)
     ↓ getMultiSeriesExtents()
-{ xDomain, yDomain }
+{ xDomain, yDomain } — calculado sobre currentSeries
     ↓ createScales()
-{ xScale, yScale }
+{ xScale, yScale } — con dominio adaptativo según cantidad de series visibles
     ↓ renderers
 SVG Elements
 ```
+
+El estado mantiene dos arrays:
+
+- `state.allSeries`: Todas las series procesadas (no se filtra nunca).
+- `state.currentSeries`: Subconjunto visible filtrado por `state.visibleLabels`.
+
+`allSeriesExtents` se calcula una vez al crear/actualizar datos y sirve como dominio
+de respaldo cuando múltiples series están visibles o cuando la serie única tiene
+pocos datos.
 
 ### 6.2 Validación de Datos
 
@@ -482,11 +494,19 @@ SVG Elements
 
 ### 6.3 Cálculo de Dominio
 
-**Elección**: El dominio se calcula con `d3.extent()` sobre todos los datos, no por serie individual.
+**Elección**: El dominio Y se calcula de forma adaptativa según la visibilidad:
 
-**Alternativa considerada**: Dominio por serie.
+- **Múltiples series visibles**: Se usa `allSeriesExtents` (dominio global fijo de todas las series `allSeries`). Esto garantiza que todas las series sean comparables en la misma escala.
+- **Una sola serie visible**: Se usa el `yDomain` de la serie actual (`currentSeries`). Esto rescalea el eje para que la serie use todo el espacio disponible.
+- **X domain**: Siempre se usa el dominio de `currentSeries` si tiene datos; si no, cae a `allSeriesExtents.xDomain`.
 
-**Razón**: Para múltiples series, tener un dominio compartido garantiza que todas las series sean comparables en la misma escala.
+**Alternativa considerada**: Siempre usar dominio global.
+
+**Razón del cambio**: Cuando se muestra una sola serie (ej. "Sales" vs "Amazon"), mantener el dominio global desperdicia espacio vertical y confunde al lector. El rescale automático mejora la UX para datasets con atributos de magnitudes dispares.
+
+**Alternativa considerada**: Siempre rescale por serie visible.
+
+**Razón de rechazo**: Con múltiples series visibles, comparar tendencias requiere que los ejes sean estables. El rescale constante al alternar entre "All Series" y una serie individual produce saltos de eje que son intencionales y deseables solo cuando se aísla una serie.
 
 ---
 
@@ -499,7 +519,7 @@ SVG Elements
 | `ChartConfig<T>` | Input: datos + definiciones de series x/y |
 | `ProcessedSeries<T>` | Serie con datos filtrados |
 | `SeriesDescriptor<T>` | Accessor + label + overrides de estilo |
-| `ChartInstance<T>` | API pública retornada por createChart |
+| `ChartInstance<T>` | API pública retornada por createChart (incluye `allSeries`, `series` (visible), `withVisibleSeries()`, `updateVisibleSeries()`) |
 | `ChartOptions` | Opciones de creación (curve, margins, theme, scale types) |
 | `WithAxesOptions` | Configuración de ticks y formato de ejes |
 | `WithGridOptions` | flags showX/showY |
@@ -550,6 +570,8 @@ RenderContext<T>
 | Tooltip | opciones vía `.withTooltip()` |
 | Zoom/Pan | opciones vía `.withZoomPan()` |
 | Custom | callbacks arbitrarios vía `.withCustom()` |
+| **Visibilidad de series** | **labels vía `.withVisibleSeries()` y `.updateVisibleSeries()`** |
+| **Legend interactivo** | **flags `interactive` y `onToggle` vía `.withLegend()`** |
 
 ### 8.2 Aspectos Hardcoded
 
@@ -630,7 +652,7 @@ Para nuevos tipos de gráficos:
 
 `utils/curveMap.mts` proporciona:
 
-```
+```text
 CurvePreset (18 presets) → D3 CurveFactory
 ```
 
@@ -645,6 +667,8 @@ Para **área charts**: Las mismas curvas aplican; solo cambia el generador (de `
 - **Builder pattern** con métodos fluent para configuración incremental
 - **Feature flags** en ChartState para gating condicional de renderizado
 - **Custom callbacks** como escape hatch para personalización avanzada
+- **Visibilidad controlada**: `withVisibleSeries()` / `updateVisibleSeries()` — el consumidor posee el estado, el librería renderiza
+- **Legend como event emitter**: La leyenda interactiva emite eventos `onToggle` pero no muta estado interno
 
 ### 10.2 Rendering
 
@@ -662,14 +686,16 @@ Para **área charts**: Las mismas curvas aplican; solo cambia el generador (de `
 ### 10.4 Datos
 
 - **Validación** filtrando null, NaN, Infinity antes de renderizar
-- **Dominio compartido** entre series para escala uniforme
+- **Dominio adaptativo**: global (allSeries) cuando hay múltiples series visibles, rescale a la serie individual cuando solo una está visible
 - **Accesores configurables** para x/y en lugar de paths fijos
+- **Validación estricta de labels**: duplicados en `ySeries` lanzan error al crear; labels inválidas en `withVisibleSeries` / `updateVisibleSeries` lanzan error
 
 ### 10.5 Interactividad
 
 - **ResizeObserver** para re-render automático en resize
 - **Zoom/Pan** como transform de scales (no de SVG viewBox)
-- **Tooltip** con cursor line y dots por serie
+- **Zoom se resetea** al cambiar visibilidad de series (para evitar escalas inválidas tras rescale de dominio)
+- **Tooltip** con cursor line y dots por serie (solo series visibles)
 
 ---
 
@@ -714,7 +740,7 @@ mouse-capture        → rect invisible para capturar mouse events
 | Dependencia | Versión | Rol |
 |-------------|---------|-----|
 | `d3` | `^7.9.0` | Scales, axes, line generator, zoom, pointer, bisector |
-| `tipviz` | `^2.3.1` | Renderizado de tooltip |
+| `tipviz` | `^2.3.2` | Renderizado de tooltip |
 
 ### 12.2 Bundling
 
@@ -802,7 +828,12 @@ mouse-capture        → rect invisible para capturar mouse events
 | Término | Definición |
 |---------|------------|
 | **ChartInstance** | Instancia retornada por createChart; expuesta al usuario |
-| **ChartState** | Estado interno mutable; feature flags + datos procesados |
+| **ChartState** | Estado interno mutable; feature flags + datos procesados + `allSeries` + `visibleLabels` |
+| **allSeries** | Array completo de series procesadas (nunca filtrado) |
+| **currentSeries** | Subconjunto visible de `allSeries` según `visibleLabels` |
+| **visibleLabels** | `Set<string>` con las labels de series actualmente visibles |
+| **Visibilidad controlada** | Patrón donde el consumidor posee el estado de visibilidad y la librería solo renderiza lo que recibe |
+| **Dominio adaptativo** | Eje Y se rescalea cuando solo una serie está visible; se mantiene fijo cuando hay múltiples |
 | **ChartConfig** | Configuración de entrada del usuario |
 | **ProcessedSeries** | Serie con datos filtrados de valores inválidos |
 | **RenderContext** | Estado + config + escalas compartidas entre renderizadores |
@@ -815,4 +846,5 @@ mouse-capture        → rect invisible para capturar mouse events
 
 ---
 
-*Documento generado mediante análisis del codebase `visc-line`. Sirve como referencia para implementar librerías hermanas para otros tipos de gráficos (barras, radar, area, scatter, pie) siguiendo los mismos patrones y convenciones.*
+*Documento generado mediante análisis del codebase `visc-line`. Sirve como referencia para implementar librerías hermanas para otros 
+tipos de gráficos (barras, radar, area, scatter, pie) siguiendo los mismos patrones y convenciones.*

@@ -224,16 +224,17 @@ flowchart TB
 
 Each optional component has a boolean flag in `ChartState`:
 
-| Flag | Renders | Default |
-|------|---------|---------|
+| Flag / State | Renders | Default |
+|--------------|---------|---------|
 | `hasTitle` | Title | false |
 | `hasAxes` | X + Y axes | false |
 | `hasGrid` | X + Y grid | false |
 | `hasPoints` | Data points | false |
 | `hasTooltip` | Tooltip | false |
 | `hasZoomPan` | Zoom/Pan | false |
+| `visibleLabels` | Controls which series are rendered (not a boolean flag; it is a `Set<string>` of active labels) | All labels |
 
-The flag is activated by calling the corresponding fluent method (`.withTitle()`, `.withAxes()`, etc.).
+Feature flags are activated by calling their corresponding fluent method (`.withwTitle()`, `.withAxes()`, etc.). Series visibility is controlled via `withVisibleSeries(labels)` and `updateVisibleSeries(labels)`, which mutate `state.visibleLabels` and filter `state.allSeries` to produce `state.currentSeries`.
 
 ### 2.4 Decision: ClipPath on Content, Not on Bounds
 
@@ -462,14 +463,25 @@ Numeric values for D3 APIs
 Raw data (T[])
     ↓ ChartConfig { data, xSerie, ySeries[] }
     ↓ processAllSeries()
-ProcessedSeries<T>[] { filtered data, series descriptor }
+allSeries — ProcessedSeries<T>[] { filtered data, series descriptor }
+    ↓ filterSeriesByLabels(visibleLabels) — applied in createChart + updateVisibleSeries
+currentSeries — ProcessedSeries<T>[] (only series whose label is in visibleLabels)
     ↓ getMultiSeriesExtents()
-{ xDomain, yDomain }
+{ xDomain, yDomain } — computed over currentSeries
     ↓ createScales()
-{ xScale, yScale }
+{ xScale, yScale } — with adaptive domain based on visible series count
     ↓ renderers
 SVG Elements
 ```
+
+The state maintains two arrays:
+
+- `state.allSeries`: All processed series (never filtered).
+- `state.currentSeries`: Visible subset filtered by `state.visibleLabels`.
+
+`allSeriesExtents` is computed once when creating/updating data and serves as the
+fallback domain when multiple series are visible or when a single series has
+sparse data.
 
 ### 6.2 Data Validation
 
@@ -482,11 +494,29 @@ SVG Elements
 
 ### 6.3 Domain Calculation
 
-**Chosen approach**: The domain is calculated with `d3.extent()` across all series data, not per individual series.
+**Chosen approach**: The Y domain is computed adaptively based on visibility:
 
-**Alternative considered**: Per-series domain.
+- **Multiple visible series**: Uses `allSeriesExtents` (fixed global domain of
+  all `allSeries`). This guarantees all series are comparable on the same scale.
+- **Single visible series**: Uses the `yDomain` of the current series
+  (`currentSeries`). This rescales the axis so the series uses the full available
+  space.
+- **X domain**: Always uses `currentSeries` domain if it has data; falls back to
+  `allSeriesExtents.xDomain` otherwise.
 
-**Rationale**: For multiple series, a shared domain ensures all series are comparable on the same scale.
+**Alternative considered**: Always use global domain.
+
+**Rationale for change**: When displaying a single series (e.g. "Sales" vs
+"Amazon"), keeping the global domain wastes vertical space and confuses the
+reader. Automatic rescale improves UX for datasets with attributes of disparate
+magnitudes.
+
+**Alternative considered**: Always rescale per visible series.
+
+**Why it was rejected**: With multiple visible series, comparing trends requires
+stable axes. Constant rescaling when toggling between "All Series" and a single
+series produces axis jumps that are intentional and desirable only when isolating
+a series.
 
 ---
 
@@ -499,7 +529,7 @@ SVG Elements
 | `ChartConfig<T>` | Input: data + x/y series definitions |
 | `ProcessedSeries<T>` | Series with filtered data |
 | `SeriesDescriptor<T>` | Accessor + label + style overrides |
-| `ChartInstance<T>` | Public API returned by createChart |
+| `ChartInstance<T>` | Public API returned by createChart (includes `allSeries`, `series` (visible), `withVisibleSeries()`, `updateVisibleSeries()`) |
 | `ChartOptions` | Creation options (curve, margins, theme, scale types) |
 | `WithAxesOptions` | Tick count and format configuration |
 | `WithGridOptions` | showX/showY flags |
@@ -550,6 +580,8 @@ RenderContext<T>
 | Tooltip | options via `.withTooltip()` |
 | Zoom/Pan | options via `.withZoomPan()` |
 | Custom | arbitrary callbacks via `.withCustom()` |
+| **Series visibility** | **labels via `.withVisibleSeries()` and `.updateVisibleSeries()`** |
+| **Interactive legend** | **`interactive` and `onToggle` flags via `.withLegend()`** |
 
 ### 8.2 Hardcoded Aspects
 
@@ -572,6 +604,8 @@ RenderContext<T>
 - **Builder pattern** with fluent methods for incremental configuration
 - **Feature flags** in ChartState for conditional render gating
 - **Custom callbacks** as an escape hatch for advanced customization
+- **Controlled visibility**: `withVisibleSeries()` / `updateVisibleSeries()` — consumer owns state, library renders
+- **Legend as event emitter**: Interactive legend emits `onToggle` events but does not mutate internal state
 
 ### 9.2 Rendering
 
@@ -589,14 +623,16 @@ RenderContext<T>
 ### 9.4 Data
 
 - **Validation** filtering null, NaN, Infinity before rendering
-- **Shared domain** across series for uniform scaling
+- **Adaptive domain**: global (allSeries) when multiple series are visible, rescale to single series when only one is visible
 - **Configurable accessors** for x/y instead of fixed paths
+- **Strict label validation**: duplicates in `ySeries` throw at creation; invalid labels in `withVisibleSeries` / `updateVisibleSeries` throw
 
 ### 9.5 Interactivity
 
 - **ResizeObserver** for automatic re-render on resize
 - **Zoom/Pan** as scale transformation (not SVG viewBox)
-- **Tooltip** with cursor line and per-series dots
+- **Zoom resets** when series visibility changes (to prevent invalid scales after domain rescale)
+- **Tooltip** with cursor line and per-series dots (only visible series)
 
 ---
 
@@ -641,7 +677,7 @@ mouse-capture        → invisible rect for mouse event capture
 | Dependency | Version | Role |
 |-----------|---------|------|
 | `d3` | `^7.9.0` | Scales, axes, line generator, zoom, pointer, bisector |
-| `tipviz` | `^2.3.1` | Tooltip rendering |
+| `tipviz` | `^2.3.2` | Tooltip rendering |
 
 ### 11.2 Bundling
 
@@ -670,7 +706,12 @@ mouse-capture        → invisible rect for mouse event capture
 | Term | Definition |
 |------|------------|
 | **ChartInstance** | Instance returned by createChart; exposed to the user |
-| **ChartState** | Mutable internal state; feature flags + processed data |
+| **ChartState** | Mutable internal state; feature flags + processed data + `allSeries` + `visibleLabels` |
+| **allSeries** | Complete array of processed series (never filtered) |
+| **currentSeries** | Visible subset of `allSeries` filtered by `visibleLabels` |
+| **visibleLabels** | `Set<string>` holding labels of currently visible series |
+| **Controlled visibility** | Pattern where consumer owns visibility state and the library only renders what it receives |
+| **Adaptive domain** | Y-axis rescales when only one series is visible; stays fixed when multiple are visible |
 | **ChartConfig** | User-provided input configuration |
 | **ProcessedSeries** | Series with invalid values filtered out |
 | **RenderContext** | State + config + scales shared across renderers |
