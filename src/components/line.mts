@@ -116,11 +116,14 @@ export const renderLine = <T,>(
           const { s, i } = datum as any;
           const path = select(this);
           const newPathD = buildPath(s);
+          // Set the new path data FIRST so getTotalLength() reflects the
+          // updated geometry. Using the stale length caused the dash pattern
+          // to be too short when the new path is longer, clipping the line.
+          path.attr("d", newPathD);
           const totalLength = this.getTotalLength();
           path
             .attr("stroke-dasharray", totalLength)
             .attr("stroke-dashoffset", totalLength)
-            .attr("d", newPathD)
             .attr("stroke", s.stroke ?? `var(--vl-palette-${i}, steelblue)`)
             .attr("opacity", s.opacity ?? "var(--vl-line-opacity, 1)")
             .transition()
