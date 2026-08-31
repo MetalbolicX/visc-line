@@ -255,8 +255,12 @@ export const renderChart = <T,>(
   }
 
   if (context.flags.hasLegend && context.state.legendOptions) {
+    const derivedItems = context.state.allSeries.map((s, i) => ({
+      color: s.stroke ?? `var(--vl-palette-${String(i)}, steelblue)`,
+      label: s.label,
+    }));
     context.svg.call(renderLegend, {
-      items: context.state.legendOptions.items,
+      items: context.state.legendOptions.items ?? derivedItems,
       interactive: context.state.legendOptions.interactive,
       onToggle: context.state.legendOptions.onToggle,
       visibleLabels: context.state.visibleLabels,

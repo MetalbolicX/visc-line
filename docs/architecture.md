@@ -536,7 +536,7 @@ a series.
 | `WithTooltipOptions` | formatX/Y, tooltipHtml, stylesheetUrl |
 | `WithZoomPanOptions` | onZoom callback, scaleExtent |
 | `WithTitleOptions` | title string |
-| `WithLegendOptions` | legend items |
+| `WithLegendOptions` | Optional legend items (auto-derived from series), interactive flag, onToggle callback |
 | `Theme` | Complete theme object |
 | `ThemeOverride` | Deep partial of Theme for overrides |
 | `Dimensions` | width, height, innerWidth, innerHeight, margins |
@@ -576,7 +576,7 @@ RenderContext<T>
 | Grid | showX/showY flags via `.withGrid()` |
 | Points | Enabled via `.withPoints()` |
 | Title | string via `.withTitle()` |
-| Legend | items via `.withLegend()` |
+| Legend | auto-derived from series via `.withLegend()` (override with explicit `items`) |
 | Tooltip | options via `.withTooltip()` |
 | Zoom/Pan | options via `.withZoomPan()` |
 | Custom | arbitrary callbacks via `.withCustom()` |
@@ -605,7 +605,7 @@ RenderContext<T>
 - **Feature flags** in ChartState for conditional render gating
 - **Custom callbacks** as an escape hatch for advanced customization
 - **Controlled visibility**: `withVisibleSeries()` / `updateVisibleSeries()` — consumer owns state, library renders
-- **Legend as event emitter**: Interactive legend emits `onToggle` events but does not mutate internal state
+- **Legend as event emitter**: Interactive legend emits `onToggle` events but does not mutate internal state. Legend items are auto-derived from `ySeries` (label + stroke) — explicit `items` override is optional.
 
 ### 9.2 Rendering
 

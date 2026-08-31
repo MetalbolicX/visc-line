@@ -25,7 +25,7 @@ export interface WithTitleOptions {
 }
 
 export interface WithLegendOptions {
-  readonly items: readonly LegendItem[];
+  readonly items?: readonly LegendItem[];
   readonly interactive?: boolean;
   readonly onToggle?: (label: string, isVisible: boolean) => void;
 }

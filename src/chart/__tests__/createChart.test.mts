@@ -140,6 +140,61 @@ describe("createChart", () => {
       expect(container.querySelectorAll("g.legend-entry").length).toBe(2);
     });
 
+    it("withLegend auto-derives items from series when items is omitted", () => {
+      createChart(container, config).withLegend({});
+      expect(container.querySelector("g.legend")).toBeTruthy();
+      const entries = container.querySelectorAll("g.legend-entry");
+      expect(entries.length).toBe(2);
+      expect(entries[0]?.getAttribute("data-label")).toBe("Revenue");
+      expect(entries[1]?.getAttribute("data-label")).toBe("Cost");
+    });
+
+    it("withLegend auto-derived items use palette colors when stroke is omitted", () => {
+      createChart(container, config).withLegend({});
+      const swatches = container.querySelectorAll("rect.swatch");
+      expect(swatches[0]?.getAttribute("fill")).toBe("var(--vl-palette-0, steelblue)");
+      expect(swatches[1]?.getAttribute("fill")).toBe("var(--vl-palette-1, steelblue)");
+    });
+
+    it("withLegend auto-derived items use stroke when series has explicit color", () => {
+      const configWithStroke: ChartConfig<TestData> = {
+        data,
+        xSerie: { accessor: (d) => d.date, label: "Date" },
+        ySeries: [
+          { accessor: (d) => d.revenue, label: "Revenue", stroke: "#e74c3c" },
+          { accessor: (d) => d.cost, label: "Cost" },
+        ],
+      };
+      createChart(container, configWithStroke).withLegend({});
+      const swatches = container.querySelectorAll("rect.swatch");
+      expect(swatches[0]?.getAttribute("fill")).toBe("#e74c3c");
+      expect(swatches[1]?.getAttribute("fill")).toBe("var(--vl-palette-1, steelblue)");
+    });
+
+    it("withLegend auto-derived interactive emits toggles", () => {
+      const calls: Array<{ label: string; isVisible: boolean }> = [];
+      createChart(container, config)
+        .withVisibleSeries(["Revenue"])
+        .withLegend({
+          interactive: true,
+          onToggle: (label, isVisible) => {
+            calls.push({ isVisible, label });
+          },
+        });
+
+      const hiddenEntry = container.querySelector<SVGGElement>('g.legend-entry[data-label="Cost"]');
+      hiddenEntry?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+      expect(calls).toEqual([{ isVisible: true, label: "Cost" }]);
+    });
+
+    it("withLegend equivalent auto-derived options skip reconfiguration", () => {
+      const chart = createChart(container, config);
+      chart.withLegend({});
+      chart.withLegend({});
+      expect(container.querySelectorAll("g.legend-entry").length).toBe(2);
+    });
+
     it("withTooltip initializes tooltip host element", () => {
       createChart(container, config).withTooltip();
       expect(document.body.querySelector("tip-viz-tooltip")).toBeTruthy();
@@ -184,12 +239,7 @@ describe("createChart", () => {
         .withPoints()
         .withTooltip()
         .withTitle({ title: "Revenue" })
-        .withLegend({
-          items: [
-            { color: "steelblue", label: "Revenue" },
-            { color: "tomato", label: "Cost" },
-          ],
-        });
+        .withLegend({});
 
       expect(container.querySelector("g.x-axis")).toBeTruthy();
       expect(container.querySelector("line.grid-x")).toBeTruthy();

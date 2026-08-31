@@ -52,7 +52,7 @@ createChart<T>(
 | `withAxes(options?)` | `(WithAxesOptions?) => ChartInstance<T>` | Enable x/y axes and axis labels                    |
 | `withCustom(callback)` | `(CustomCallback \| null) => ChartInstance<T>` | Inject custom D3 drawing code (see below)            |
 | `withGrid(options?)` | `(WithGridOptions?) => ChartInstance<T>` | Enable x/y grid lines                               |
-| `withLegend(options)`   | `(WithLegendOptions) => ChartInstance<T>`      | Enable legend (optionally interactive)                 |
+| `withLegend(options?)`  | `(WithLegendOptions?) => ChartInstance<T>`     | Enable legend (optionally interactive)                 |
 | `withPoints()`          | `() => ChartInstance<T>`                       | Enable point markers                                   |
 | `withTitle(options)`    | `(WithTitleOptions) => ChartInstance<T>`       | Enable chart title                                     |
 | `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>`    | Enable tooltip interactivity                           |
@@ -158,19 +158,30 @@ stable; when isolating a single series it uses the full chart area.
 
 ### Legend Interactivity
 
-The legend is an **event emitter** — it does not mutate chart state:
+The legend is an **event emitter** — it does not mutate chart state. Legend
+items are **auto-derived** from `ySeries` by default (using `SeriesDescriptor.label`
+and `SeriesDescriptor.stroke` with palette fallback), so you only need to pass
+`interactive` and `onToggle`:
 
 ```ts
 chart.withLegend({
   interactive: true,
-  items: chart.allSeries.map(s => ({
-    color: s.stroke ?? "steelblue",
-    label: s.label,
-  })),
   onToggle: (label, isVisible) => {
     // Consumer decides what to do
     chart.updateVisibleSeries(isVisible ? [label] : allLabels);
   },
+});
+```
+
+To override the auto-derived items (e.g. custom labels or colors), pass `items` explicitly:
+
+```ts
+chart.withLegend({
+  items: [
+    { color: "#e74c3c", label: "Revenue (USD)" },
+    { color: "#2ecc71", label: "Cost (USD)" },
+  ],
+  interactive: true,
 });
 ```
 
@@ -400,7 +411,7 @@ Exported type aliases and interfaces available from `visc-line`.
 | `ChartOptions`        | `interface` | Optional rendering options for `createChart`    |
 | `ProcessedSeries<T>`  | `interface` | Series descriptor with filtered `data` attached |
 | `SeriesDescriptor<T>` | `interface` | Describes a single line series                  |
-| `WithLegendOptions`   | `interface` | Options for `withLegend` (includes `interactive`, `onToggle`, `items`) |
+| `WithLegendOptions`   | `interface` | Options for `withLegend` (optional `items`, `interactive`, `onToggle`) |
 | `WithTooltipOptions`  | `interface` | Options for `withTooltip`                       |
 | `WithTitleOptions`    | `interface` | Options for `withTitle`                         |
 | `WithZoomPanOptions`  | `interface` | Options for `withZoomPan`                       |

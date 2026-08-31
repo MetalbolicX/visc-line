@@ -144,6 +144,32 @@ describe("optionComparators", () => {
 
       expect(areLegendOptionsEqual(previous, next)).toBe(false);
     });
+
+    it("returns true when both items are undefined (auto-derived)", () => {
+      expect(areLegendOptionsEqual({}, {})).toBe(true);
+    });
+
+    it("returns true when both items are undefined with same interactive flag", () => {
+      const previous = { interactive: true };
+      const next = { interactive: true };
+      expect(areLegendOptionsEqual(previous, next)).toBe(true);
+    });
+
+    it("returns false when previous items is undefined and next is explicit", () => {
+      const previous = {};
+      const next = {
+        items: [{ color: "steelblue", label: "Revenue" }],
+      };
+      expect(areLegendOptionsEqual(previous, next)).toBe(false);
+    });
+
+    it("returns false when previous items is explicit and next is undefined", () => {
+      const previous = {
+        items: [{ color: "steelblue", label: "Revenue" }],
+      };
+      const next = {};
+      expect(areLegendOptionsEqual(previous, next)).toBe(false);
+    });
   });
 
   describe("areTooltipOptionsEqual", () => {

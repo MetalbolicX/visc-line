@@ -88,10 +88,19 @@ export const areLegendOptionsEqual = (
   if (previous.onToggle !== next.onToggle) {
     return false;
   }
-  if (previous.items.length !== next.items.length) return false;
 
-  for (const [index, prevItem] of previous.items.entries()) {
-    const nextItem = next.items[index];
+  const prevItems = previous.items;
+  const nextItems = next.items;
+
+  // Both auto-derived from allSeries — equal by definition.
+  if (prevItems == null && nextItems == null) return true;
+  // One explicit, one auto-derived — always different.
+  if (prevItems == null || nextItems == null) return false;
+
+  if (prevItems.length !== nextItems.length) return false;
+
+  for (const [index, prevItem] of prevItems.entries()) {
+    const nextItem = nextItems[index];
     if (!nextItem) return false;
     if (
       prevItem.color !== nextItem.color ||
