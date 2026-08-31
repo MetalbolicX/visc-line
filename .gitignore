@@ -152,6 +152,7 @@ dist
 # Ignore for AI
 *.prompt.md
 .qodo
+.atl/
 
 # For data
 /data
