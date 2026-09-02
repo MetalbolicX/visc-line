@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createScales } from "../../services/scales.mjs";
 
@@ -144,17 +144,110 @@ describe("createScales", () => {
     expect(result.yScale(100)).toBeCloseTo(0, 2);
   });
 
-  it("returns NaN domain values when undefined domains are given", () => {
-    /**
-     *
-     */
-    const result = createScales({
-      innerHeight: 400,
-      innerWidth: 800,
-      xDomain: [undefined, undefined] as readonly [undefined, undefined],
-      yDomain: [0, 100],
+  describe("empty / all-invalid domain guard", () => {
+    let warnSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     });
-    expect(Number.isNaN(result.xScale.domain()[0] as number)).toBe(true);
-    expect(Number.isNaN(result.xScale.domain()[1] as number)).toBe(true);
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it("returns [0, 1] and warns once when xDomain is [undefined, undefined] (linear)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [undefined, undefined] as readonly [undefined, undefined],
+        yDomain: [0, 100],
+      });
+      const [d0, d1] = result.xScale.domain();
+      expect(Number.isFinite(d0 as number)).toBe(true);
+      expect(Number.isFinite(d1 as number)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toMatch(/empty|invalid/);
+    });
+
+    it("returns [0, 1] and warns once when xDomain is [NaN, NaN] (linear)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [NaN, NaN] as unknown as readonly [number, number],
+        yDomain: [0, 100],
+      });
+      const [d0, d1] = result.xScale.domain();
+      expect(Number.isFinite(d0 as number)).toBe(true);
+      expect(Number.isFinite(d1 as number)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns default domain and warns when xDomain is [undefined, 5] (mixed)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [undefined, 5] as unknown as readonly [number, number],
+        yDomain: [0, 100],
+      });
+      const [d0, d1] = result.xScale.domain();
+      expect(Number.isFinite(d0 as number)).toBe(true);
+      expect(Number.isFinite(d1 as number)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns finite time domain and warns once when xDomain is [undefined, undefined] (time)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [undefined, undefined] as readonly [undefined, undefined],
+        xType: "time",
+        yDomain: [0, 100],
+      });
+      const [d0, d1] = result.xScale.domain() as [Date, Date];
+      expect(d0 instanceof Date).toBe(true);
+      expect(d1 instanceof Date).toBe(true);
+      // nice() may expand the domain; verify both ends are finite dates
+      expect(Number.isFinite(+d0)).toBe(true);
+      expect(Number.isFinite(+d1)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns domain unchanged and does NOT warn when xDomain is [0, 10] (linear)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [0, 10],
+        yDomain: [0, 100],
+      });
+      expect(result.xScale.domain()).toEqual([0, 10]);
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns [0, 1] and warns once when yDomain is [undefined, undefined] (linear)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [0, 10],
+        yDomain: [undefined, undefined] as readonly [undefined, undefined],
+      });
+      const [d0, d1] = result.yScale.domain();
+      expect(Number.isFinite(d0 as number)).toBe(true);
+      expect(Number.isFinite(d1 as number)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toMatch(/empty|invalid/);
+    });
+
+    it("returns [0, 1] and warns once when yDomain is [NaN, NaN] (linear)", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [0, 10],
+        yDomain: [NaN, NaN] as unknown as readonly [number, number],
+      });
+      const [d0, d1] = result.yScale.domain();
+      expect(Number.isFinite(d0 as number)).toBe(true);
+      expect(Number.isFinite(d1 as number)).toBe(true);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+    });
   });
 });
