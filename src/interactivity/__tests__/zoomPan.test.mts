@@ -31,6 +31,7 @@ describe("addZoomPan", () => {
     const zoomBehavior = addZoomPan(svg, {
       innerHeight: 200,
       innerWidth: 800,
+      margins: { left: 0, top: 0, right: 0, bottom: 0 },
       onZoom: vi.fn(),
       xScale,
       yScale,
@@ -45,6 +46,7 @@ describe("addZoomPan", () => {
     const zoomBehavior = addZoomPan(svg, {
       innerHeight: 200,
       innerWidth: 800,
+      margins: { left: 0, top: 0, right: 0, bottom: 0 },
       onZoom: vi.fn(),
       xScale,
       yScale,
@@ -62,6 +64,7 @@ describe("addZoomPan", () => {
     const zoomBehavior = addZoomPan(svg, {
       innerHeight: 200,
       innerWidth: 800,
+      margins: { left: 0, top: 0, right: 0, bottom: 0 },
       onZoom,
       xScale,
       yScale,
@@ -80,6 +83,7 @@ describe("addZoomPan", () => {
     const zoomBehavior = addZoomPan(svg, {
       innerHeight: 200,
       innerWidth: 800,
+      margins: { left: 0, top: 0, right: 0, bottom: 0 },
       onZoom,
       xScale,
       yScale,
@@ -87,11 +91,48 @@ describe("addZoomPan", () => {
     addZoomPan(svg, {
       innerHeight: 200,
       innerWidth: 800,
+      margins: { left: 0, top: 0, right: 0, bottom: 0 },
       onZoom,
       xScale,
       yScale,
     });
     zoomBehavior.scaleBy(svg as never, 1.5);
     expect(onZoom).toHaveBeenCalled();
+  });
+
+  describe("extent respects margins", () => {
+    it("derives extent from margins (non-zero margins)", () => {
+      const svg = createMockSVG();
+      const xScale = scaleLinear().domain([0, 100]).range([0, 300]);
+      const yScale = scaleLinear().domain([0, 50]).range([200, 0]);
+      const zoomBehavior = addZoomPan(svg, {
+        innerHeight: 200,
+        innerWidth: 300,
+        margins: { left: 50, top: 20, right: 30, bottom: 40 },
+        onZoom: vi.fn(),
+        xScale,
+        yScale,
+      });
+      // extent() is the d3-zoom getter — returns the configured extent array
+      const extent = (zoomBehavior as unknown as { extent(): () => [[number, number], [number, number]] }).extent()();
+      // [[margins.left, margins.top], [margins.left + innerWidth, margins.top + innerHeight]]
+      expect(extent).toEqual([[50, 20], [350, 220]]);
+    });
+
+    it("zero margins produces [[0,0],[innerWidth,innerHeight]]", () => {
+      const svg = createMockSVG();
+      const xScale = scaleLinear().domain([0, 100]).range([0, 300]);
+      const yScale = scaleLinear().domain([0, 50]).range([200, 0]);
+      const zoomBehavior = addZoomPan(svg, {
+        innerHeight: 200,
+        innerWidth: 300,
+        margins: { left: 0, top: 0, right: 0, bottom: 0 },
+        onZoom: vi.fn(),
+        xScale,
+        yScale,
+      });
+      const extent = (zoomBehavior as unknown as { extent(): () => [[number, number], [number, number]] }).extent()();
+      expect(extent).toEqual([[0, 0], [300, 200]]);
+    });
   });
 });
