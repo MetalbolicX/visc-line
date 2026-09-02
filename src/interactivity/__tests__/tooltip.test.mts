@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { addTooltip } from "../../interactivity/tooltip.mjs";
+import type { TipVizTooltip } from "tipviz";
 import {
   safeColor,
   sortDataByX,
@@ -216,5 +218,115 @@ describe("sortDataByX", () => {
     expect(sorted[0].x).toEqual(new Date("2023-01-01"));
     expect(sorted[1].x).toEqual(new Date("2023-01-02"));
     expect(sorted[2].x).toEqual(new Date("2023-01-03"));
+  });
+});
+
+describe("TipVizTooltip v3 API (setTemplate + setData)", () => {
+  // jsdom registers the custom element via the "tipviz" side-effect import above.
+
+  it("setTemplate stores the template and setData populates data-bind slots", () => {
+    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
+    document.body.appendChild(tooltip);
+
+    tooltip.setTemplate(/*html*/ `
+      <div>
+        <span data-bind="label"></span>:
+        <span data-bind="value"></span>
+      </div>`);
+
+    tooltip.setData({ label: "Series A", value: "42" });
+
+    const shadow = tooltip.shadowRoot!;
+    const labelSlot = shadow.querySelector("[data-bind='label']");
+    const valueSlot = shadow.querySelector("[data-bind='value']");
+
+    expect(labelSlot?.textContent).toBe("Series A");
+    expect(valueSlot?.textContent).toBe("42");
+
+    // setData again updates the slots
+    tooltip.setData({ label: "Series B", value: "99" });
+    expect(labelSlot?.textContent).toBe("Series B");
+    expect(valueSlot?.textContent).toBe("99");
+
+    tooltip.remove();
+  });
+
+  it("show() makes the tooltip visible and hide() hides it", () => {
+    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
+    document.body.appendChild(tooltip);
+
+    tooltip.setTemplate(/*html*/ `<div data-bind="text"></div>`);
+    tooltip.setData({ text: "hello" });
+
+    const anchor = document.createElement("div");
+    document.body.appendChild(anchor);
+
+    // Initially hidden (aria-hidden should be true)
+    expect(tooltip.getAttribute("aria-hidden")).toBe("true");
+
+    tooltip.show(anchor);
+    expect(tooltip.getAttribute("aria-hidden")).toBe("false");
+
+    tooltip.hide();
+    expect(tooltip.getAttribute("aria-hidden")).toBe("true");
+
+    tooltip.remove();
+    anchor.remove();
+  });
+
+  it("series label containing <script> tag does not inject markup (sanitizer regression)", () => {
+    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
+    document.body.appendChild(tooltip);
+
+    // Configure sanitizer — allowCustomElements is needed for the tooltip template shell.
+    // The data-bind slots use textContent assignment, which escapes HTML entities.
+    tooltip.setSanitizerConfig(
+      // @ts-expect-error allowCustomElements may not be in the local TS DOM lib
+      { allowCustomElements: true },
+    );
+
+    tooltip.setTemplate(/*html*/ `
+      <div>
+        <span data-bind="label"></span>
+      </div>`);
+
+    // Simulate a series label that a consumer might pass — contains a script tag.
+    const maliciousLabel = "Series <script>window.__xss=1</script> X";
+    tooltip.setData({ label: maliciousLabel });
+
+    const shadow = tooltip.shadowRoot!;
+    const labelSlot = shadow.querySelector("[data-bind='label']");
+
+    // The slot must contain the literal text, not evaluated HTML
+    expect(labelSlot?.textContent).toBe(maliciousLabel);
+    // The script tag must NOT have been executed
+    expect((window as unknown as Record<string, unknown>).__xss).toBeUndefined();
+
+    tooltip.remove();
+  });
+
+  it("setTemplate can be called once and setData updates slots on subsequent calls", () => {
+    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
+    document.body.appendChild(tooltip);
+
+    tooltip.setTemplate(/*html*/ `
+      <div data-bind="xLabel"></div>
+      <span data-bind="row0Label"></span>
+      <span data-bind="row0Value"></span>`);
+
+    // First data update
+    tooltip.setData({ xLabel: "Jan", row0Label: "Alpha", row0Value: "10" });
+    const shadow = tooltip.shadowRoot!;
+    expect(shadow.querySelector("[data-bind='xLabel']")?.textContent).toBe("Jan");
+    expect(shadow.querySelector("[data-bind='row0Label']")?.textContent).toBe("Alpha");
+    expect(shadow.querySelector("[data-bind='row0Value']")?.textContent).toBe("10");
+
+    // Second data update (different values)
+    tooltip.setData({ xLabel: "Feb", row0Label: "Beta", row0Value: "20" });
+    expect(shadow.querySelector("[data-bind='xLabel']")?.textContent).toBe("Feb");
+    expect(shadow.querySelector("[data-bind='row0Label']")?.textContent).toBe("Beta");
+    expect(shadow.querySelector("[data-bind='row0Value']")?.textContent).toBe("20");
+
+    tooltip.remove();
   });
 });

@@ -85,20 +85,6 @@ export interface TooltipRow {
 // ── HTML utilities ────────────────────────────────────────────────────────────
 
 /**
- * Escapes HTML special characters in a string for safe interpolation into
- * HTML text content or double-quoted attributes.
- *
- * @param text - The raw string to escape.
- * @returns A string safe for HTML insertion.
- */
-const esc = (text: string): string =>
-  text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
-/**
  * Regular expression matching a conservative subset of CSS color values that are
  * considered safe for interpolation into inline style attributes.
  *
@@ -126,32 +112,6 @@ const safeColorPattern =
 const safeColor = (text: string): string =>
   safeColorPattern.test(text.trim()) ? text.trim() : "#999";
 
-/**
- * Generates the default tooltip HTML from a TooltipData object.
- *
- * @param data - Object containing xLabel and rows for the tooltip.
- * @param data.xLabel - Header text for the tooltip.
- * @param data.rows - Array of color/label/value rows to display.
- * @returns An HTML string safe for tooltip insertion.
- */
-const defaultTooltipHtml = ({ rows, xLabel }: TooltipData): string => {
-  const rowsHtml = rows
-    .map(
-      ({ color, label, value }) => /*html*/ `
-        <div style="display:flex;align-items:center;gap:6px;height:18px">
-        <span style="width:8px;height:8px;border-radius:50%;background:${safeColor(color)};flex-shrink:0"></span>
-        <span style="font-size:var(--vl-tooltip-font-size,12px);color:var(--vl-tooltip-color,#222222)">${esc(label)}: ${esc(value)}</span>
-        </div>`,
-    )
-    .join("");
-
-  return /*html*/ `
-    <div style="font-family:sans-serif;padding:var(--vl-tooltip-padding,8px);min-width:140px;background:var(--vl-tooltip-bg,#ffffff);border:var(--vl-tooltip-border,1px solid #cccccc);border-radius:var(--vl-tooltip-border-radius,4px);filter:drop-shadow(0 1px 4px rgba(0,0,0,.12))">
-    <div style="font-size:var(--vl-tooltip-font-size,12px);font-weight:bold;color:var(--vl-tooltip-color,#222222);margin-bottom:4px">${esc(xLabel)}</div>
-    ${rowsHtml}
-    </div>`;
-};
-
 // ── Options ─────────────────────────────────────────────────────────────────
 
 export interface AddTooltipOptions {
@@ -160,6 +120,7 @@ export interface AddTooltipOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
   readonly stylesheetUrl?: string;
+  /** @deprecated Not supported with tipviz v3; kept for source compatibility. */
   readonly tooltipHtml?: (data: TooltipData) => string;
 }
 
@@ -197,7 +158,6 @@ export const addTooltip = <T,>(
     innerHeight,
     innerWidth,
     stylesheetUrl,
-    tooltipHtml = defaultTooltipHtml,
   }: AddTooltipOptions = { innerHeight: 0, innerWidth: 0 },
 ): TipVizTooltip => {
   const boundsEl = boundsGroup.node();
@@ -220,7 +180,24 @@ export const addTooltip = <T,>(
 
   const { tooltip } = entry;
 
-  tooltip.setHtml((d) => tooltipHtml(d as unknown as TooltipData));
+  // v3 API: setTemplate once at setup with data-bind slots; setData populates
+  // them at each mousemove. textContent assignment on slots escapes HTML entities,
+  // and setSanitizerConfig enables custom elements in the template shell.
+  tooltip.setTemplate(/*html*/ `
+    <div style="font-family:sans-serif;padding:var(--vl-tooltip-padding,8px);min-width:140px;background:var(--vl-tooltip-bg,#ffffff);border:var(--vl-tooltip-border,1px solid #cccccc);border-radius:var(--vl-tooltip-border-radius,4px);filter:drop-shadow(0 1px 4px rgba(0,0,0,.12))">
+    <div data-bind="xLabel" style="font-size:var(--vl-tooltip-font-size,12px);font-weight:bold;color:var(--vl-tooltip-color,#222222);margin-bottom:4px"></div>
+    <div style="display:flex;align-items:center;gap:6px;height:18px">
+    <span data-bind="row0Color" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--vl-tooltip-row0-color,#999)"></span>
+    <span data-bind="row0Label" style="font-size:var(--vl-tooltip-font-size,12px);color:var(--vl-tooltip-color,#222222)"></span>
+    <span style="font-size:var(--vl-tooltip-font-size,12px);color:var(--vl-tooltip-color,#222222)">: </span>
+    <span data-bind="row0Value" style="font-size:var(--vl-tooltip-font-size,12px);color:var(--vl-tooltip-color,#222222)"></span>
+    </div>
+    </div>`);
+  tooltip.setSanitizerConfig(
+    // @ts-expect-error allowCustomElements is in the DOM Sanitizer API but may
+    // not be in the local TS DOM lib version used by this project.
+    { allowCustomElements: true },
+  );
 
   if (stylesheetUrl !== undefined && stylesheetUrl !== entry.loadedStylesheet) {
     tooltip.loadStylesheet(stylesheetUrl);
@@ -327,10 +304,15 @@ export const addTooltip = <T,>(
         firstDot ??= dot;
       });
 
-      tooltip.show(
-        { rows, xLabel: formatX(xAccessor(refDatum)) } satisfies TooltipData,
-        firstDot ?? (event.currentTarget as Element),
-      );
+      const data = {
+        xLabel: formatX(xAccessor(refDatum)),
+        row0: rows[0]?.label ?? "—",
+        row0Color: rows[0] ? safeColor(rows[0].color) : "#999",
+        row0Label: rows[0]?.label ?? "—",
+        row0Value: rows[0]?.value ?? "—",
+      };
+      tooltip.setData(data);
+      tooltip.show(firstDot ?? (event.currentTarget as Element));
     })
     .on("mouseleave", () => {
       cursorLine.attr("display", "none");
