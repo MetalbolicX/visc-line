@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { select } from "d3";
 
 import {
+  addTooltip,
+  disposeTooltip,
   safeColor,
   sortDataByX,
   toComparableX,
@@ -216,5 +220,78 @@ describe("sortDataByX", () => {
     expect(sorted[0].x).toEqual(new Date("2023-01-01"));
     expect(sorted[1].x).toEqual(new Date("2023-01-02"));
     expect(sorted[2].x).toEqual(new Date("2023-01-03"));
+  });
+});
+
+describe("disposeTooltip", () => {
+  let container: HTMLElement;
+  let boundsGroup: ReturnType<typeof select<SVGGElement, null>>;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    const svg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    ) as SVGSVGElement;
+    container.appendChild(svg);
+    const boundsEl = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "g",
+    ) as SVGGElement;
+    boundsEl.setAttribute("class", "bounds");
+    svg.appendChild(boundsEl);
+    boundsGroup = select<SVGGElement, null>(boundsEl);
+
+    // Make setHtml/loadStylesheet available on Elements (tipviz v2 API in this branch)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Element.prototype as any).setHtml = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Element.prototype as any).loadStylesheet = vi.fn();
+  });
+
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (Element.prototype as any).setHtml;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (Element.prototype as any).loadStylesheet;
+    document.body.removeChild(container);
+  });
+
+  it("removes the mouse-capture rect from the DOM after disposeTooltip", () => {
+    // Mock ProcessedSeries data
+    const mockSeries = [
+      {
+        label: "series-1",
+        data: [{ x: 1, y: 10 }],
+        accessor: (d: { x: number; y: number }) => d.y,
+        stroke: "steelblue",
+      },
+    ] as unknown as import("../../types/index.mjs").ProcessedSeries<{
+      x: number;
+      y: number;
+    }>[];
+
+    // Minimal scales
+    const xScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const yScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const xAccessor = (d: { x: number; y: number }) => d.x;
+
+    // addTooltip populates the tooltip registry and creates rect.mouse-capture
+    addTooltip(boundsGroup, mockSeries, xScale, yScale, xAccessor, {
+      innerHeight: 400,
+      innerWidth: 800,
+    });
+
+    // Capture reference to the mouse-capture rect
+    const rect = boundsGroup.select<SVGRectElement>("rect.mouse-capture").node();
+    expect(rect).toBeTruthy();
+    expect(document.body.contains(rect)).toBe(true);
+
+    // Dispose the tooltip — this should remove the rect from DOM
+    disposeTooltip(boundsGroup);
+
+    // FAIL before fix: rect stays in DOM because disposeTooltip only removes the tooltip element
+    expect(document.body.contains(rect)).toBe(false);
   });
 });
