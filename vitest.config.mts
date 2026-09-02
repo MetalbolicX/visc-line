@@ -10,6 +10,11 @@ export default defineConfig({
       include: ["src/**/*.mts"],
       provider: "v8",
       reporter: ["text", "json", "html"],
+      thresholds: {
+        branches: 79,
+        functions: 89,
+        lines: 87,
+      },
     },
     environment: "jsdom",
     globals: true,
