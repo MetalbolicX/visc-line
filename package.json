@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Component functions to render line charts with D3.js",
   "type": "module",
+  "packageManager": "pnpm@11.25.0",
   "scripts": {
     "start": "echo \"Hello world\"",
     "lint": "echo 'ESLint is temporarily disabled — requires type-aware linting setup. Run type-check and test instead.'",
@@ -12,6 +13,7 @@
     "dev": "vite",
     "test": "vitest",
     "docs": "docsify serve docs",
+    "check": "pnpm type-check && pnpm test && pnpm build",
     "prepublishOnly": "pnpm type-check && pnpm test && pnpm build"
   },
   "author": {
