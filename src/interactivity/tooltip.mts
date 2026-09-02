@@ -266,7 +266,7 @@ export const addTooltip = <T,>(
     .attr("width", innerWidth)
     .attr("height", innerHeight)
     .attr("fill", "transparent")
-    .on("mousemove", (event: MouseEvent) => {
+    .on("mousemove.tooltip", (event: MouseEvent) => {
       const [mx] = pointer(event);
       const xVal = asInvertibleScale(xScale).invert(mx);
       const comparableXVal = toComparableX(xVal);
@@ -332,7 +332,7 @@ export const addTooltip = <T,>(
         firstDot ?? (event.currentTarget as Element),
       );
     })
-    .on("mouseleave", () => {
+    .on("mouseleave.tooltip", () => {
       cursorLine.attr("display", "none");
       cursorDots.attr("display", "none");
       tooltip.hide();
@@ -360,4 +360,7 @@ export const disposeTooltip = (boundsGroup: BoundsSelection): void => {
     entry.tooltip.remove();
     tooltipRegistry.delete(boundsEl);
   }
+  // Remove the mouse-capture rect (defense in depth — namespaced listeners
+  // are removed by chartLifecycle cleanup, but this ensures rect is gone too)
+  boundsGroup.selectAll<SVGRectElement, null>("rect.mouse-capture").remove();
 };
