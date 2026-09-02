@@ -327,6 +327,44 @@ describe("createChart", () => {
       expect(updatedCircles).toBe(4);
     });
 
+    it("update resets the zoom transform to identity", () => {
+      const chart = createChart(container, config).withZoomPan();
+      const zoomBehavior = chart.zoomBehavior;
+      expect(zoomBehavior).not.toBeNull();
+
+      // Apply a non-identity transform by replacing the transform property with a
+      // function that returns a scaled zoom transform.
+      // d3 zoom uses transform(svgNode) to get current transform, and transform(svgNode, newTransform) to set it.
+      let currentK = 2; // simulate zoomed-in state
+      const fakeTransform = (
+        node: unknown,
+        t?: unknown,
+      ): { k: number; x: number; y: number } => {
+        if (t !== undefined) {
+          const transform = t as { k: number; x: number; y: number };
+          currentK = transform.k;
+          return transform;
+        }
+        return { k: currentK, x: 0, y: 0 };
+      };
+
+      Object.defineProperty(zoomBehavior!, "transform", {
+        value: fakeTransform,
+        writable: true,
+        configurable: true,
+      });
+
+      expect(fakeTransform(undefined)).toMatchObject({ k: 2 });
+
+      chart.update([
+        { date: new Date("2023-04-01"), revenue: 400, cost: 50 },
+        { date: new Date("2023-04-02"), revenue: 450, cost: 55 },
+      ]);
+
+      // After update(), zoom should be reset to identity (k=1)
+      expect(fakeTransform(undefined)).toMatchObject({ k: 1 });
+    });
+
     it("update keeps visible series selection", () => {
       const chart = createChart(container, config)
         .withPoints()
@@ -497,6 +535,22 @@ describe("createChart", () => {
       chart.dispose();
       // withCustom(null) calls ensureActive() internally and will throw too
       expect(() => chart.withCustom(null)).toThrow("disposed");
+    });
+
+    it("withCustom short-circuits when called twice with the same callback reference", () => {
+      let renderCount = 0;
+      const cb = (): (() => void) => {
+        renderCount++;
+        return () => {};
+      };
+
+      const chart = createChart(container, config);
+      chart.withCustom(cb);
+      expect(renderCount).toBe(1);
+
+      // Calling with the same callback reference should short-circuit and NOT re-render
+      chart.withCustom(cb);
+      expect(renderCount).toBe(1); // Still 1 — no second render
     });
 
     it("supports method chaining", () => {

@@ -174,4 +174,11 @@ export const areTooltipOptionsEqual = (
 export const areZoomPanOptionsEqual = (
   previous: WithZoomPanOptions,
   next: WithZoomPanOptions,
-): boolean => previous.onZoom === next.onZoom;
+): boolean => {
+  if (previous.onZoom !== next.onZoom) return false;
+  const prevExtent = previous.scaleExtent;
+  const nextExtent = next.scaleExtent;
+  if (prevExtent === nextExtent) return true;
+  if (prevExtent === undefined || nextExtent === undefined) return false;
+  return prevExtent[0] === nextExtent[0] && prevExtent[1] === nextExtent[1];
+};

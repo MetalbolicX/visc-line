@@ -228,5 +228,45 @@ describe("optionComparators", () => {
         ),
       ).toBe(false);
     });
+
+    it("returns true when scaleExtent and onZoom both match", () => {
+      const onZoom = (): void => {};
+      expect(
+        areZoomPanOptionsEqual(
+          { onZoom, scaleExtent: [0.5, 8] },
+          { onZoom, scaleExtent: [0.5, 8] },
+        ),
+      ).toBe(true);
+    });
+
+    it("returns false when scaleExtent endpoints differ", () => {
+      const onZoom = (): void => {};
+      expect(
+        areZoomPanOptionsEqual(
+          { onZoom, scaleExtent: [0.5, 8] },
+          { onZoom, scaleExtent: [0.5, 32] },
+        ),
+      ).toBe(false);
+    });
+
+    it("returns true when both scaleExtent are undefined", () => {
+      const onZoom = (): void => {};
+      expect(
+        areZoomPanOptionsEqual(
+          { onZoom, scaleExtent: undefined },
+          { onZoom, scaleExtent: undefined },
+        ),
+      ).toBe(true);
+    });
+
+    it("returns false when only one scaleExtent is undefined", () => {
+      const onZoom = (): void => {};
+      expect(
+        areZoomPanOptionsEqual(
+          { onZoom, scaleExtent: [0.5, 8] },
+          { onZoom, scaleExtent: undefined },
+        ),
+      ).toBe(false);
+    });
   });
 });

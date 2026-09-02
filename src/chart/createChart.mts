@@ -213,6 +213,9 @@ export const createChart = <T,>(
       return Object.freeze([...state.currentSeries]);
     },
     svg,
+    get zoomBehavior() {
+      return state.zoomBehavior;
+    },
     update: (newData: readonly T[]): void => {
       ensureActive();
       clearExtentCache();
@@ -235,6 +238,7 @@ export const createChart = <T,>(
         state.allSeries,
         state.visibleLabels,
       );
+      state.zoomBehavior?.reset();
       render();
     },
     updateVisibleSeries: (labels): void => {
@@ -265,6 +269,7 @@ export const createChart = <T,>(
         render();
         return chart;
       }
+      if (state.customCallback === callback) return chart;
       state.customCallback = callback;
       state.hasCustom = true;
       render();
