@@ -294,31 +294,35 @@ describe("getMultiSeriesExtents", () => {
 
   it("plan-007: cache hit on stable reference returns identical object", () => {
     const series = makeSeries([{ x: 1, y: 10 }, { x: 2, y: 20 }], (d) => d.y, "Revenue");
+    // Store the same array reference — WeakMap is keyed by array identity.
+    const seriesArray = [series];
 
-    const first = getMultiSeriesExtents([series], (d) => d.x);
-    const second = getMultiSeriesExtents([series], (d) => d.x);
+    const first = getMultiSeriesExtents(seriesArray, (d) => d.x);
+    const second = getMultiSeriesExtents(seriesArray, (d) => d.x);
 
     // Must be the exact same frozen object (memoized)
     expect(first).toBe(second);
   });
 
-  it("plan-007: in-place mutation is NOT observed — caller must replace array to invalidate", () => {
-    // WeakMap is keyed by array identity. Mutating the array in-place does NOT
-    // change the cache key, so subsequent calls return the ORIGINAL cached result.
-    // This documents the identity-keyed contract: callers must replace the array.
+  it("plan-007: in-place mutation is NOT observed when array reference is stable", () => {
+    // WeakMap is keyed by array identity. If the same array reference is passed
+    // (stable reference), in-place mutation of the underlying data does NOT
+    // change the cache key — callers must replace the array to get fresh extents.
     const data: SeriesPoint[] = [{ x: 1, y: 10 }, { x: 2, y: 20 }];
     const series = makeSeries(data as readonly SeriesPoint[], (d) => d.y, "Revenue");
+    // Same array reference passed to both calls
+    const seriesArray = [series];
 
-    const before = getMultiSeriesExtents([series], (d) => d.x);
+    const before = getMultiSeriesExtents(seriesArray, (d) => d.x);
     expect(before.yDomain).toEqual([10, 20]);
 
     // Mutate in-place — push a point with a much larger y value.
     data.push({ x: 3, y: 999 });
 
-    // With the SAME array reference the cache key is unchanged, so we get the
-    // STALE cached result (reflecting the pre-mutation data). Callers must
+    // With the SAME array reference the WeakMap key is unchanged, so we get the
+    // STALE cached result reflecting the pre-mutation data. Callers must
     // replace the array to get fresh extents.
-    const after = getMultiSeriesExtents([series], (d) => d.x);
+    const after = getMultiSeriesExtents(seriesArray, (d) => d.x);
     expect(after.yDomain).toEqual([10, 20]); // NOT [10, 999]
   });
 });
