@@ -99,7 +99,11 @@ export const createChart = <T,>(
 
   const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
   const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
-  const clipPathId = `visc-clip-${crypto.randomUUID().slice(0, 8)}`;
+  const clipPathId = `visc-clip-${
+    (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 10))
+      .replace(/-/g, "")
+      .slice(0, 8)
+  }`;
 
   const svg = renderSVG(container, "Interactive line chart");
   const bounds = renderBoundsGroup(svg, margins);
