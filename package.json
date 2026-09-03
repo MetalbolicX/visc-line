@@ -52,8 +52,8 @@
     "jsdom": "^30.0.1",
     "tsdown": "^0.22.14",
     "tsx": "^4.23.13",
-    "typescript": "^7.0.2",
-    "typescript-eslint": "^8.69.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.18.0",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"
   },
@@ -83,11 +83,10 @@
     }
   },
   "dependencies": {
-    "tipviz": "^2.3.2"
+    "tipviz": "^3.0.1"
   },
   "peerDependencies": {
-    "d3": "^7.9.0",
-    "tipviz": "^2.1.0"
+    "d3": "^7.9.0"
   },
   "engines": {
     "node": ">20.0.0"

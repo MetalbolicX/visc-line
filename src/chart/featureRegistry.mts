@@ -9,65 +9,22 @@
  * @module featureRegistry
  * @internal
  */
+/* eslint-disable @typescript-eslint/naming-convention -- showX/showY match public API types */
 
-import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType, SVGSelection } from "@/types/index.mjs";
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
 import type { WithAxesOptions, WithGridOptions, WithLegendOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
+import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType, SVGSelection } from "@/types/index.mjs";
 
 // ─── Context types ────────────────────────────────────────────────────────────
 
-/** Context required by FeatureDefinition.render */
-export interface FeatureRenderContext<T> {
-  readonly bounds: import("@/types/index.mjs").BoundsSelection;
-  readonly config: ChartConfig<T>;
-  readonly container: HTMLElement;
-  readonly flags: FeatureFlags;
-  readonly margins: Margins;
-  readonly resolvedCurve: import("d3").CurveFactory;
-  readonly state: ChartState<unknown>;
-  readonly svg: SVGSelection;
-  readonly xType: ScaleType;
-  readonly yLabel?: string;
-  readonly reducedMotion: boolean;
-  readonly clipPathId: string;
-  readonly xScale: AnyScale;
-  readonly yScale: AnyScale;
-  readonly allSeriesExtents: Readonly<{
-    readonly xDomain: readonly [unknown, unknown];
-    readonly yDomain: readonly [number, number];
-  }>;
-}
-
 /** Computed layout dimensions — derived in renderChart before feature render loop */
 export interface Dimensions {
-  readonly width: number;
   readonly height: number;
-  readonly innerWidth: number;
   readonly innerHeight: number;
+  readonly innerWidth: number;
   readonly margins: Margins;
+  readonly width: number;
 }
-
-// ─── Feature key ─────────────────────────────────────────────────────────────
-
-/** Discriminated union key for all registered features */
-export type FeatureKey =
-  | "axes" | "grid" | "points"
-  | "title" | "legend" | "tooltip"
-  | "zoomPan" | "custom";
-
-/** Options type per feature — discriminated union */
-export type FeatureOptionsMap = {
-  axes: WithAxesOptions;
-  grid: WithGridOptions;
-  points: null;
-  title: WithTitleOptions | null;
-  legend: WithLegendOptions | null;
-  tooltip: WithTooltipOptions;
-  zoomPan: WithZoomPanOptions;
-  custom: CustomCallback | null;
-};
-
-// ─── FeatureDefinition ───────────────────────────────────────────────────────
 
 /**
  * Declaration of a single optional chart feature.
@@ -78,16 +35,14 @@ export type FeatureOptionsMap = {
  * up when the feature is disabled.
  */
 export interface FeatureDefinition<K extends FeatureKey> {
-  readonly key: K;
+  /** CSS selectors for DOM cleanup (passed to clearOptionalNodes) */
+  readonly clearSelectors: readonly string[];
   /** Which boolean flag on FeatureFlags controls this feature */
   readonly flagKey: keyof FeatureFlags;
-  /** Which field on ChartState holds this feature's options */
-  readonly optionsKey: keyof ChartState<unknown>;
   /** Shallow-equality check for the feature's options */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly isEqual: (a: any, b: any) => boolean;
-  /** Initial-path render — called during renderChart main flow */
-  readonly render: (ctx: FeatureRenderContext<unknown>, dims: Dimensions) => void;
+  readonly key: K;
   /**
    * Zoom-path render — called inside the zoom behavior callback.
    * Omit/leave undefined to exclude the feature from zoom re-renders.
@@ -101,15 +56,62 @@ export interface FeatureDefinition<K extends FeatureKey> {
     newX: AnyScale,
     newY: AnyScale,
   ) => void;
-  /** CSS selectors for DOM cleanup (passed to clearOptionalNodes) */
-  readonly clearSelectors: readonly string[];
+  /** Which field on ChartState holds this feature's options */
+  readonly optionsKey: keyof ChartState<unknown>;
+  /** Initial-path render — called during renderChart main flow */
+  readonly render: (ctx: FeatureRenderContext<unknown>, dims: Dimensions) => void;
+}
+
+// ─── Feature key ─────────────────────────────────────────────────────────────
+
+/** Discriminated union key for all registered features */
+export type FeatureKey =
+  | "axes" | "custom" | "grid"
+  | "legend" | "points" | "title"
+  | "tooltip" | "zoomPan";
+
+/** Options type per feature — discriminated union */
+export type FeatureOptionsMap = {
+  axes: WithAxesOptions;
+  custom: CustomCallback | null;
+  grid: WithGridOptions;
+  legend: null | WithLegendOptions;
+  points: null;
+  title: null | WithTitleOptions;
+  tooltip: WithTooltipOptions;
+  zoomPan: WithZoomPanOptions;
+};
+
+// ─── FeatureDefinition ───────────────────────────────────────────────────────
+
+/** Context required by FeatureDefinition.render */
+export interface FeatureRenderContext<T> {
+  readonly allSeriesExtents: Readonly<{
+    readonly xDomain: readonly [unknown, unknown];
+    readonly yDomain: readonly [number, number];
+  }>;
+  readonly bounds: import("@/types/index.mjs").BoundsSelection;
+  readonly clipPathId: string;
+  readonly config: ChartConfig<T>;
+  readonly container: HTMLElement;
+  readonly flags: FeatureFlags;
+  readonly margins: Margins;
+  readonly reducedMotion: boolean;
+  readonly resolvedCurve: import("d3").CurveFactory;
+  readonly state: ChartState<unknown>;
+  readonly svg: SVGSelection;
+  readonly xScale: AnyScale;
+  readonly xType: ScaleType;
+  readonly yLabel?: string;
+  readonly yScale: AnyScale;
 }
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
-import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
-import { areGridOptionsEqual } from "@/chart/optionComparators.mjs";
 import type { BoundsSelection } from "@/types/index.mjs";
+
+import { areGridOptionsEqual } from "@/chart/optionComparators.mjs";
+import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 
 /**
  * Grid feature definition — first migrated feature for prototype validation.
@@ -121,11 +123,26 @@ import type { BoundsSelection } from "@/types/index.mjs";
  * - DOM cleanup: line.grid-x, line.grid-y
  */
 export const gridDef: FeatureDefinition<"grid"> = {
-  key: "grid",
-  flagKey: "hasGrid",
-  optionsKey: "gridOptions",
-  isEqual: areGridOptionsEqual,
   clearSelectors: ["line.grid-x", "line.grid-y"],
+  flagKey: "hasGrid",
+  isEqual: areGridOptionsEqual,
+  key: "grid",
+  onZoomRedraw: (ctx, _dims, newX, newY) => {
+    if (!ctx.flags.hasGrid) return;
+    const { showX = true, showY = true } = ctx.state.gridOptions as WithGridOptions;
+    if (showX) {
+      (ctx.bounds as BoundsSelection).call(renderXGrid, newX, newY);
+    } else {
+      ctx.bounds.selectAll("line.grid-x").remove();
+    }
+    if (showY) {
+      (ctx.bounds as BoundsSelection).call(renderYGrid, newX, newY);
+    } else {
+      ctx.bounds.selectAll("line.grid-y").remove();
+    }
+  },
+
+  optionsKey: "gridOptions",
 
   render: (ctx, _dims) => {
     if (!ctx.flags.hasGrid) return;
@@ -137,21 +154,6 @@ export const gridDef: FeatureDefinition<"grid"> = {
     }
     if (showY) {
       (ctx.bounds as BoundsSelection).call(renderYGrid, ctx.xScale, ctx.yScale);
-    } else {
-      ctx.bounds.selectAll("line.grid-y").remove();
-    }
-  },
-
-  onZoomRedraw: (ctx, _dims, newX, newY) => {
-    if (!ctx.flags.hasGrid) return;
-    const { showX = true, showY = true } = ctx.state.gridOptions as WithGridOptions;
-    if (showX) {
-      (ctx.bounds as BoundsSelection).call(renderXGrid, newX, newY);
-    } else {
-      ctx.bounds.selectAll("line.grid-x").remove();
-    }
-    if (showY) {
-      (ctx.bounds as BoundsSelection).call(renderYGrid, newX, newY);
     } else {
       ctx.bounds.selectAll("line.grid-y").remove();
     }

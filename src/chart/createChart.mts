@@ -217,9 +217,6 @@ export const createChart = <T,>(
       return Object.freeze([...state.currentSeries]);
     },
     svg,
-    get zoomBehavior() {
-      return state.zoomBehavior;
-    },
     update: (newData: readonly T[]): void => {
       ensureActive();
       state.allSeries = processAllSeries<T>(
@@ -362,6 +359,9 @@ export const createChart = <T,>(
       state.zoomPanOptions = options;
       render();
       return chart;
+    },
+    get zoomBehavior() {
+      return state.zoomBehavior;
     },
   };
 

@@ -12,11 +12,11 @@
 
 "use strict";
 
-import { createServer } from "node:http";
-import { readFileSync, cpSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
+import { cpSync, existsSync, readFileSync } from "node:fs";
+import { createServer } from "node:http";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "../..");
@@ -34,40 +34,6 @@ function copyHarnessToDist() {
   console.log("  copied harness.html → dist/");
 }
 
-function startStaticServer(port) {
-  return new Promise((resolve, reject) => {
-    const server = createServer((req, res) => {
-      let filePath = join(DIST, req.url === "/" ? "harness.html" : req.url);
-      if (!existsSync(filePath)) {
-        res.writeHead(404);
-        res.end("Not found");
-        return;
-      }
-      try {
-        const content = readFileSync(filePath);
-        const ext = filePath.split(".").pop();
-        const mimeTypes = {
-          html: "text/html",
-          js: "application/javascript",
-          mjs: "application/javascript",
-          css: "text/css",
-          json: "application/json",
-        };
-        res.writeHead(200, { "Content-Type": mimeTypes[ext] ?? "text/plain" });
-        res.end(content);
-      } catch (err) {
-        res.writeHead(500);
-        res.end(String(err));
-      }
-    });
-    server.listen(port, () => {
-      console.log(`  static server listening on http://localhost:${port}`);
-      resolve(server);
-    });
-    server.on("error", reject);
-  });
-}
-
 function findFreePort() {
   return new Promise((resolve, reject) => {
     const s = createServer();
@@ -78,8 +44,6 @@ function findFreePort() {
     s.on("error", reject);
   });
 }
-
-// ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   const port = await findFreePort();
@@ -269,6 +233,42 @@ async function main() {
     if (browser) await browser.close();
     server.close();
   }
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+
+function startStaticServer(port) {
+  return new Promise((resolve, reject) => {
+    const server = createServer((req, res) => {
+      let filePath = join(DIST, req.url === "/" ? "harness.html" : req.url);
+      if (!existsSync(filePath)) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+      try {
+        const content = readFileSync(filePath);
+        const ext = filePath.split(".").pop();
+        const mimeTypes = {
+          css: "text/css",
+          html: "text/html",
+          js: "application/javascript",
+          json: "application/json",
+          mjs: "application/javascript",
+        };
+        res.writeHead(200, { "Content-Type": mimeTypes[ext] ?? "text/plain" });
+        res.end(content);
+      } catch (err) {
+        res.writeHead(500);
+        res.end(String(err));
+      }
+    });
+    server.listen(port, () => {
+      console.log(`  static server listening on http://localhost:${port}`);
+      resolve(server);
+    });
+    server.on("error", reject);
+  });
 }
 
 main().catch((err) => {

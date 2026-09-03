@@ -1,7 +1,8 @@
 import type { AxisDomain } from "d3";
 
-import { renderAxis } from "@/components/axisRenderer.mjs";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
+
+import { renderAxis } from "@/components/axisRenderer.mjs";
 
 /** Options for {@link renderXAxis}. */
 export interface RenderXAxisOptions {

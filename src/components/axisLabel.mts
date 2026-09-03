@@ -29,11 +29,11 @@ export interface YAxisLabelOptions {
 const resolveAxisLabelSpacing = (
   svg: SVGSelection,
 ): {
-  readonly padding: number;
-  readonly axisTickSize: number;
-  readonly axisTickPadding: number;
   readonly axisFontSize: number;
   readonly axisLabelSpacing: number;
+  readonly axisTickPadding: number;
+  readonly axisTickSize: number;
+  readonly padding: number;
 } => {
   const node = svg.node();
   const padding = node ? readCssNumber(node, "--vl-label-padding", 8) : 8;
@@ -41,7 +41,7 @@ const resolveAxisLabelSpacing = (
   const axisTickPadding = node ? readCssNumber(node, "--vl-axis-tick-padding", 8) : 8;
   const axisFontSize = node ? readCssNumber(node, "--vl-axis-font-size", 12) : 12;
   const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
-  return { padding, axisTickSize, axisTickPadding, axisFontSize, axisLabelSpacing };
+  return { axisFontSize, axisLabelSpacing, axisTickPadding, axisTickSize, padding };
 };
 
 /**
@@ -67,7 +67,7 @@ export const renderXAxisLabel = (
     margins,
   }: XAxisLabelOptions,
 ): void => {
-  const { padding, axisLabelSpacing } = resolveAxisLabelSpacing(svg);
+  const { axisLabelSpacing, padding } = resolveAxisLabelSpacing(svg);
 
   svg
     .selectAll<SVGTextElement, null>("text.x-axis-label")
@@ -105,7 +105,7 @@ export const renderYAxisLabel = (
     margins,
   }: YAxisLabelOptions,
 ): void => {
-  const { padding, axisLabelSpacing } = resolveAxisLabelSpacing(svg);
+  const { axisLabelSpacing, padding } = resolveAxisLabelSpacing(svg);
 
   svg
     .selectAll<SVGTextElement, null>("text.y-axis-label")

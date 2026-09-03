@@ -2,12 +2,15 @@ import type { AxisDomain, AxisScale } from "d3";
 
 import { axisBottom, axisLeft } from "d3";
 
+import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
+
 import { asAxisScale } from "@/utils/axisScale.mjs";
 import { readCssNumber } from "@/utils/cssVariables.mjs";
-import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 // ── Internal shared axis renderer ─────────────────────────────────────────────
 // NOT exported from the package index. Use renderXAxis / renderYAxis instead.
+
+type AxisGenerator = typeof axisBottom | typeof axisLeft;
 
 /** Shared options shape for axis rendering. */
 interface AxisRenderOptions {
@@ -15,28 +18,26 @@ interface AxisRenderOptions {
   readonly tickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
-type AxisGenerator = typeof axisBottom | typeof axisLeft;
-
 interface OrientationConfig {
-  readonly axis: AxisGenerator;
-  readonly className: "x-axis" | "y-axis";
   /**
    * Transform to apply to the axis <g> element, or null if no transform needed.
    * Receives innerHeight so the x-axis can be positioned at the bottom.
    */
   readonly applyTransform: ((innerHeight: number) => string) | null;
+  readonly axis: AxisGenerator;
+  readonly className: "x-axis" | "y-axis";
 }
 
 const ORIENTATION_CONFIG: Record<"x" | "y", OrientationConfig> = {
   x: {
+    applyTransform: (innerHeight) => `translate(0,${String(innerHeight)})`,
     axis: axisBottom,
     className: "x-axis",
-    applyTransform: (innerHeight) => `translate(0,${String(innerHeight)})`,
   },
   y: {
+    applyTransform: null,
     axis: axisLeft,
     className: "y-axis",
-    applyTransform: null,
   },
 } as const;
 

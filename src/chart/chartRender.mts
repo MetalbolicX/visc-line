@@ -1,36 +1,62 @@
 import type { CurveFactory } from "d3";
+
 import { timeFormat } from "d3";
 
+import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
+import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type {
   AnyScale,
   BoundsSelection,
   ChartConfig,
   CustomContext,
-  SVGSelection,
   ScaleType,
+  SVGSelection,
 } from "@/types/index.mjs";
+import type { Margins } from "@/types/index.mjs";
 
+import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
+import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
+import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
+import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
 import { renderPoints } from "@/components/points.mjs";
 import { renderTitle } from "@/components/title.mjs";
 import { renderXAxis } from "@/components/xAxis.mjs";
-import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
-import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 import { renderYAxis } from "@/components/yAxis.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
-import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import {
   createScales,
   getDimensions,
   getMultiSeriesExtents,
 } from "@/services/index.mjs";
-import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
-import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
-import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
-import type { Margins } from "@/types/index.mjs";
+
+/**
+ * Callbacks invoked by the renderer to notify the host about lifecycle events.
+ *
+ * Currently only used to communicate the active zoom behavior so the owner can
+ * keep a reference (e.g. to reset or dispose it) when re-rendering or tearing
+ * down the chart.
+ *
+ * @internal
+ */
+export interface RenderCallbacks {
+  /**
+   * Invoked whenever the custom cleanup function changes.
+   * @param {(() => void) | null} cleanup - New cleanup function, or null to clear.
+   */
+  readonly onCustomCleanupChange: (cleanup: (() => void) | null) => void;
+  /**
+   * Invoked whenever the renderer creates or clears the zoom behavior.
+   * @param {ZoomBehaviorWithReset | null} zoomBehavior - Newly active zoom
+   *   behavior, or null when the renderer removed any zoom handlers.
+   */
+  readonly onZoomBehaviorChange: (
+    zoomBehavior: null | ZoomBehaviorWithReset,
+  ) => void;
+}
 
 /**
  * Context required to render a chart instance.
@@ -66,39 +92,14 @@ export interface RenderContext<T> {
   readonly clipPathId: string;
   readonly config: ChartConfig<T>;
   readonly container: HTMLElement;
-  readonly state: ChartState<T>;
   readonly flags: FeatureFlags;
   readonly margins: Margins;
+  readonly reducedMotion: boolean;
   readonly resolvedCurve: CurveFactory;
+  readonly state: ChartState<T>;
   readonly svg: SVGSelection;
   readonly xType: ScaleType;
-  readonly reducedMotion: boolean;
   readonly yLabel?: string;
-}
-
-/**
- * Callbacks invoked by the renderer to notify the host about lifecycle events.
- *
- * Currently only used to communicate the active zoom behavior so the owner can
- * keep a reference (e.g. to reset or dispose it) when re-rendering or tearing
- * down the chart.
- *
- * @internal
- */
-export interface RenderCallbacks {
-  /**
-   * Invoked whenever the renderer creates or clears the zoom behavior.
-   * @param {ZoomBehaviorWithReset | null} zoomBehavior - Newly active zoom
-   *   behavior, or null when the renderer removed any zoom handlers.
-   */
-  readonly onZoomBehaviorChange: (
-    zoomBehavior: null | ZoomBehaviorWithReset,
-  ) => void;
-  /**
-   * Invoked whenever the custom cleanup function changes.
-   * @param {(() => void) | null} cleanup - New cleanup function, or null to clear.
-   */
-  readonly onCustomCleanupChange: (cleanup: (() => void) | null) => void;
 }
 
 /**
@@ -151,8 +152,9 @@ export const renderChart = <T,>(
     visibleXMin !== undefined && visibleXMax !== undefined
       ? xDomain
       : context.state.allSeriesExtents.xDomain;
-  const isSingleSeriesVisible = context.state.currentSeries.length === 1;
-  const yDomainToUse = isSingleSeriesVisible &&
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- local variable named for clarity
+  const singleSeriesVisible = context.state.currentSeries.length === 1;
+  const yDomainToUse = singleSeriesVisible &&
     visibleYMin !== undefined &&
     visibleYMax !== undefined
     ? yDomain
@@ -177,9 +179,9 @@ export const renderChart = <T,>(
 
   if (context.flags.hasAxes) {
     const {
+      timeTickFormat,
       xTickCount,
       xTickFormat,
-      timeTickFormat,
       yTickCount,
       yTickFormat,
     } = context.state.axesOptions;
@@ -274,8 +276,8 @@ export const renderChart = <T,>(
       label: s.label,
     }));
     context.svg.call(renderLegend, {
-      items: context.state.legendOptions.items ?? derivedItems,
       interactive: context.state.legendOptions.interactive,
+      items: context.state.legendOptions.items ?? derivedItems,
       onToggle: context.state.legendOptions.onToggle,
       visibleLabels: context.state.visibleLabels,
       x: context.margins.left + dims.innerWidth - LEGEND_WIDTH,
@@ -289,15 +291,14 @@ export const renderChart = <T,>(
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
       margins: context.margins,
-      scaleExtent: context.state.zoomPanOptions.scaleExtent,
       onZoom:
         context.state.zoomPanOptions.onZoom ??
         ((newX: AnyScale, newY: AnyScale): void => {
           if (context.flags.hasAxes) {
             const {
+              timeTickFormat,
               xTickCount,
               xTickFormat,
-              timeTickFormat,
               yTickCount,
               yTickFormat,
             } = context.state.axesOptions;
@@ -355,6 +356,7 @@ export const renderChart = <T,>(
             );
           }
         }),
+      scaleExtent: context.state.zoomPanOptions.scaleExtent,
       xScale,
       yScale,
     });

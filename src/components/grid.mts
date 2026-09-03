@@ -7,19 +7,19 @@ import { asTickable } from "@/utils/scaleCast.mjs";
 
 interface GridRenderParams {
   readonly boundSelection: BoundsSelection;
-  readonly tickScale: AnyScale;
   readonly className: "grid-x" | "grid-y";
+  readonly domainMax: null | number;
   /** Domain endpoint for x1/x2 (for grid-x) or y1/y2 (for grid-y). */
-  readonly domainMin: number | null;
-  readonly domainMax: number | null;
+  readonly domainMin: null | number;
+  readonly tickScale: AnyScale;
 }
 
 const renderGrid = ({
   boundSelection,
-  tickScale,
   className,
-  domainMin,
   domainMax,
+  domainMin,
+  tickScale,
 }: GridRenderParams): void => {
   const tickableScale = asTickable(tickScale);
 
@@ -74,14 +74,14 @@ export const renderXGrid = (
   yScale: AnyScale,
 ): void => {
   const xTickableScale = asTickable(xScale);
-  const [xMin, xMax] = xTickableScale.domain() as [number | null, number | null];
+  const [xMin, xMax] = xTickableScale.domain() as [null | number, null | number];
 
   renderGrid({
     boundSelection,
-    tickScale: yScale,
     className: "grid-x",
-    domainMin: xMin,
     domainMax: xMax,
+    domainMin: xMin,
+    tickScale: yScale,
   });
 };
 
@@ -110,13 +110,13 @@ export const renderYGrid = (
   yScale: AnyScale,
 ): void => {
   const yTickableScale = asTickable(yScale);
-  const [yMin, yMax] = yTickableScale.domain() as [number | null, number | null];
+  const [yMin, yMax] = yTickableScale.domain() as [null | number, null | number];
 
   renderGrid({
     boundSelection,
-    tickScale: xScale,
     className: "grid-y",
-    domainMin: yMin,
     domainMax: yMax,
+    domainMin: yMin,
+    tickScale: xScale,
   });
 };

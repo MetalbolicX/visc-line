@@ -149,8 +149,9 @@ export const createScales = ({
 
   // Determine if domains are invalid so we warn only once when both are bad
   const [xa, xb] = xDomain;
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- internal logic variable
   const xInvalid = !Number.isFinite(xa as number) || !Number.isFinite(xb as number);
-  // If x is invalid, its ensureFiniteDomain call will warn; y should stay silent to avoid duplicate warnings
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- mirrors xInvalid
   const ySilent = xInvalid;
 
   const xScale = (

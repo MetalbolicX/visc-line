@@ -306,11 +306,11 @@ export const addTooltip = <T,>(
       });
 
       const data = {
-        xLabel: formatX(xAccessor(refDatum)),
         row0: rows[0]?.label ?? "—",
         row0Color: rows[0] ? safeColor(rows[0].color) : "#999",
         row0Label: rows[0]?.label ?? "—",
         row0Value: rows[0]?.value ?? "—",
+        xLabel: formatX(xAccessor(refDatum)),
       };
       tooltip.setData(data);
       tooltip.show(firstDot ?? (event.currentTarget as Element));

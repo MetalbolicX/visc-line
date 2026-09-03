@@ -13,7 +13,7 @@ export type ZoomBehaviorWithReset = Readonly<{
 interface AddZoomPanOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
-  readonly margins: { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number };
+  readonly margins: { readonly bottom: number; readonly left: number; readonly right: number; readonly top: number; };
   readonly onZoom: (newX: AnyScale, newY: AnyScale) => void;
   /** Minimum and maximum zoom levels (default: [0.5, 32]). */
   readonly scaleExtent?: readonly [number, number];

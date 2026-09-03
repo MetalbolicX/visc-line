@@ -2,13 +2,13 @@ import type { Selection } from "d3";
 
 import { select } from "d3";
 
-import { readCssNumber } from "@/utils/cssVariables.mjs";
 import type {
   AnyScale,
   BoundsSelection,
   ProcessedSeries,
 } from "@/types/index.mjs";
 
+import { readCssNumber } from "@/utils/cssVariables.mjs";
 import { asScaleNumber } from "@/utils/scaleCast.mjs";
 
 /**
