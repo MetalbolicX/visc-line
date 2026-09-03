@@ -21,7 +21,7 @@ your row when done.
 | 010  | Playwright browser smoke tests (real Chromium, UMD build) | P2 | M | 001, 004 | DONE |
 | 011  | Restore lint (flat config, ported from tipviz) | P3 | M | 001 | DONE |
 | 012  | DESIGN: registry-driven feature architecture | P3 | M | 002, 006, 009 | DONE |
-| 013  | DESIGN: time-series axis polish | P3 | M | 009 | TODO |
+| 013  | DESIGN: time-series axis polish | P3 | M | 009 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)

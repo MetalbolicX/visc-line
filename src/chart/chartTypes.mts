@@ -40,6 +40,13 @@ export interface WithZoomPanOptions {
 export interface WithAxesOptions {
   readonly xTickCount?: number;
   readonly xTickFormat?: (domainValue: AxisDomain, index: number) => string;
+  /**
+   * Optional tick format for time scales.
+   * - `string`: a d3 time-format specifier (e.g., `"%Y"` for year, `"%b %d"` for month-day)
+   * - `function`: custom formatter receiving a Date, returning a string label
+   * Only applies when `xType: "time"`; ignored for other scale types.
+   */
+  readonly timeTickFormat?: string | ((date: Date) => string);
   readonly yTickCount?: number;
   readonly yTickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
