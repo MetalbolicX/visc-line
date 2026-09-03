@@ -17,6 +17,8 @@ import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
 import type { WithAxesOptions, WithGridOptions, WithLegendOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
 import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType, SVGSelection } from "@/types/index.mjs";
 
+import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
+
 // ─── Context types ────────────────────────────────────────────────────────────
 
 /** Computed layout dimensions — derived in renderChart before feature render loop */
@@ -114,6 +116,7 @@ export interface FeatureRenderContext<T> {
 import { areAxesOptionsEqual, areGridOptionsEqual } from "@/chart/optionComparators.mjs";
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
+import { renderLegend } from "@/components/legend.mjs";
 import { renderPoints } from "@/components/points.mjs";
 import { renderTitle } from "@/components/title.mjs";
 import { renderXAxis } from "@/components/xAxis.mjs";
@@ -269,11 +272,60 @@ export const titleDef: FeatureDefinition<"title"> = {
   },
 };
 
+/**
+ * Legend feature definition.
+ *
+ * - Options: WithLegendOptions { interactive?, items?, onToggle? }
+ * - Comparator: areLegendOptionsEqual
+ * - Zoom-path: excluded (legend does not re-render on zoom)
+ * - DOM cleanup: g.legend
+ */
+export const legendDef: FeatureDefinition<"legend"> = {
+  clearSelectors: ["g.legend"],
+  flagKey: "hasLegend",
+  isEqual: (a: unknown, b: unknown): boolean => {
+    const pa = a as null | WithLegendOptions;
+    const pb = b as WithLegendOptions;
+    if (!pa) return false;
+    if ((pa.interactive ?? false) !== (pb.interactive ?? false)) return false;
+    if (pa.onToggle !== pb.onToggle) return false;
+    const prevItems = pa.items;
+    const nextItems = pb.items;
+    if (prevItems == null && nextItems == null) return true;
+    if (prevItems == null || nextItems == null) return false;
+    if (prevItems.length !== nextItems.length) return false;
+    for (const [index, prevItem] of prevItems.entries()) {
+      const nextItem = nextItems[index];
+      if (!nextItem) return false;
+      if (prevItem.color !== nextItem.color || prevItem.label !== nextItem.label) return false;
+    }
+    return true;
+  },
+  key: "legend",
+  optionsKey: "legendOptions",
+  render: (ctx, dims) => {
+    if (!ctx.flags.hasLegend || !ctx.state.legendOptions) return;
+    const derivedItems = ctx.state.allSeries.map((s, i) => ({
+      color: s.stroke ?? `var(--vl-palette-${String(i)}, steelblue)`,
+      label: s.label,
+    }));
+    ctx.svg.call(renderLegend, {
+      interactive: ctx.state.legendOptions.interactive,
+      items: ctx.state.legendOptions.items ?? derivedItems,
+      onToggle: ctx.state.legendOptions.onToggle,
+      visibleLabels: ctx.state.visibleLabels,
+      x: ctx.margins.left + dims.innerWidth - LEGEND_WIDTH,
+      y: ctx.margins.top + LEGEND_TOP_OFFSET,
+    });
+  },
+};
+
 /** Ordered registry — the array order IS the render sequence */
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   axesDef,
   gridDef,
   titleDef,
+  legendDef,
   {
     clearSelectors: ["g.point-series"],
     flagKey: "hasPoints",

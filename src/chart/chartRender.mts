@@ -13,11 +13,9 @@ import type {
 } from "@/types/index.mjs";
 import type { Margins } from "@/types/index.mjs";
 
-import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
 import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
 import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
-import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
@@ -194,21 +192,6 @@ export const renderChart = <T,>(
         innerWidth: dims.innerWidth,
       },
     );
-  }
-
-  if (context.flags.hasLegend && context.state.legendOptions) {
-    const derivedItems = context.state.allSeries.map((s, i) => ({
-      color: s.stroke ?? `var(--vl-palette-${String(i)}, steelblue)`,
-      label: s.label,
-    }));
-    context.svg.call(renderLegend, {
-      interactive: context.state.legendOptions.interactive,
-      items: context.state.legendOptions.items ?? derivedItems,
-      onToggle: context.state.legendOptions.onToggle,
-      visibleLabels: context.state.visibleLabels,
-      x: context.margins.left + dims.innerWidth - LEGEND_WIDTH,
-      y: context.margins.top + LEGEND_TOP_OFFSET,
-    });
   }
 
   if (context.flags.hasZoomPan) {
