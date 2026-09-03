@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { defaultTheme } from "../../themes/defaultTheme.mjs";
 import {
   applyThemeCssVars,
+  readCssNumber,
 } from "../../utils/cssVariables.mjs";
 
 describe("applyThemeCssVars", () => {
@@ -168,5 +169,64 @@ describe("applyThemeCssVars", () => {
     expect(container.style.getPropertyValue("--vl-spacing-sm")).toBe("");
     expect(container.style.getPropertyValue("--vl-spacing-md")).toBe("");
     expect(container.style.getPropertyValue("--vl-spacing-lg")).toBe("");
+  });
+});
+
+describe("readCssNumber", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+  });
+
+  it("returns the fallback when the CSS variable is missing", () => {
+    expect(readCssNumber(container, "--vl-nonexistent", 8)).toBe(8);
+  });
+
+  it("returns the fallback when the CSS variable is empty", () => {
+    container.style.setProperty("--vl-test-var", "");
+    expect(readCssNumber(container, "--vl-test-var", 8)).toBe(8);
+  });
+
+  it("returns 0 when the CSS variable is the string '0' — NOT the fallback", () => {
+    // This is the regression test: the old `|| 6` pattern treated 0 as falsy
+    // and incorrectly returned 6 when --vl-point-radius was "0".
+    container.style.setProperty("--vl-test-var", "0");
+    expect(readCssNumber(container, "--vl-test-var", 99)).toBe(0);
+  });
+
+  it("returns the parsed number for a normal numeric value", () => {
+    container.style.setProperty("--vl-test-var", "5");
+    expect(readCssNumber(container, "--vl-test-var", 99)).toBe(5);
+  });
+
+  it("returns the fallback for non-numeric garbage", () => {
+    container.style.setProperty("--vl-test-var", "abc");
+    expect(readCssNumber(container, "--vl-test-var", 8)).toBe(8);
+  });
+
+  it("returns a negative number correctly", () => {
+    container.style.setProperty("--vl-test-var", "-3");
+    expect(readCssNumber(container, "--vl-test-var", 99)).toBe(-3);
+  });
+
+  it("accepts var names without the -- prefix", () => {
+    container.style.setProperty("--vl-test-var", "42");
+    expect(readCssNumber(container, "vl-test-var", 99)).toBe(42);
+  });
+
+  it("returns the fallback when the CSS variable is set to 'auto'", () => {
+    container.style.setProperty("--vl-test-var", "auto");
+    expect(readCssNumber(container, "--vl-test-var", 8)).toBe(8);
+  });
+
+  it("handles decimal values", () => {
+    container.style.setProperty("--vl-test-var", "2.5");
+    expect(readCssNumber(container, "--vl-test-var", 99)).toBe(2.5);
   });
 });

@@ -73,3 +73,26 @@ export const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
     style.setProperty("--vl-text", "#000000");
   }
 };
+
+/**
+ * Reads a numeric CSS custom property from an element and returns it as a number.
+ *
+ * Uses `Number.isFinite` (not `||` fallback) so that a literal `"0"` value is
+ * returned as `0` rather than falling through to the fallback — the old `|| N`
+ * pattern treated `0` as falsy and incorrectly returned the fallback.
+ *
+ * @param node - The element to read the CSS property from.
+ * @param varName - The CSS custom property name (with or without `--` prefix;
+ *   the prefix is added automatically if not present).
+ * @param fallback - The value to return when the property is missing,
+ *   empty, or its value cannot be parsed as a finite number.
+ */
+export const readCssNumber = (
+  node: Element,
+  varName: string,
+  fallback: number,
+): number => {
+  const cssVarName = varName.startsWith("--") ? varName : `--${varName}`;
+  const raw = parseFloat(getComputedStyle(node).getPropertyValue(cssVarName));
+  return Number.isFinite(raw) ? raw : fallback;
+};

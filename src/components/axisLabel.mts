@@ -1,5 +1,7 @@
 import type { Margins, SVGSelection } from "@/types/index.mjs";
 
+import { readCssNumber } from "@/utils/cssVariables.mjs";
+
 export interface XAxisLabelOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
@@ -12,6 +14,35 @@ export interface YAxisLabelOptions {
   readonly label?: string;
   readonly margins: Margins;
 }
+
+/**
+ * Derives all spacing values needed for axis label positioning from the
+ * resolved CSS custom properties on the SVG node.
+ *
+ * Returns an object with:
+ * - padding: the --vl-label-padding value (default 8)
+ * - axisTickSize: the --vl-axis-tick-size value (default 6)
+ * - axisTickPadding: the --vl-axis-tick-padding value (default 8)
+ * - axisFontSize: the --vl-axis-font-size value (default 12)
+ * - axisLabelSpacing: the sum of the three axis style values
+ */
+const resolveAxisLabelSpacing = (
+  svg: SVGSelection,
+): {
+  readonly padding: number;
+  readonly axisTickSize: number;
+  readonly axisTickPadding: number;
+  readonly axisFontSize: number;
+  readonly axisLabelSpacing: number;
+} => {
+  const node = svg.node();
+  const padding = node ? readCssNumber(node, "--vl-label-padding", 8) : 8;
+  const axisTickSize = node ? readCssNumber(node, "--vl-axis-tick-size", 6) : 6;
+  const axisTickPadding = node ? readCssNumber(node, "--vl-axis-tick-padding", 8) : 8;
+  const axisFontSize = node ? readCssNumber(node, "--vl-axis-font-size", 12) : 12;
+  const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
+  return { padding, axisTickSize, axisTickPadding, axisFontSize, axisLabelSpacing };
+};
 
 /**
  * Renders or updates a centered X-axis label inside the given SVG selection.
@@ -36,22 +67,7 @@ export const renderXAxisLabel = (
     margins,
   }: XAxisLabelOptions,
 ): void => {
-  const node = svg.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const rawPadding = cs
-    ? parseFloat(cs.getPropertyValue("--vl-label-padding"))
-    : NaN;
-  const padding = Number.isNaN(rawPadding) ? 8 : rawPadding;
-  const axisTickSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6)
-    : 6;
-  const axisTickPadding = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8)
-    : 8;
-  const axisFontSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-font-size")) || 12)
-    : 12;
-  const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
+  const { padding, axisLabelSpacing } = resolveAxisLabelSpacing(svg);
 
   svg
     .selectAll<SVGTextElement, null>("text.x-axis-label")
@@ -89,22 +105,7 @@ export const renderYAxisLabel = (
     margins,
   }: YAxisLabelOptions,
 ): void => {
-  const node = svg.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const rawPadding = cs
-    ? parseFloat(cs.getPropertyValue("--vl-label-padding"))
-    : NaN;
-  const padding = Number.isNaN(rawPadding) ? 8 : rawPadding;
-  const axisTickSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6)
-    : 6;
-  const axisTickPadding = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8)
-    : 8;
-  const axisFontSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-font-size")) || 12)
-    : 12;
-  const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
+  const { padding, axisLabelSpacing } = resolveAxisLabelSpacing(svg);
 
   svg
     .selectAll<SVGTextElement, null>("text.y-axis-label")

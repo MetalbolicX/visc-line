@@ -1,8 +1,6 @@
 import type { AxisDomain } from "d3";
 
-import { axisBottom } from "d3";
-
-import { asAxisScale } from "@/utils/axisScale.mjs";
+import { renderAxis } from "@/components/axisRenderer.mjs";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderXAxis}. */
@@ -20,7 +18,7 @@ export interface RenderXAxisOptions {
  * driven by CSS custom properties (`--vl-axis-tick-size`, `--vl-axis-tick-padding`,
  * `--vl-axis-font-size`, `--vl-axis-color`) that are written by
  * {@link applyThemeCssVars} and inherited through the SVG element tree.
- * Numeric values are resolved via `getComputedStyle` because D3's
+ * Numeric values are resolved via `readCssNumber` because D3's
  * `.tickSize()` / `.tickPadding()` require actual numbers.
  *
  * @param boundsGroup - D3 selection of the container group for the axis.
@@ -34,28 +32,7 @@ export const renderXAxis = (
   boundsGroup: BoundsSelection,
   xScale: AnyScale,
   innerHeight: number,
-  { tickCount = 5, tickFormat }: RenderXAxisOptions = {},
+  opts: RenderXAxisOptions = {},
 ): void => {
-  const node = boundsGroup.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const tickSize = cs ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6) : 6;
-  const tickPadding = cs ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8) : 8;
-
-  const axis = axisBottom(asAxisScale(xScale))
-    .ticks(tickCount)
-    .tickSize(tickSize)
-    .tickPadding(tickPadding);
-  if (tickFormat) axis.tickFormat(tickFormat);
-
-  const g = boundsGroup
-    .selectAll<SVGGElement, null>("g.x-axis")
-    .data([null])
-    .join("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0,${String(innerHeight)})`)
-    .call(axis);
-
-  g.selectAll<SVGTextElement, unknown>("text")
-    .style("fill", "var(--vl-axis-color, #333333)")
-    .style("font-size", "var(--vl-axis-font-size, 12px)");
+  renderAxis("x", boundsGroup, xScale, innerHeight, opts);
 };

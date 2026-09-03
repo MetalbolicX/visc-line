@@ -1,5 +1,7 @@
 import type { SVGSelection } from "@/types/index.mjs";
 
+import { readCssNumber } from "@/utils/cssVariables.mjs";
+
 /**
  * A single entry in the legend.
  *
@@ -62,13 +64,8 @@ export const renderLegend = (
   }: RenderLegendOptions,
 ): void => {
   const node = svg.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const symbolSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-legend-symbol-size")) || 12)
-    : 12;
-  const itemSpacing = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-legend-item-spacing")) || 8)
-    : 8;
+  const symbolSize = node ? readCssNumber(node, "--vl-legend-symbol-size", 12) : 12;
+  const itemSpacing = node ? readCssNumber(node, "--vl-legend-item-spacing", 8) : 8;
   const rowHeight = symbolSize + itemSpacing;
 
   const legendGroup = svg

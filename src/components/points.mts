@@ -2,6 +2,7 @@ import type { Selection } from "d3";
 
 import { select } from "d3";
 
+import { readCssNumber } from "@/utils/cssVariables.mjs";
 import type {
   AnyScale,
   BoundsSelection,
@@ -45,9 +46,7 @@ export const renderPoints = <T,>(
   xAccessor: (d: T) => unknown,
 ): Selection<SVGGElement, ProcessedSeries<T>, SVGGElement, null> => {
   const node = boundsGroup.node();
-  const radius = node
-    ? (parseFloat(getComputedStyle(node).getPropertyValue("--vl-point-radius")) || 3)
-    : 3;
+  const radius = node ? readCssNumber(node, "--vl-point-radius", 3) : 3;
 
   return boundsGroup
     .selectAll<SVGGElement, ProcessedSeries<T>>("g.point-series")
