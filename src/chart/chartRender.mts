@@ -4,7 +4,6 @@ import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
 import type { FeatureRenderContext } from "@/chart/featureRegistry.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type {
-  AnyScale,
   BoundsSelection,
   ChartConfig,
   CustomContext,
@@ -17,7 +16,6 @@ import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
 import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
 import { renderLine } from "@/components/line.mjs";
-import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 import {
   createScales,
   getDimensions,
@@ -172,52 +170,10 @@ export const renderChart = <T,>(
   for (const feature of FEATURE_REGISTRY) {
     if (context.flags[feature.flagKey]) {
       feature.render(
-        { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, content, xScale, yScale } as FeatureRenderContext<unknown>,
+        { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, callbacks, content, xScale, yScale } as FeatureRenderContext<unknown>,
         dims,
       );
     }
-  }
-
-  if (context.flags.hasZoomPan) {
-    context.svg.on(".zoom", null);
-    const zoomBehavior = addZoomPan(context.svg, {
-      innerHeight: dims.innerHeight,
-      innerWidth: dims.innerWidth,
-      margins: context.margins,
-      onZoom:
-        context.state.zoomPanOptions.onZoom ??
-        ((newX: AnyScale, newY: AnyScale): void => {
-          // Registry-driven zoom dispatch
-          for (const feature of FEATURE_REGISTRY) {
-            if (context.flags[feature.flagKey] && feature.onZoomRedraw) {
-              feature.onZoomRedraw(
-                { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, content, xScale: newX, yScale: newY } as FeatureRenderContext<unknown>,
-                dims,
-                newX,
-                newY,
-              );
-            }
-          }
-
-          renderLine<T>(
-            content,
-            context.state.currentSeries,
-            newX,
-            newY,
-            context.config.xSerie.accessor,
-            {
-              curve: context.resolvedCurve,
-              reducedMotion: context.reducedMotion,
-            },
-          );
-
-        }),
-      scaleExtent: context.state.zoomPanOptions.scaleExtent,
-      xScale,
-      yScale,
-    });
-
-    callbacks.onZoomBehaviorChange(zoomBehavior);
   }
 
   if (context.state.customCallback && context.flags.hasCustom) {
@@ -234,7 +190,5 @@ export const renderChart = <T,>(
     callbacks.onCustomCleanupChange(typeof cleanup === "function" ? cleanup : null);
   }
 
-  clearOptionalNodes(context.bounds, context.svg, context.flags, () => {
-    callbacks.onZoomBehaviorChange(null);
-  });
+  clearOptionalNodes(context.bounds, context.svg, context.flags);
 };

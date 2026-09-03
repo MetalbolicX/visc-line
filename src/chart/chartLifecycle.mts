@@ -29,7 +29,6 @@ export const clearOptionalNodes = (
   bounds: BoundsSelection,
   svg: SVGSelection,
   flags: FeatureFlags,
-  onZoomPanCleared: () => void,
 ): void => {
   // Registry-driven cleanup for migrated features (axes, grid, points, title, legend, tooltip)
   for (const feature of FEATURE_REGISTRY) {
@@ -62,11 +61,6 @@ export const clearOptionalNodes = (
 
   if (!flags.hasGrid) {
     bounds.selectAll("line.grid-x, line.grid-y").remove();
-  }
-
-  if (!flags.hasZoomPan) {
-    svg.on(".zoom", null);
-    onZoomPanCleared();
   }
 };
 

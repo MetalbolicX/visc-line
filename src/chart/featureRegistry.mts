@@ -15,7 +15,7 @@ import { timeFormat } from "d3";
 
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
 import type { WithAxesOptions, WithGridOptions, WithLegendOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
-import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType, SVGSelection } from "@/types/index.mjs";
+import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType } from "@/types/index.mjs";
 
 import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
 
@@ -100,6 +100,7 @@ export interface FeatureRenderContext<T> {
     readonly yDomain: readonly [number, number];
   }>;
   readonly bounds: import("@/types/index.mjs").BoundsSelection;
+  readonly callbacks: RenderCallbacks;
   readonly clipPathId: string;
   readonly config: ChartConfig<T>;
   readonly container: HTMLElement;
@@ -110,11 +111,19 @@ export interface FeatureRenderContext<T> {
   readonly reducedMotion: boolean;
   readonly resolvedCurve: import("d3").CurveFactory;
   readonly state: ChartState<unknown>;
-  readonly svg: SVGSelection;
+  readonly svg: import("@/types/index.mjs").SVGSelection;
   readonly xScale: AnyScale;
   readonly xType: ScaleType;
   readonly yLabel?: string;
   readonly yScale: AnyScale;
+}
+
+/** Callbacks exposed by the chart renderer for lifecycle notifications */
+interface RenderCallbacks {
+  readonly onCustomCleanupChange: (cleanup: (() => void) | null) => void;
+  readonly onZoomBehaviorChange: (
+    zoomBehavior: import("@/interactivity/index.mjs").ZoomBehaviorWithReset | null,
+  ) => void;
 }
 
 // ─── Registry ────────────────────────────────────────────────────────────────
@@ -123,11 +132,13 @@ import { areAxesOptionsEqual, areGridOptionsEqual } from "@/chart/optionComparat
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 import { renderLegend } from "@/components/legend.mjs";
+import { renderLine } from "@/components/line.mjs";
 import { renderPoints } from "@/components/points.mjs";
 import { renderTitle } from "@/components/title.mjs";
 import { renderXAxis } from "@/components/xAxis.mjs";
 import { renderYAxis } from "@/components/yAxis.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
+import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 
 /**
  * Axes feature definition.
@@ -369,6 +380,69 @@ export const tooltipDef: FeatureDefinition<"tooltip"> = {
   },
 };
 
+/**
+ * Zoom/Pan feature definition — the zoom dispatch trigger.
+ *
+ * - Options: WithZoomPanOptions { onZoom?, scaleExtent? }
+ * - Comparator: areZoomPanOptionsEqual
+ * - Zoom-path: zoomPan IS the trigger; no onZoomRedraw of its own
+ * - DOM cleanup: no selectors; event cleanup via svg.on(".zoom", null)
+ */
+export const zoomPanDef: FeatureDefinition<"zoomPan"> = {
+  clearEvents: [".zoom"],
+  clearSelectors: [],
+  flagKey: "hasZoomPan",
+  isEqual: (a: unknown, b: unknown): boolean => {
+    const pa = a as import("@/chart/chartTypes.mjs").WithZoomPanOptions;
+    const pb = b as import("@/chart/chartTypes.mjs").WithZoomPanOptions;
+    if (pa.onZoom !== pb.onZoom) return false;
+    const prevExtent = pa.scaleExtent;
+    const nextExtent = pb.scaleExtent;
+    if (prevExtent === nextExtent) return true;
+    if (prevExtent === undefined || nextExtent === undefined) return false;
+    return prevExtent[0] === nextExtent[0] && prevExtent[1] === nextExtent[1];
+  },
+  key: "zoomPan",
+  optionsKey: "zoomPanOptions",
+  render: (ctx, dims) => {
+    if (!ctx.flags.hasZoomPan) return;
+    ctx.svg.on(".zoom", null);
+    const zoomBehavior = addZoomPan(ctx.svg, {
+      innerHeight: dims.innerHeight,
+      innerWidth: dims.innerWidth,
+      margins: ctx.margins,
+      onZoom:
+        ctx.state.zoomPanOptions.onZoom ??
+        ((newX: AnyScale, newY: AnyScale): void => {
+          // Registry-driven zoom dispatch
+          for (const feature of FEATURE_REGISTRY) {
+            if (ctx.flags[feature.flagKey] && feature.onZoomRedraw) {
+              feature.onZoomRedraw(
+                { ...ctx, allSeriesExtents: ctx.allSeriesExtents } as FeatureRenderContext<unknown>,
+                dims,
+                newX,
+                newY,
+              );
+            }
+          }
+          // Line re-render is NOT in the registry — re-render line directly
+          renderLine<unknown>(
+            ctx.content,
+            ctx.state.currentSeries,
+            newX,
+            newY,
+            ctx.config.xSerie.accessor,
+            { curve: ctx.resolvedCurve, reducedMotion: ctx.reducedMotion },
+          );
+        }),
+      scaleExtent: ctx.state.zoomPanOptions.scaleExtent,
+      xScale: ctx.xScale,
+      yScale: ctx.yScale,
+    });
+    ctx.callbacks.onZoomBehaviorChange(zoomBehavior);
+  },
+};
+
 /** Ordered registry — the array order IS the render sequence */
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   axesDef,
@@ -376,6 +450,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   titleDef,
   legendDef,
   tooltipDef,
+  zoomPanDef,
   {
     clearSelectors: ["g.point-series"],
     flagKey: "hasPoints",
