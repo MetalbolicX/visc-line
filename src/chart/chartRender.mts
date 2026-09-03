@@ -1,4 +1,5 @@
 import type { CurveFactory } from "d3";
+import { timeFormat } from "d3";
 
 import type {
   AnyScale,
@@ -178,14 +179,27 @@ export const renderChart = <T,>(
     const {
       xTickCount,
       xTickFormat,
+      timeTickFormat,
       yTickCount,
       yTickFormat,
     } = context.state.axesOptions;
 
+    // Resolve timeTickFormat: if xType is "time" and timeTickFormat is a string,
+    // convert it to a d3 time-format function. Function form is passed through.
+    // The cast is safe because d3-axis always passes Date values for time scales.
+    const effectiveXTickFormat:
+      | ((domainValue: import("d3").AxisDomain, index: number) => string)
+      | undefined =
+      context.xType === "time" && timeTickFormat !== undefined
+        ? typeof timeTickFormat === "string"
+          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
+          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
+        : xTickFormat;
+
     context.bounds
       .call(renderXAxis, xScale, dims.innerHeight, {
         tickCount: xTickCount,
-        tickFormat: xTickFormat,
+        tickFormat: effectiveXTickFormat,
       })
       .call(renderYAxis, yScale, {
         tickCount: yTickCount,
@@ -282,12 +296,21 @@ export const renderChart = <T,>(
             const {
               xTickCount,
               xTickFormat,
+              timeTickFormat,
               yTickCount,
               yTickFormat,
             } = context.state.axesOptions;
+            const effectiveXTickFormat:
+              | ((domainValue: import("d3").AxisDomain, index: number) => string)
+              | undefined =
+              context.xType === "time" && timeTickFormat !== undefined
+                ? typeof timeTickFormat === "string"
+                  ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
+                  : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
+                : xTickFormat;
             renderXAxis(context.bounds, newX, dims.innerHeight, {
               tickCount: xTickCount,
-              tickFormat: xTickFormat,
+              tickFormat: effectiveXTickFormat,
             });
             renderYAxis(context.bounds, newY, {
               tickCount: yTickCount,
