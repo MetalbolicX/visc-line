@@ -12,6 +12,7 @@ import type {
 } from "@/types/index.mjs";
 import type { LegendItem } from "@/components/legend.mjs";
 import type { TooltipData } from "@/interactivity/tooltip.mjs";
+import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 
 export interface WithTooltipOptions {
   readonly formatX?: (v: unknown) => string;
@@ -68,6 +69,8 @@ export interface ChartInstance<T> {
   readonly withTitle: (options: WithTitleOptions) => ChartInstance<T>;
   readonly withTooltip: (options?: WithTooltipOptions) => ChartInstance<T>;
   readonly withZoomPan: (options?: WithZoomPanOptions) => ChartInstance<T>;
+  /** Exposes the internal zoom behavior for testing observation. */
+  readonly zoomBehavior: ZoomBehaviorWithReset | null;
 }
 
 export interface ChartOptions {
