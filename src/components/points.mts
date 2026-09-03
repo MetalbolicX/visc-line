@@ -7,6 +7,7 @@ import type {
   BoundsSelection,
   ProcessedSeries,
 } from "@/types/index.mjs";
+
 import { asScaleNumber } from "@/utils/scaleCast.mjs";
 
 /**

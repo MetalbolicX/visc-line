@@ -3,6 +3,7 @@ import type { CurveFactory, Selection } from "d3";
 import { line, select } from "d3";
 
 import type { AnyScale, BoundsSelection, CurvePreset, ProcessedSeries } from "@/types/index.mjs";
+
 import { resolveCurve } from "@/utils/index.mjs";
 import { asScaleNumber } from "@/utils/scaleCast.mjs";
 
@@ -62,7 +63,7 @@ export const renderLine = <T,>(
     reducedMotion: reducedMotionOption,
     transitionDuration = 1000,
   }: RenderLineOptions = {},
-): Selection<SVGPathElement, { s: ProcessedSeries<T>; i: number }, SVGGElement, unknown> => {
+): Selection<SVGPathElement, { readonly i: number; readonly s: ProcessedSeries<T>; }, SVGGElement, unknown> => {
   const curveFactory = resolveCurve(curve);
 
   /** Build a path `d` attribute for a series using the configured curve factory. */
@@ -74,13 +75,14 @@ export const renderLine = <T,>(
       serie.data,
     );
 
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- accessibility preference flag
   const shouldReduceMotion: boolean =
     reducedMotionOption ??
     (typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   // Index-preserving data join so palette index is stable across re-renders.
-  const indexedSeries = series.map((s, i) => ({ s, i }));
+  const indexedSeries = series.map((s, i) => ({ i, s }));
   return boundsGroup
     .selectAll<SVGPathElement, (typeof indexedSeries)[number]>("path.chart-line")
     .data(indexedSeries, ({ s: { label } }) => label)
@@ -92,7 +94,7 @@ export const renderLine = <T,>(
           .attr("fill", "none")
           .attr(
             "stroke",
-            ({ s, i }) => s.stroke ?? `var(--vl-palette-${i}, steelblue)`,
+            ({ i, s }) => s.stroke ?? `var(--vl-palette-${i}, steelblue)`,
           )
           .attr("stroke-width", ({ s }) => s.strokeWidth ?? "var(--vl-line-stroke-width, 2)")
           .attr("opacity", ({ s }) => s.opacity ?? "var(--vl-line-opacity, 1)")
@@ -113,7 +115,7 @@ export const renderLine = <T,>(
       (update) =>
         update.each(function (datum) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { s, i } = datum as any;
+          const { i, s } = datum as any;
           const path = select(this);
           const newPathD = buildPath(s);
           // Set the new path data FIRST so getTotalLength() reflects the

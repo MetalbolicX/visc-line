@@ -2,8 +2,9 @@ import type { AxisDomain } from "d3";
 
 import { axisLeft } from "d3";
 
-import { asAxisScale } from "@/utils/axisScale.mjs";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
+
+import { asAxisScale } from "@/utils/axisScale.mjs";
 
 /** Options for {@link renderYAxis}. */
 export interface RenderYAxisOptions {

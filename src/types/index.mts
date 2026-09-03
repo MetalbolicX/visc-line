@@ -1,4 +1,11 @@
 export type {
+  CustomCallback,
+  CustomContext,
+} from "@/types/customContextTypes.mjs";
+
+export type { Dimensions, Margins } from "@/types/layoutTypes.mjs";
+
+export type {
   ChartConfig,
   ProcessedSeries,
   SeriesDescriptor,
@@ -11,13 +18,6 @@ export type {
 } from "@/types/scalesTypes.mjs";
 
 export type { BoundsSelection, SVGSelection } from "@/types/selectionTypes.mjs";
-
-export type { Dimensions, Margins } from "@/types/layoutTypes.mjs";
-
-export type {
-  CustomCallback,
-  CustomContext,
-} from "@/types/customContextTypes.mjs";
 
 export type {
   CurvePreset,

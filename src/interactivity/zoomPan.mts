@@ -14,10 +14,10 @@ interface AddZoomPanOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
   readonly onZoom: (newX: AnyScale, newY: AnyScale) => void;
-  readonly xScale: AnyScale;
-  readonly yScale: AnyScale;
   /** Minimum and maximum zoom levels (default: [0.5, 32]). */
   readonly scaleExtent?: readonly [number, number];
+  readonly xScale: AnyScale;
+  readonly yScale: AnyScale;
 }
 
 /**
@@ -60,7 +60,7 @@ export const addZoomPan = (
     configurable: true,
     value: () =>
       svg.call(
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+         
         zoomBehavior.transform as never,
         zoomIdentity as unknown as ZoomTransform,
       ),
