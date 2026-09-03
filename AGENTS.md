@@ -26,8 +26,8 @@ type-check → test → build
 - **Entry**: `src/index.mts`
 - **Source dirs**: `components/`, `services/`, `interactivity/`, `types/`, `utils/`, `themes/`, `accessibility/`
 - **Examples**: `examples/main.mts` (runnable demo)
-- **Peer deps**: `d3@^7.9.0`, `tipviz@^2.3.0`
-- **Bundled dep**: `tipviz` (forced into bundle by tsdown); `d3` remains external (UMD global)
+- **Peer deps**: `d3@^7.9.0`
+- **Bundled dep**: `tipviz@^3.0.1` (forced into bundle by tsdown); `d3` remains external (UMD global)
 - **Platform**: browser-only (UMD, tsdown `platform: "browser"`)
 
 ## Render Flow (important)
