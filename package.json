@@ -12,6 +12,7 @@
     "build": "tsdown",
     "dev": "vite",
     "test": "vitest",
+    "test:e2e": "pnpm build && node tests/e2e/serve-and-run.mjs",
     "docs": "docsify serve docs",
     "check": "pnpm type-check && pnpm test && pnpm build",
     "prepublishOnly": "pnpm type-check && pnpm test && pnpm build"
@@ -43,6 +44,7 @@
   ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@types/d3": "^7.4.3",
     "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10.9.1",
