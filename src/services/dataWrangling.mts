@@ -62,18 +62,18 @@ export const processAllSeries = <T,>(
   }));
 
 /**
- * In-memory cache for multi-series extents keyed by `extentCacheKey`.
+ * Identity-keyed cache for multi-series extent results.
  *
- * Key construction is deterministic for a given array order and relies on
- * series labels and data lengths. The cached value is a plain object
- * containing `xDomain` and `yDomain` extents. This cache is a module-level
- * mutable Map and therefore a side-effect of calling getMultiSeriesExtents.
+ * Keyed by the series-array reference itself (WeakMap), so replacing the array
+ * (as `createChart.update()` does) naturally produces a new cache entry.
+ * No cross-instance pollution is possible because each distinct array reference
+ * is its own key.
  *
- * PERF: Avoid mutating series labels or their `data` arrays after computing
- * extents, otherwise the cache may become stale or collide.
+ * Note: in-place mutation of the array does NOT invalidate the cache — callers
+ * must replace the array to get fresh extents.
  */
-const extentCache = new Map<
-  string,
+const extentCache = new WeakMap<
+  readonly unknown[],
   Readonly<{
     readonly xDomain: readonly [undefined, undefined] | readonly [unknown, unknown];
     readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
@@ -81,36 +81,15 @@ const extentCache = new Map<
 >();
 
 /**
- * Create a stable cache key for a collection of processed series.
- *
- * The key is formed from each series' label, data length, and a simple hash
- * of the first/last data point values. This avoids collisions when different
- * series share the same label length pattern but have distinct data.
- *
- * @template T - Datum type for the series data arrays.
- * @param processedSeries - Array of processed series to derive the key from.
- * @returns A simple string key safe to use as a Map key for caching extents.
- */
-const extentCacheKey = <T,>(processedSeries: readonly ProcessedSeries<T>[]): string =>
-  processedSeries
-    .map((s) => {
-      const len = s.data.length;
-      const front = len > 0 ? String(s.data[0]).slice(0, 8) : "e";
-      const back = len > 1 ? String(s.data[len - 1]).slice(0, 8) : "e";
-      return `${encodeURIComponent(s.label)}:${len}:${front}:${back}`;
-    })
-    .join("|");
-
-/**
  * Compute combined x and y extents for multiple processed series.
  *
  * - xDomain: Extent across all series' x values using the provided xAccessor.
  * - yDomain: Extent across all series' y values using each series' `accessor`.
  *
- * Side effects:
- * - Results are memoized in a module-level cache keyed by series label and
- *   data length. The cache is invalidated implicitly when callers change the
- *   labels or the number of data points (caller must ensure stable labels).
+ * Results are memoized in a WeakMap keyed by the series-array reference.
+ * Replacing the array (as `createChart.update()` does) naturally produces a
+ * new cache entry. In-place mutation of the array does NOT invalidate the
+ * cache — callers must replace the array to get fresh extents.
  *
  * Important notes:
  * - Either domain may be [undefined, undefined] when no valid numeric values
@@ -135,8 +114,7 @@ export const getMultiSeriesExtents = <T,>(
   readonly xDomain: readonly [undefined, undefined] | readonly [unknown, unknown];
   readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
 }> => {
-  const cacheKey = extentCacheKey(processedSeries);
-  const cached = extentCache.get(cacheKey);
+  const cached = extentCache.get(processedSeries);
   if (cached) return cached;
 
   const result = {
@@ -149,22 +127,20 @@ export const getMultiSeriesExtents = <T,>(
     ),
   };
 
-  extentCache.set(cacheKey, result);
+  extentCache.set(processedSeries, result);
   return result;
 };
 
 /**
- * Clears the module-level extent cache.
+ * Clears the extent cache. No longer required for cache invalidation — the
+ * WeakMap is keyed by array identity, so replacing the series array (as
+ * `createChart.update()` does) automatically produces a new cache entry.
  *
- * Call this before recomputing extents with new data to avoid returning
- * stale cached values when data arrays have the same length but different content.
- *
- * @example
- * ```ts
- * clearExtentCache();
- * const { xDomain, yDomain } = getMultiSeriesExtents(newSeries, accessor);
- * ```
+ * @deprecated Cache invalidation is now automatic via array-identity WeakMap.
+ *   Callers should replace the array to trigger recomputation instead of calling
+ *   this function.
  */
 export const clearExtentCache = (): void => {
-  extentCache.clear();
+  // No-op: the WeakMap is keyed by array identity; replacing the array
+  // (as createChart.update() does) naturally produces a new cache key.
 };

@@ -256,4 +256,73 @@ describe("getMultiSeriesExtents", () => {
     expect(all.yDomain).toEqual([10, 200]);
     expect(onlyRevenue.yDomain).toEqual([10, 20]);
   });
+
+  it("plan-007: isolation — same label+length but different data must not share cache entry", () => {
+    // Two series with identical label ("Revenue") and identical point count (2).
+    // The old content-fingerprint cache key would collide, returning A's extents for B.
+    const seriesA = makeSeries([{ x: 1, y: 10 }, { x: 2, y: 20 }], (d) => d.y, "Revenue");
+    const seriesB = makeSeries([{ x: 1, y: 100 }, { x: 2, y: 200 }], (d) => d.y, "Revenue");
+
+    // Compute A's extents first (populates the cache for this label+length fingerprint)
+    const extentsA = getMultiSeriesExtents([seriesA], (d) => d.x);
+    expect(extentsA.yDomain).toEqual([10, 20]);
+
+    // Compute B's extents — B's data is different and has a wider range.
+    // Under the new identity-keyed WeakMap cache each array reference is its own
+    // key, so B's result correctly reflects B's data ([100, 200]), not A's.
+    const extentsB = getMultiSeriesExtents([seriesB], (d) => d.x);
+    expect(extentsB.yDomain).toEqual([100, 200]);
+  });
+
+  it("plan-007: array replacement invalidates cache — replace array, get fresh extents", () => {
+    // The cache is keyed by series-array identity. Replacing the array (as
+    // createChart.update() does) naturally produces a new cache key.
+    const dataA: readonly SeriesPoint[] = [{ x: 1, y: 10 }, { x: 2, y: 20 }];
+    const seriesA = makeSeries(dataA, (d) => d.y, "Revenue");
+
+    const extentsFirst = getMultiSeriesExtents([seriesA], (d) => d.x);
+    expect(extentsFirst.yDomain).toEqual([10, 20]);
+
+    // Simulate update() by passing a new array with different values.
+    // The new array is a new reference — a new WeakMap key.
+    const dataB: readonly SeriesPoint[] = [{ x: 1, y: 10 }, { x: 2, y: 200 }];
+    const seriesB = makeSeries(dataB, (d) => d.y, "Revenue");
+
+    const extentsAfterReplace = getMultiSeriesExtents([seriesB], (d) => d.x);
+    expect(extentsAfterReplace.yDomain).toEqual([10, 200]);
+  });
+
+  it("plan-007: cache hit on stable reference returns identical object", () => {
+    const series = makeSeries([{ x: 1, y: 10 }, { x: 2, y: 20 }], (d) => d.y, "Revenue");
+    // Store the same array reference — WeakMap is keyed by array identity.
+    const seriesArray = [series];
+
+    const first = getMultiSeriesExtents(seriesArray, (d) => d.x);
+    const second = getMultiSeriesExtents(seriesArray, (d) => d.x);
+
+    // Must be the exact same frozen object (memoized)
+    expect(first).toBe(second);
+  });
+
+  it("plan-007: in-place mutation is NOT observed when array reference is stable", () => {
+    // WeakMap is keyed by array identity. If the same array reference is passed
+    // (stable reference), in-place mutation of the underlying data does NOT
+    // change the cache key — callers must replace the array to get fresh extents.
+    const data: SeriesPoint[] = [{ x: 1, y: 10 }, { x: 2, y: 20 }];
+    const series = makeSeries(data as readonly SeriesPoint[], (d) => d.y, "Revenue");
+    // Same array reference passed to both calls
+    const seriesArray = [series];
+
+    const before = getMultiSeriesExtents(seriesArray, (d) => d.x);
+    expect(before.yDomain).toEqual([10, 20]);
+
+    // Mutate in-place — push a point with a much larger y value.
+    data.push({ x: 3, y: 999 });
+
+    // With the SAME array reference the WeakMap key is unchanged, so we get the
+    // STALE cached result reflecting the pre-mutation data. Callers must
+    // replace the array to get fresh extents.
+    const after = getMultiSeriesExtents(seriesArray, (d) => d.x);
+    expect(after.yDomain).toEqual([10, 20]); // NOT [10, 999]
+  });
 });

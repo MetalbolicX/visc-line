@@ -4,7 +4,6 @@ import { observeResize } from "@/accessibility/index.mjs";
 import { renderBoundsGroup, renderSVG } from "@/components/index.mjs";
 import { disposeTooltip } from "@/interactivity/index.mjs";
 import {
-  clearExtentCache,
   getMultiSeriesExtents,
   processAllSeries,
 } from "@/services/index.mjs";
@@ -218,7 +217,6 @@ export const createChart = <T,>(
     },
     update: (newData: readonly T[]): void => {
       ensureActive();
-      clearExtentCache();
       state.allSeries = processAllSeries<T>(
         newData,
         config.xSerie.accessor,
