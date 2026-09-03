@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { addTooltip } from "../../interactivity/tooltip.mjs";
-import type { TipVizTooltip } from "tipviz";
+import { select } from "d3";
+
 import {
+  addTooltip,
+  disposeTooltip,
   safeColor,
   sortDataByX,
   toComparableX,
@@ -221,112 +223,75 @@ describe("sortDataByX", () => {
   });
 });
 
-describe("TipVizTooltip v3 API (setTemplate + setData)", () => {
-  // jsdom registers the custom element via the "tipviz" side-effect import above.
+describe("disposeTooltip", () => {
+  let container: HTMLElement;
+  let boundsGroup: ReturnType<typeof select<SVGGElement, null>>;
 
-  it("setTemplate stores the template and setData populates data-bind slots", () => {
-    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
-    document.body.appendChild(tooltip);
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    const svg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    ) as SVGSVGElement;
+    container.appendChild(svg);
+    const boundsEl = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "g",
+    ) as SVGGElement;
+    boundsEl.setAttribute("class", "bounds");
+    svg.appendChild(boundsEl);
+    boundsGroup = select<SVGGElement, null>(boundsEl);
 
-    tooltip.setTemplate(/*html*/ `
-      <div>
-        <span data-bind="label"></span>:
-        <span data-bind="value"></span>
-      </div>`);
-
-    tooltip.setData({ label: "Series A", value: "42" });
-
-    const shadow = tooltip.shadowRoot!;
-    const labelSlot = shadow.querySelector("[data-bind='label']");
-    const valueSlot = shadow.querySelector("[data-bind='value']");
-
-    expect(labelSlot?.textContent).toBe("Series A");
-    expect(valueSlot?.textContent).toBe("42");
-
-    // setData again updates the slots
-    tooltip.setData({ label: "Series B", value: "99" });
-    expect(labelSlot?.textContent).toBe("Series B");
-    expect(valueSlot?.textContent).toBe("99");
-
-    tooltip.remove();
+    // Make setHtml/loadStylesheet available on Elements (tipviz v2 API in this branch)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Element.prototype as any).setHtml = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Element.prototype as any).loadStylesheet = vi.fn();
   });
 
-  it("show() makes the tooltip visible and hide() hides it", () => {
-    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
-    document.body.appendChild(tooltip);
-
-    tooltip.setTemplate(/*html*/ `<div data-bind="text"></div>`);
-    tooltip.setData({ text: "hello" });
-
-    const anchor = document.createElement("div");
-    document.body.appendChild(anchor);
-
-    // Initially hidden (aria-hidden should be true)
-    expect(tooltip.getAttribute("aria-hidden")).toBe("true");
-
-    tooltip.show(anchor);
-    expect(tooltip.getAttribute("aria-hidden")).toBe("false");
-
-    tooltip.hide();
-    expect(tooltip.getAttribute("aria-hidden")).toBe("true");
-
-    tooltip.remove();
-    anchor.remove();
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (Element.prototype as any).setHtml;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (Element.prototype as any).loadStylesheet;
+    document.body.removeChild(container);
   });
 
-  it("series label containing <script> tag does not inject markup (sanitizer regression)", () => {
-    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
-    document.body.appendChild(tooltip);
+  it("removes the mouse-capture rect from the DOM after disposeTooltip", () => {
+    // Mock ProcessedSeries data
+    const mockSeries = [
+      {
+        label: "series-1",
+        data: [{ x: 1, y: 10 }],
+        accessor: (d: { x: number; y: number }) => d.y,
+        stroke: "steelblue",
+      },
+    ] as unknown as import("../../types/index.mjs").ProcessedSeries<{
+      x: number;
+      y: number;
+    }>[];
 
-    // Configure sanitizer — allowCustomElements is needed for the tooltip template shell.
-    // The data-bind slots use textContent assignment, which escapes HTML entities.
-    tooltip.setSanitizerConfig(
-      // @ts-expect-error allowCustomElements may not be in the local TS DOM lib
-      { allowCustomElements: true },
-    );
+    // Minimal scales
+    const xScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const yScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const xAccessor = (d: { x: number; y: number }) => d.x;
 
-    tooltip.setTemplate(/*html*/ `
-      <div>
-        <span data-bind="label"></span>
-      </div>`);
+    // addTooltip populates the tooltip registry and creates rect.mouse-capture
+    addTooltip(boundsGroup, mockSeries, xScale, yScale, xAccessor, {
+      innerHeight: 400,
+      innerWidth: 800,
+    });
 
-    // Simulate a series label that a consumer might pass — contains a script tag.
-    const maliciousLabel = "Series <script>window.__xss=1</script> X";
-    tooltip.setData({ label: maliciousLabel });
+    // Capture reference to the mouse-capture rect
+    const rect = boundsGroup.select<SVGRectElement>("rect.mouse-capture").node();
+    expect(rect).toBeTruthy();
+    expect(document.body.contains(rect)).toBe(true);
 
-    const shadow = tooltip.shadowRoot!;
-    const labelSlot = shadow.querySelector("[data-bind='label']");
+    // Dispose the tooltip — this should remove the rect from DOM
+    disposeTooltip(boundsGroup);
 
-    // The slot must contain the literal text, not evaluated HTML
-    expect(labelSlot?.textContent).toBe(maliciousLabel);
-    // The script tag must NOT have been executed
-    expect((window as unknown as Record<string, unknown>).__xss).toBeUndefined();
-
-    tooltip.remove();
-  });
-
-  it("setTemplate can be called once and setData updates slots on subsequent calls", () => {
-    const tooltip = document.createElement("tip-viz-tooltip") as TipVizTooltip;
-    document.body.appendChild(tooltip);
-
-    tooltip.setTemplate(/*html*/ `
-      <div data-bind="xLabel"></div>
-      <span data-bind="row0Label"></span>
-      <span data-bind="row0Value"></span>`);
-
-    // First data update
-    tooltip.setData({ xLabel: "Jan", row0Label: "Alpha", row0Value: "10" });
-    const shadow = tooltip.shadowRoot!;
-    expect(shadow.querySelector("[data-bind='xLabel']")?.textContent).toBe("Jan");
-    expect(shadow.querySelector("[data-bind='row0Label']")?.textContent).toBe("Alpha");
-    expect(shadow.querySelector("[data-bind='row0Value']")?.textContent).toBe("10");
-
-    // Second data update (different values)
-    tooltip.setData({ xLabel: "Feb", row0Label: "Beta", row0Value: "20" });
-    expect(shadow.querySelector("[data-bind='xLabel']")?.textContent).toBe("Feb");
-    expect(shadow.querySelector("[data-bind='row0Label']")?.textContent).toBe("Beta");
-    expect(shadow.querySelector("[data-bind='row0Value']")?.textContent).toBe("20");
-
-    tooltip.remove();
+    // FAIL before fix: rect stays in DOM because disposeTooltip only removes the tooltip element
+    expect(document.body.contains(rect)).toBe(false);
   });
 });

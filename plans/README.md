@@ -13,7 +13,7 @@ your row when done.
 | 001  | Verification baseline (`pnpm check` + CI) | P1 | S | 003 | DONE |
 | 002  | Strict characterization suite for untested core | P1 | M | 001 | DONE |
 | 004  | Guard empty/all-invalid data (no silent NaN charts) | P1 | S | 002 | DONE |
-| 005  | Fix tooltip listener leak (namespaced events) | P1 | S | 003 | TODO |
+| 005  | Fix tooltip listener leak (namespaced events) | P1 | S | 003 | DONE |
 | 006  | Builder correctness (zoom reset, scaleExtent, withCustom) | P2 | S | 002 | TODO |
 | 007  | Per-chart collision-proof extent cache | P2 | M | 002, 004 | TODO |
 | 008  | Zoom extent respects margins + safe id fallback | P2 | S | 002 | TODO |
