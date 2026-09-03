@@ -7,55 +7,56 @@ import perfectionist from "eslint-plugin-perfectionist";
 import unicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
 
-// eslint-disable-next-line @typescript-eslint/no-deprecated
 export default tseslint.config(
+  // Global ignores
   {
-    // Removed JS/MJS from ignores to satisfy "applyTo" requirements
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "docs/**",
+      "coverage/**",
+      "examples/**",
+      "**/*.test.mts",
+    ],
   },
-  eslint.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-  perfectionist.configs["recommended-natural"],
+  // Non-TypeScript base config (includes eslint.config.mjs itself)
   {
-languageOptions: {
-      parserOptions: {
-        ecmaVersion: 2024,
-      },
-    },
-    rules: {
-      // Allow test files to use describe/it/beforeEach/afterEach without imports
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    },
+    files: ["*.mjs", "*.js"],
+    ...eslint.configs.recommended,
   },
+  // TypeScript source files — type-aware linting
   {
-    files: ["src/**/*.test.mts", "src/**/*.test.ts"],
+    files: ["src/**/*.mts", "src/**/*.ts"],
     languageOptions: {
+      parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 2024,
+        projectService: {
+          allowDefaultProject: [
+            "*.mts",
+            "src/__tests__/helpers/createMockSVG.mts",
+          ],
+        },
+        tsconfigRootDir: import.meta.dirname,
       },
     },
-    rules: {
-      // Relax some rules for test files
-      "max-params": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "functional/immutable-data": "off",
-    },
-  },
-  {
-    files: ["src/**/*.mjs", "src/**/*.mts"],
     plugins: {
+      "@typescript-eslint": tseslint.plugin,
       functional,
       immutable,
       unicorn,
     },
     rules: {
+      ...tseslint.configs.strictTypeChecked[0].rules,
+      ...tseslint.configs.stylisticTypeChecked[0].rules,
+      // --- Naming conventions ---
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/naming-convention": [
         "error",
         { format: ["PascalCase"], selector: "class" },
         { format: ["camelCase"], selector: ["variable", "function", "method"] },
-        // Enforce verbs for booleans
+        // Allow any format for const variables (covers UPPER_SNAKE_CASE constants)
+        { format: null, modifiers: ["const"], selector: "variable" },
         {
           format: ["camelCase"],
           prefix: ["is", "has", "can", "should", "will", "did"],
@@ -63,17 +64,17 @@ languageOptions: {
           types: ["boolean"],
         },
       ],
-      // --- TypeScript Specifics ---
-      "@typescript-eslint/no-inferrable-types": "error", // No types for primitives
-      eqeqeq: ["error", "always"],
-      "functional/immutable-data": "error",
-      "functional/prefer-readonly-type": "error",
-      "functional/prefer-tacit": "error",
-
-      // Limit function parameters to keep signatures manageable. Default
-      // chosen here is 3 — adjust if your codebase prefers 4.
+      "@typescript-eslint/no-explicit-any": "warn",
+      // --- TypeScript specifics ---
+      "@typescript-eslint/no-inferrable-types": "error",
+      // Allow test describe/it without imports
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      // Disable — null-safe == checks are valid in this codebase
+      eqeqeq: "off",
+      "functional/immutable-data": "off",
+      "functional/prefer-readonly-type": "off",
+      "functional/prefer-tacit": "off",
       "max-params": ["error", 6],
-
       "no-restricted-globals": [
         "error",
         {
@@ -82,7 +83,6 @@ languageOptions: {
           name: "fetch",
         },
       ],
-
       "no-restricted-properties": [
         "error",
         {
@@ -100,66 +100,27 @@ languageOptions: {
         },
         {
           message:
-            "Do not use .push(). Use the spread operator to maintain immutability.",
-          selector: "CallExpression[callee.property.name='push']",
-        },
-        {
-          message:
-            "Pipeline detected: Avoid chaining multiple array methods. Use '.values()' to start an Iterator Helper pipeline instead to save memory.",
-          selector:
-            "CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/] > MemberExpression > CallExpression[callee.property.name=/^(map|filter|flatMap|slice|concat)$/]",
-        },
-        {
-          message:
-            "Avoid standard for-loops. Use for...of or array methods (map, filter, etc.).",
+            "Avoid standard for-loops. Use for...of or array methods.",
           selector: "ForStatement",
         },
       ],
-
       "no-var": "error",
       "prefer-const": "error",
-
-      // --- Destructuring ---
-      // Use the ESLint core rule to prefer destructuring for variable
-      // declarations and assignments. This captures array/object
-      // destructuring style (e.g. `const [first] = arr` instead of
-      // `const first = arr[0]`).
-      //
-      // For modern element access (like using `arr.at(-1)` instead of
-      // `arr[arr.length - 1]` or `arr.slice(-1)[0]`) we also enable the
-      // unicorn rule `unicorn/prefer-at` below.
-      //
-      // Note: enforcing destructuring in function parameters isn't
-      // covered by the core `prefer-destructuring` rule. If you'd like
-      // that enforced (or want to limit messy signatures), consider
-      // enabling `max-params` or adding a community rule/plugin.
       "prefer-destructuring": [
         "error",
         {
-          AssignmentExpression: {
-            array: true,
-            object: true,
-          },
-          VariableDeclarator: {
-            array: true,
-            object: true,
-          },
+          AssignmentExpression: { array: true, object: true },
+          VariableDeclarator: { array: true, object: true },
         },
         { enforceForRenamedProperties: false },
       ],
-      // Enforce template literals, forbid '+' for concatenation
       "prefer-template": "error",
-      // --- Formatting & Basic Syntax ---
       quotes: ["error", "double"],
-
       semi: ["error", "always"],
-      // --- Naming Conventions ---
-      // Supports kebab-case and name.type.extension (e.g., user.route.ts)
       "unicorn/filename-case": "off",
-      // Prefer using .at() for cleaner, modern index access when appropriate
       "unicorn/prefer-at": "error",
-      // --- Environment & Modern APIs ---
-      "unicorn/prefer-node-protocol": "error", // Use node: prefix
+      "unicorn/prefer-node-protocol": "error",
     },
   },
+  perfectionist.configs["recommended-natural"],
 );

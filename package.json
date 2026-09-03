@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "start": "echo \"Hello world\"",
-    "lint": "echo 'ESLint is temporarily disabled — requires type-aware linting setup. Run type-check and test instead.'",
+    "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
     "build": "tsdown",
     "dev": "vite",
     "test": "vitest",
     "docs": "docsify serve docs",
+    "check": "pnpm type-check && pnpm test && pnpm build && pnpm lint",
     "prepublishOnly": "pnpm type-check && pnpm test && pnpm build"
   },
   "author": {
