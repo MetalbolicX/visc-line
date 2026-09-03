@@ -1,7 +1,5 @@
 import type { CurveFactory } from "d3";
 
-import { timeFormat } from "d3";
-
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
 import type { FeatureRenderContext } from "@/chart/featureRegistry.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
@@ -18,14 +16,11 @@ import type { Margins } from "@/types/index.mjs";
 import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
 import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
 import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
-import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
 import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
 import { renderPoints } from "@/components/points.mjs";
 import { renderTitle } from "@/components/title.mjs";
-import { renderXAxis } from "@/components/xAxis.mjs";
-import { renderYAxis } from "@/components/yAxis.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 import {
@@ -188,52 +183,6 @@ export const renderChart = <T,>(
     }
   }
 
-  if (context.flags.hasAxes) {
-    const {
-      timeTickFormat,
-      xTickCount,
-      xTickFormat,
-      yTickCount,
-      yTickFormat,
-    } = context.state.axesOptions;
-
-    // Resolve timeTickFormat: if xType is "time" and timeTickFormat is a string,
-    // convert it to a d3 time-format function. Function form is passed through.
-    // The cast is safe because d3-axis always passes Date values for time scales.
-    const effectiveXTickFormat:
-      | ((domainValue: import("d3").AxisDomain, index: number) => string)
-      | undefined =
-      context.xType === "time" && timeTickFormat !== undefined
-        ? typeof timeTickFormat === "string"
-          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
-          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
-        : xTickFormat;
-
-    context.bounds
-      .call(renderXAxis, xScale, dims.innerHeight, {
-        tickCount: xTickCount,
-        tickFormat: effectiveXTickFormat,
-      })
-      .call(renderYAxis, yScale, {
-        tickCount: yTickCount,
-        tickFormat: yTickFormat,
-      });
-
-    context.svg
-      .call(renderXAxisLabel, {
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-        label: context.config.xSerie.label,
-        margins: dims.margins,
-      })
-      .call(renderYAxisLabel, {
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-        label: context.yLabel ?? context.config.ySeries[0]?.label ?? "Value",
-        margins: dims.margins,
-      });
-  }
-
   if (context.flags.hasPoints) {
     renderPoints<T>(
       content,
@@ -291,32 +240,6 @@ export const renderChart = <T,>(
       onZoom:
         context.state.zoomPanOptions.onZoom ??
         ((newX: AnyScale, newY: AnyScale): void => {
-          if (context.flags.hasAxes) {
-            const {
-              timeTickFormat,
-              xTickCount,
-              xTickFormat,
-              yTickCount,
-              yTickFormat,
-            } = context.state.axesOptions;
-            const effectiveXTickFormat:
-              | ((domainValue: import("d3").AxisDomain, index: number) => string)
-              | undefined =
-              context.xType === "time" && timeTickFormat !== undefined
-                ? typeof timeTickFormat === "string"
-                  ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
-                  : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
-                : xTickFormat;
-            renderXAxis(context.bounds, newX, dims.innerHeight, {
-              tickCount: xTickCount,
-              tickFormat: effectiveXTickFormat,
-            });
-            renderYAxis(context.bounds, newY, {
-              tickCount: yTickCount,
-              tickFormat: yTickFormat,
-            });
-          }
-
           // Registry-driven zoom dispatch
           for (const feature of FEATURE_REGISTRY) {
             if (context.flags[feature.flagKey] && feature.onZoomRedraw) {

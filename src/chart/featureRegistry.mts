@@ -11,6 +11,8 @@
  */
 /* eslint-disable @typescript-eslint/naming-convention -- showX/showY match public API types */
 
+import { timeFormat } from "d3";
+
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
 import type { WithAxesOptions, WithGridOptions, WithLegendOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
 import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType, SVGSelection } from "@/types/index.mjs";
@@ -109,8 +111,86 @@ export interface FeatureRenderContext<T> {
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
-import { areGridOptionsEqual } from "@/chart/optionComparators.mjs";
+import { areAxesOptionsEqual, areGridOptionsEqual } from "@/chart/optionComparators.mjs";
+import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
+import { renderXAxis } from "@/components/xAxis.mjs";
+import { renderYAxis } from "@/components/yAxis.mjs";
+
+/**
+ * Axes feature definition.
+ *
+ * - Options: WithAxesOptions { xTickCount?, xTickFormat?, yTickCount?, yTickFormat?, timeTickFormat? }
+ * - Comparator: areAxesOptionsEqual
+ * - Zoom-path: participates (re-renders on zoom)
+ * - DOM cleanup: g.x-axis, g.y-axis, text.x-axis-label, text.y-axis-label
+ */
+export const axesDef: FeatureDefinition<"axes"> = {
+  clearSelectors: ["g.x-axis, g.y-axis", "text.x-axis-label, text.y-axis-label"],
+  flagKey: "hasAxes",
+  isEqual: (a: unknown, b: unknown): boolean =>
+    areAxesOptionsEqual(a as Parameters<typeof areAxesOptionsEqual>[0], b as Parameters<typeof areAxesOptionsEqual>[1]),
+  key: "axes",
+  onZoomRedraw: (ctx, dims, newX, newY) => {
+    if (!ctx.flags.hasAxes) return;
+    const { timeTickFormat, xTickCount, xTickFormat, yTickCount, yTickFormat } =
+      ctx.state.axesOptions;
+    const effectiveXTickFormat:
+      | ((domainValue: import("d3").AxisDomain, index: number) => string)
+      | undefined =
+      ctx.xType === "time" && timeTickFormat !== undefined
+        ? typeof timeTickFormat === "string"
+          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
+          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
+        : xTickFormat;
+    ctx.bounds.call(renderXAxis, newX, dims.innerHeight, {
+      tickCount: xTickCount,
+      tickFormat: effectiveXTickFormat,
+    });
+    ctx.bounds.call(renderYAxis, newY, {
+      tickCount: yTickCount,
+      tickFormat: yTickFormat,
+    });
+  },
+
+  optionsKey: "axesOptions",
+
+  render: (ctx, dims) => {
+    if (!ctx.flags.hasAxes) return;
+    const { timeTickFormat, xTickCount, xTickFormat, yTickCount, yTickFormat } =
+      ctx.state.axesOptions;
+    const effectiveXTickFormat:
+      | ((domainValue: import("d3").AxisDomain, index: number) => string)
+      | undefined =
+      ctx.xType === "time" && timeTickFormat !== undefined
+        ? typeof timeTickFormat === "string"
+          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
+          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
+        : xTickFormat;
+    ctx.bounds
+      .call(renderXAxis, ctx.xScale, dims.innerHeight, {
+        tickCount: xTickCount,
+        tickFormat: effectiveXTickFormat,
+      })
+      .call(renderYAxis, ctx.yScale, {
+        tickCount: yTickCount,
+        tickFormat: yTickFormat,
+      });
+    ctx.svg
+      .call(renderXAxisLabel, {
+        innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
+        label: ctx.config.xSerie.label,
+        margins: dims.margins,
+      })
+      .call(renderYAxisLabel, {
+        innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
+        label: ctx.yLabel ?? ctx.config.ySeries[0]?.label ?? "Value",
+        margins: dims.margins,
+      });
+  },
+};
 
 /**
  * Grid feature definition — first migrated feature for prototype validation.
@@ -161,5 +241,6 @@ export const gridDef: FeatureDefinition<"grid"> = {
 
 /** Ordered registry — the array order IS the render sequence */
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
+  axesDef,
   gridDef,
 ];
