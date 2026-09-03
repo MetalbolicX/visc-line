@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>visc-line e2e harness</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: system-ui, sans-serif;
+      background: #f0f0f0;
+    }
+    .chart-container {
+      display: inline-block;
+      background: #fff;
+      border: 1px solid #ccc;
+      margin: 16px;
+      vertical-align: top;
+    }
+    #chart-full, #chart-minimal, #chart-empty {
+      width: 500px;
+      height: 320px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full-featured chart: time scale, all UI elements, zoom + tooltip -->
+  <div class="chart-container">
+    <div id="chart-full"></div>
+  </div>
+
+  <!-- Minimal chart: numeric scale, line only -->
+  <div class="chart-container">
+    <div id="chart-minimal"></div>
+  </div>
+
+  <!-- Empty-data chart: data: [], verifies plan-004 guard (no NaN) -->
+  <div class="chart-container">
+    <div id="chart-empty"></div>
+  </div>
+
+  <!-- d3 MUST load before the UMD bundle so the global is available -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="./index.umd.js"></script>
+  <script>
+    window.__chartError = null;
+    window.onerror = function (msg) {
+      window.__chartError = msg;
+    };
+
+    // ── #chart-full: time-series, all features ───────────────────────────────
+    var timeData = [
+      { date: new Date('2024-01-01'), revenue: 100 },
+      { date: new Date('2024-02-01'), revenue: 130 },
+      { date: new Date('2024-03-01'), revenue: 110 },
+      { date: new Date('2024-04-01'), revenue: 160 },
+      { date: new Date('2024-05-01'), revenue: 145 },
+      { date: new Date('2024-06-01'), revenue: 180 },
+    ];
+
+    ViscLine.createChart(
+      document.getElementById('chart-full'),
+      {
+        data: timeData,
+        xSerie: { accessor: function(d) { return d.date; }, label: 'Month' },
+        ySeries: [{ accessor: function(d) { return d.revenue; }, label: 'Revenue' }]
+      },
+      { xType: 'time' }
+    )
+      .withAxes()
+      .withGrid()
+      .withPoints()
+      .withTitle({ title: 'Monthly Revenue' })
+      .withLegend({ items: [{ label: 'Revenue', color: '#4c78a8' }] })
+      .withTooltip()
+      .withZoomPan();
+
+    // ── #chart-minimal: numeric x/y, line only ───────────────────────────────
+    var numericData = [
+      { x: 1, y: 10 },
+      { x: 2, y: 25 },
+      { x: 3, y: 18 },
+      { x: 4, y: 30 },
+      { x: 5, y: 22 },
+    ];
+
+    ViscLine.createChart(
+      document.getElementById('chart-minimal'),
+      {
+        data: numericData,
+        xSerie: { accessor: function(d) { return d.x; }, label: 'X' },
+        ySeries: [{ accessor: function(d) { return d.y; }, label: 'Y' }]
+      },
+      { xType: 'linear' }
+    );
+
+    // ── #chart-empty: empty array — plan-004 guard ─────────────────────────
+    ViscLine.createChart(
+      document.getElementById('chart-empty'),
+      {
+        data: [],
+        xSerie: { accessor: function(d) { return d.x; }, label: 'X' },
+        ySeries: [{ accessor: function(d) { return d.y; }, label: 'Y' }]
+      },
+      {}
+    );
+  </script>
+</body>
+</html>
