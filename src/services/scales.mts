@@ -79,6 +79,37 @@ const isDomainValidForScale = (
 };
 
 /**
+ * Guards a domain tuple against undefined or NaN endpoints, substituting a
+ * scale-type-appropriate default and logging a warning.
+ *
+ * @param domain - A two-element domain tuple that may contain undefined or NaN.
+ * @param scaleType - The scale type to determine the default domain.
+ * @param silent - If true, suppresses the console.warn (used when the caller
+ *   has already warned about an invalid domain and does not want duplicate warnings).
+ * @returns A finite [number, number] domain.
+ */
+export const ensureFiniteDomain = (
+  domain: readonly [number | undefined, number | undefined],
+  scaleType: ScaleType,
+  silent = false,
+): [number, number] => {
+  const [a, b] = domain;
+  if (Number.isFinite(a as number) && Number.isFinite(b as number)) {
+    return [a as number, b as number];
+  }
+  if (!silent) {
+    console.warn(
+      `[visc-line] empty or invalid domain for ${scaleType} scale; using default domain.`,
+    );
+  }
+  if (scaleType === "time") {
+    const now = Date.now();
+    return [now, now + 24 * 60 * 60 * 1000];
+  }
+  return [0, 1];
+};
+
+/**
  * Create configured X and Y scales for charts.
  *
  * This factory returns fresh, pre-configured AnyScale instances whose domains
@@ -115,16 +146,23 @@ export const createScales = ({
 
   const xFactory = scaleFactories[xSafeType] ?? scaleFactories.linear;
   const yFactory = scaleFactories[ySafeType] ?? scaleFactories.linear;
+
+  // Determine if domains are invalid so we warn only once when both are bad
+  const [xa, xb] = xDomain;
+  const xInvalid = !Number.isFinite(xa as number) || !Number.isFinite(xb as number);
+  // If x is invalid, its ensureFiniteDomain call will warn; y should stay silent to avoid duplicate warnings
+  const ySilent = xInvalid;
+
   const xScale = (
     xFactory(xExponent) as ScaleLinear<number, number>
   )
-    .domain(xDomain as readonly number[])
+    .domain(ensureFiniteDomain(xDomain as readonly [number | undefined, number | undefined], xSafeType))
     .range([0, innerWidth])
     .nice() as AnyScale;
   const yScale = (
     yFactory(yExponent) as ScaleLinear<number, number>
   )
-    .domain((yDomain as readonly number[]).map(Number))
+    .domain(ensureFiniteDomain(yDomain as readonly [number | undefined, number | undefined], ySafeType, ySilent))
     .range([innerHeight, 0])
     .nice() as AnyScale;
   return { xScale, yScale };
