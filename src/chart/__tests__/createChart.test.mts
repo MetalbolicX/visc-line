@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ChartConfig, Theme } from "../../types/index.mjs";
 import { defaultTheme } from "../../themes/defaultTheme.mjs";
@@ -634,6 +634,70 @@ describe("createChart", () => {
 
       expect(() => createChart(container, duplicatedConfig))
         .toThrow("duplicated ySeries labels");
+    });
+  });
+
+  describe("clipPathId generation", () => {
+    it("does not throw when crypto.randomUUID is absent and produces a valid id", () => {
+      // Stub globalThis.crypto without randomUUID to simulate non-secure origin
+      const originalCrypto = globalThis.crypto;
+      Object.defineProperty(globalThis, "crypto", {
+        value: { otherMethod: () => "ok" },
+        writable: true,
+        configurable: true,
+      });
+      try {
+        const chart = createChart(container, config);
+        const clipPath = container.querySelector("clipPath");
+        expect(clipPath).toBeTruthy();
+        const id = clipPath!.getAttribute("id");
+        expect(id).toBeTruthy();
+        expect(id!.startsWith("visc-clip-")).toBe(true);
+        expect(id!.length).toBeGreaterThan("visc-clip-".length);
+      } finally {
+        Object.defineProperty(globalThis, "crypto", {
+          value: originalCrypto,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
+
+    it("produces different clipPathIds for two separate chart instances", () => {
+      const originalCrypto = globalThis.crypto;
+      Object.defineProperty(globalThis, "crypto", {
+        value: { otherMethod: () => "ok" },
+        writable: true,
+        configurable: true,
+      });
+      try {
+        const c1 = document.createElement("div");
+        document.body.appendChild(c1);
+        const c2 = document.createElement("div");
+        document.body.appendChild(c2);
+        createChart(c1, config);
+        createChart(c2, config);
+        const id1 = c1.querySelector("clipPath")!.getAttribute("id");
+        const id2 = c2.querySelector("clipPath")!.getAttribute("id");
+        expect(id1).not.toBe(id2);
+        document.body.removeChild(c1);
+        document.body.removeChild(c2);
+      } finally {
+        Object.defineProperty(globalThis, "crypto", {
+          value: originalCrypto,
+          writable: true,
+          configurable: true,
+        });
+      }
+    });
+
+    it("clipPathId uses crypto.randomUUID when available (default jsdom)", () => {
+      const chart = createChart(container, config);
+      const clipPath = container.querySelector("clipPath");
+      expect(clipPath).toBeTruthy();
+      const id = clipPath!.getAttribute("id")!;
+      // jsdom provides crypto.randomUUID — id should be visc-clip- + 8 hex chars
+      expect(id).toMatch(/^visc-clip-[0-9a-f]{8}$/);
     });
   });
 });

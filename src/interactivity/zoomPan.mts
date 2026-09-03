@@ -13,6 +13,7 @@ export type ZoomBehaviorWithReset = Readonly<{
 interface AddZoomPanOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
+  readonly margins: { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number };
   readonly onZoom: (newX: AnyScale, newY: AnyScale) => void;
   readonly xScale: AnyScale;
   readonly yScale: AnyScale;
@@ -36,13 +37,13 @@ interface AddZoomPanOptions {
  */
 export const addZoomPan = (
   svg: SVGSelection,
-  { innerHeight, innerWidth, onZoom, scaleExtent = [0.5, 32], xScale, yScale }: AddZoomPanOptions,
+  { innerHeight, innerWidth, margins, onZoom, scaleExtent = [0.5, 32], xScale, yScale }: AddZoomPanOptions,
 ): ZoomBehaviorWithReset => {
   const zoomBehavior = zoom<SVGSVGElement, unknown>()
     .scaleExtent([scaleExtent[0], scaleExtent[1]])
     .extent([
-      [0, 0],
-      [innerWidth, innerHeight],
+      [margins.left, margins.top],
+      [margins.left + innerWidth, margins.top + innerHeight],
     ])
     .on("zoom", (event) => {
       const { transform: t } = event as Readonly<{ readonly transform: { readonly rescaleX: (scale: unknown) => unknown; readonly rescaleY: (scale: unknown) => unknown } }>;

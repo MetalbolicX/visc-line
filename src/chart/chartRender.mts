@@ -274,6 +274,7 @@ export const renderChart = <T,>(
     const zoomBehavior = addZoomPan(context.svg, {
       innerHeight: dims.innerHeight,
       innerWidth: dims.innerWidth,
+      margins: context.margins,
       scaleExtent: context.state.zoomPanOptions.scaleExtent,
       onZoom:
         context.state.zoomPanOptions.onZoom ??

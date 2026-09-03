@@ -16,7 +16,7 @@ your row when done.
 | 005  | Fix tooltip listener leak (namespaced events) | P1 | S | 003 | DONE |
 | 006  | Builder correctness (zoom reset, scaleExtent, withCustom) | P2 | S | 002 | DONE |
 | 007  | Per-chart collision-proof extent cache | P2 | M | 002, 004 | DONE |
-| 008  | Zoom extent respects margins + safe id fallback | P2 | S | 002 | TODO |
+| 008  | Zoom extent respects margins + safe id fallback | P2 | S | 002 | DONE |
 | 009  | Consolidate axis/grid/label renderers + CSS-var reader | P2 | M | 002 | TODO |
 | 010  | Playwright browser smoke tests (real Chromium, UMD build) | P2 | M | 001, 004 | TODO |
 | 011  | Restore lint (flat config, ported from tipviz) | P3 | M | 001 | TODO |
