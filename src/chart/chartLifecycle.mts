@@ -54,10 +54,6 @@ export const clearOptionalNodes = (
     bounds.selectAll("line.grid-x, line.grid-y").remove();
   }
 
-  if (!flags.hasTitle) {
-    svg.selectAll("text.chart-title").remove();
-  }
-
   if (!flags.hasLegend) {
     svg.selectAll("g.legend").remove();
   }

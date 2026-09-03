@@ -19,7 +19,6 @@ import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
 import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
-import { renderTitle } from "@/components/title.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 import {
@@ -195,14 +194,6 @@ export const renderChart = <T,>(
         innerWidth: dims.innerWidth,
       },
     );
-  }
-
-  if (context.flags.hasTitle && context.state.titleOptions) {
-    context.svg.call(renderTitle, {
-      margins: dims.margins,
-      title: context.state.titleOptions.title,
-      width: dims.width,
-    });
   }
 
   if (context.flags.hasLegend && context.state.legendOptions) {

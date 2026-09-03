@@ -115,6 +115,7 @@ import { areAxesOptionsEqual, areGridOptionsEqual } from "@/chart/optionComparat
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 import { renderPoints } from "@/components/points.mjs";
+import { renderTitle } from "@/components/title.mjs";
 import { renderXAxis } from "@/components/xAxis.mjs";
 import { renderYAxis } from "@/components/yAxis.mjs";
 
@@ -240,10 +241,39 @@ export const gridDef: FeatureDefinition<"grid"> = {
   },
 };
 
+/**
+ * Title feature definition.
+ *
+ * - Options: WithTitleOptions { title }
+ * - Comparator: areTitleOptionsEqual
+ * - Zoom-path: excluded (title does not re-render on zoom)
+ * - DOM cleanup: text.chart-title
+ */
+export const titleDef: FeatureDefinition<"title"> = {
+  clearSelectors: ["text.chart-title"],
+  flagKey: "hasTitle",
+  isEqual: (a: unknown, b: unknown): boolean => {
+    const pa = a as null | WithTitleOptions;
+    const pb = b as WithTitleOptions;
+    return pa?.title === pb.title;
+  },
+  key: "title",
+  optionsKey: "titleOptions",
+  render: (ctx, dims) => {
+    if (!ctx.flags.hasTitle || !ctx.state.titleOptions) return;
+    ctx.svg.call(renderTitle, {
+      margins: dims.margins,
+      title: ctx.state.titleOptions.title,
+      width: dims.width,
+    });
+  },
+};
+
 /** Ordered registry — the array order IS the render sequence */
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   axesDef,
   gridDef,
+  titleDef,
   {
     clearSelectors: ["g.point-series"],
     flagKey: "hasPoints",
