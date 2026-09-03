@@ -128,7 +128,6 @@ interface RenderCallbacks {
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
-import { areAxesOptionsEqual, areGridOptionsEqual } from "@/chart/optionComparators.mjs";
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 import { renderLegend } from "@/components/legend.mjs";
@@ -151,8 +150,20 @@ import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 export const axesDef: FeatureDefinition<"axes"> = {
   clearSelectors: ["g.x-axis, g.y-axis", "text.x-axis-label, text.y-axis-label"],
   flagKey: "hasAxes",
-  isEqual: (a: unknown, b: unknown): boolean =>
-    areAxesOptionsEqual(a as Parameters<typeof areAxesOptionsEqual>[0], b as Parameters<typeof areAxesOptionsEqual>[1]),
+  isEqual: (a: unknown, b: unknown): boolean => {
+    const pa = a as WithAxesOptions;
+    const pb = b as WithAxesOptions;
+    const prevX = pa.xTickCount ?? 5;
+    const prevY = pa.yTickCount ?? 5;
+    const nextX = pb.xTickCount ?? 5;
+    const nextY = pb.yTickCount ?? 5;
+    return (
+      prevX === nextX &&
+      pa.xTickFormat === pb.xTickFormat &&
+      prevY === nextY &&
+      pa.yTickFormat === pb.yTickFormat
+    );
+  },
   key: "axes",
   onZoomRedraw: (ctx, dims, newX, newY) => {
     if (!ctx.flags.hasAxes) return;
@@ -227,7 +238,14 @@ export const axesDef: FeatureDefinition<"axes"> = {
 export const gridDef: FeatureDefinition<"grid"> = {
   clearSelectors: ["line.grid-x", "line.grid-y"],
   flagKey: "hasGrid",
-  isEqual: areGridOptionsEqual,
+  isEqual: (a: unknown, b: unknown): boolean => {
+    const pa = a as WithGridOptions;
+    const pb = b as WithGridOptions;
+    return (
+      (pa.showX ?? true) === (pb.showX ?? true) &&
+      (pa.showY ?? true) === (pb.showY ?? true)
+    );
+  },
   key: "grid",
   onZoomRedraw: (ctx, _dims, newX, newY) => {
     if (!ctx.flags.hasGrid) return;
