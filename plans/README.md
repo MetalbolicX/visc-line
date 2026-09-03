@@ -20,7 +20,7 @@ your row when done.
 | 009  | Consolidate axis/grid/label renderers + CSS-var reader | P2 | M | 002 | DONE |
 | 010  | Playwright browser smoke tests (real Chromium, UMD build) | P2 | M | 001, 004 | DONE |
 | 011  | Restore lint (flat config, ported from tipviz) | P3 | M | 001 | DONE |
-| 012  | DESIGN: registry-driven feature architecture | P3 | M | 002, 006, 009 | TODO |
+| 012  | DESIGN: registry-driven feature architecture | P3 | M | 002, 006, 009 | DONE |
 | 013  | DESIGN: time-series axis polish | P3 | M | 009 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
@@ -38,6 +38,8 @@ REJECTED (with one-line rationale)
 - 009 before 012/013: both designs build on the consolidated axis renderer and the safety net of 002.
 - 011 can run any time after 001; it touches only config/scripts.
 - 012 and 013 are design/spike plans — their deliverable is a document plus a throwaway branch, and each seeds a future numbered build plan.
+
+> Note (prior sequence): the original ordering had 001 first, but a pre-existing broken test suite blocks `pnpm check` from going green. Plan 003 is the true first execution; plans 001 and 002 were re-ordered to depend on it.
 
 ## Verification flow after every plan
 
