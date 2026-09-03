@@ -90,6 +90,8 @@ export interface FeatureRenderContext<T> {
     readonly yDomain: readonly [number, number];
   }>;
   readonly bounds: import("@/types/index.mjs").BoundsSelection;
+  /** Clip-path content group — the proper target for grid/points rendering */
+  readonly content: import("@/types/index.mjs").BoundsSelection;
   readonly clipPathId: string;
   readonly config: ChartConfig<T>;
   readonly container: HTMLElement;
@@ -106,8 +108,6 @@ export interface FeatureRenderContext<T> {
 }
 
 // ─── Registry ────────────────────────────────────────────────────────────────
-
-import type { BoundsSelection } from "@/types/index.mjs";
 
 import { areGridOptionsEqual } from "@/chart/optionComparators.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
@@ -130,14 +130,14 @@ export const gridDef: FeatureDefinition<"grid"> = {
     if (!ctx.flags.hasGrid) return;
     const { showX = true, showY = true } = ctx.state.gridOptions as WithGridOptions;
     if (showX) {
-      (ctx.bounds as BoundsSelection).call(renderXGrid, newX, newY);
+      ctx.content.call(renderXGrid, newX, newY);
     } else {
-      ctx.bounds.selectAll("line.grid-x").remove();
+      ctx.content.selectAll("line.grid-x").remove();
     }
     if (showY) {
-      (ctx.bounds as BoundsSelection).call(renderYGrid, newX, newY);
+      ctx.content.call(renderYGrid, newX, newY);
     } else {
-      ctx.bounds.selectAll("line.grid-y").remove();
+      ctx.content.selectAll("line.grid-y").remove();
     }
   },
 
@@ -147,14 +147,14 @@ export const gridDef: FeatureDefinition<"grid"> = {
     if (!ctx.flags.hasGrid) return;
     const { showX = true, showY = true } = ctx.state.gridOptions as WithGridOptions;
     if (showX) {
-      (ctx.bounds as BoundsSelection).call(renderXGrid, ctx.xScale, ctx.yScale);
+      ctx.content.call(renderXGrid, ctx.xScale, ctx.yScale);
     } else {
-      ctx.bounds.selectAll("line.grid-x").remove();
+      ctx.content.selectAll("line.grid-x").remove();
     }
     if (showY) {
-      (ctx.bounds as BoundsSelection).call(renderYGrid, ctx.xScale, ctx.yScale);
+      ctx.content.call(renderYGrid, ctx.xScale, ctx.yScale);
     } else {
-      ctx.bounds.selectAll("line.grid-y").remove();
+      ctx.content.selectAll("line.grid-y").remove();
     }
   },
 };
