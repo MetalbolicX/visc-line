@@ -90,11 +90,11 @@ export interface FeatureRenderContext<T> {
     readonly yDomain: readonly [number, number];
   }>;
   readonly bounds: import("@/types/index.mjs").BoundsSelection;
-  /** Clip-path content group — the proper target for grid/points rendering */
-  readonly content: import("@/types/index.mjs").BoundsSelection;
   readonly clipPathId: string;
   readonly config: ChartConfig<T>;
   readonly container: HTMLElement;
+  /** Clip-path content group — the proper target for grid/points rendering */
+  readonly content: import("@/types/index.mjs").BoundsSelection;
   readonly flags: FeatureFlags;
   readonly margins: Margins;
   readonly reducedMotion: boolean;

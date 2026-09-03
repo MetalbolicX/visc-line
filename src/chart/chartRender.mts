@@ -3,6 +3,7 @@ import type { CurveFactory } from "d3";
 import { timeFormat } from "d3";
 
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
+import type { FeatureRenderContext } from "@/chart/featureRegistry.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type {
   AnyScale,
@@ -16,9 +17,9 @@ import type { Margins } from "@/types/index.mjs";
 
 import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
 import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
+import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
-import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
 import { renderPoints } from "@/components/points.mjs";
@@ -177,6 +178,16 @@ export const renderChart = <T,>(
     { curve: context.resolvedCurve, reducedMotion: context.reducedMotion },
   );
 
+  // Registry-driven feature render loop
+  for (const feature of FEATURE_REGISTRY) {
+    if (context.flags[feature.flagKey]) {
+      feature.render(
+        { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, content, xScale, yScale } as FeatureRenderContext<unknown>,
+        dims,
+      );
+    }
+  }
+
   if (context.flags.hasAxes) {
     const {
       timeTickFormat,
@@ -221,20 +232,6 @@ export const renderChart = <T,>(
         label: context.yLabel ?? context.config.ySeries[0]?.label ?? "Value",
         margins: dims.margins,
       });
-  }
-
-  if (context.flags.hasGrid) {
-    const { showX = true, showY = true } = context.state.gridOptions;
-    if (showX) {
-      content.call(renderXGrid, xScale, yScale);
-    } else {
-      content.selectAll("line.grid-x").remove();
-    }
-    if (showY) {
-      content.call(renderYGrid, xScale, yScale);
-    } else {
-      content.selectAll("line.grid-y").remove();
-    }
   }
 
   if (context.flags.hasPoints) {
@@ -320,17 +317,15 @@ export const renderChart = <T,>(
             });
           }
 
-          if (context.flags.hasGrid) {
-            const { showX = true, showY = true } = context.state.gridOptions;
-            if (showX) {
-              content.call(renderXGrid, newX, newY);
-            } else {
-              content.selectAll("line.grid-x").remove();
-            }
-            if (showY) {
-              content.call(renderYGrid, newX, newY);
-            } else {
-              content.selectAll("line.grid-y").remove();
+          // Registry-driven zoom dispatch
+          for (const feature of FEATURE_REGISTRY) {
+            if (context.flags[feature.flagKey] && feature.onZoomRedraw) {
+              feature.onZoomRedraw(
+                { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, content, xScale: newX, yScale: newY } as FeatureRenderContext<unknown>,
+                dims,
+                newX,
+                newY,
+              );
             }
           }
 
