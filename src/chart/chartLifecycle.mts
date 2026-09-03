@@ -31,7 +31,7 @@ export const clearOptionalNodes = (
   flags: FeatureFlags,
   onZoomPanCleared: () => void,
 ): void => {
-  // Registry-driven cleanup for migrated features (axes, grid, points)
+  // Registry-driven cleanup for migrated features (axes, grid, points, title, legend, tooltip)
   for (const feature of FEATURE_REGISTRY) {
     if (!flags[feature.flagKey]) {
       for (const selector of feature.clearSelectors) {
@@ -40,6 +40,16 @@ export const clearOptionalNodes = (
           svg.selectAll(selector).remove();
         } else {
           bounds.selectAll(selector).remove();
+        }
+      }
+      // Event listener cleanup — tooltip events are on bounds, zoom events on svg
+      if (feature.clearEvents) {
+        for (const event of feature.clearEvents) {
+          if (event.includes("zoom")) {
+            svg.on(event, null);
+          } else {
+            bounds.on(event, null);
+          }
         }
       }
     }
@@ -52,14 +62,6 @@ export const clearOptionalNodes = (
 
   if (!flags.hasGrid) {
     bounds.selectAll("line.grid-x, line.grid-y").remove();
-  }
-
-  if (!flags.hasTooltip) {
-    bounds
-      .on("mousemove.tooltip", null)
-      .on("mouseleave.tooltip", null)
-      .selectAll("line.tooltip-cursor, circle.tooltip-dot")
-      .remove();
   }
 
   if (!flags.hasZoomPan) {

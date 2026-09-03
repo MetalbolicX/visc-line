@@ -39,6 +39,12 @@ export interface Dimensions {
  * up when the feature is disabled.
  */
 export interface FeatureDefinition<K extends FeatureKey> {
+  /**
+   * D3 event namespaces to unbind when this feature is disabled.
+   * e.g. ["mousemove.tooltip", "mouseleave.tooltip"].
+   * These are cleared by calling `selection.on(namespace, null)`.
+   */
+  readonly clearEvents?: readonly string[];
   /** CSS selectors for DOM cleanup (passed to clearOptionalNodes) */
   readonly clearSelectors: readonly string[];
   /** Which boolean flag on FeatureFlags controls this feature */
@@ -121,6 +127,7 @@ import { renderPoints } from "@/components/points.mjs";
 import { renderTitle } from "@/components/title.mjs";
 import { renderXAxis } from "@/components/xAxis.mjs";
 import { renderYAxis } from "@/components/yAxis.mjs";
+import { addTooltip } from "@/interactivity/tooltip.mjs";
 
 /**
  * Axes feature definition.
@@ -320,12 +327,55 @@ export const legendDef: FeatureDefinition<"legend"> = {
   },
 };
 
+/**
+ * Tooltip feature definition.
+ *
+ * - Options: WithTooltipOptions { formatX?, formatY?, stylesheetUrl?, tooltipHtml? }
+ * - Comparator: areTooltipOptionsEqual
+ * - Zoom-path: excluded (tooltip does not re-render on zoom)
+ * - DOM cleanup: line.tooltip-cursor, circle.tooltip-dot; event listeners: mousemove.tooltip, mouseleave.tooltip
+ */
+export const tooltipDef: FeatureDefinition<"tooltip"> = {
+  clearEvents: ["mousemove.tooltip", "mouseleave.tooltip"],
+  clearSelectors: ["line.tooltip-cursor", "circle.tooltip-dot"],
+  flagKey: "hasTooltip",
+  isEqual: (a: unknown, b: unknown): boolean => {
+    const pa = a as WithTooltipOptions;
+    const pb = b as WithTooltipOptions;
+    return (
+      pa.formatX === pb.formatX &&
+      pa.formatY === pb.formatY &&
+      pa.stylesheetUrl === pb.stylesheetUrl &&
+      pa.tooltipHtml === pb.tooltipHtml
+    );
+  },
+  key: "tooltip",
+  optionsKey: "tooltipOptions",
+  render: (ctx, dims) => {
+    if (!ctx.flags.hasTooltip) return;
+    // addTooltip is called directly (not via .call) since it needs the boundsGroup as first arg
+    addTooltip<unknown>(
+      ctx.bounds,
+      ctx.state.currentSeries,
+      ctx.xScale,
+      ctx.yScale,
+      ctx.config.xSerie.accessor,
+      {
+        ...ctx.state.tooltipOptions,
+        innerHeight: dims.innerHeight,
+        innerWidth: dims.innerWidth,
+      },
+    );
+  },
+};
+
 /** Ordered registry — the array order IS the render sequence */
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   axesDef,
   gridDef,
   titleDef,
   legendDef,
+  tooltipDef,
   {
     clearSelectors: ["g.point-series"],
     flagKey: "hasPoints",

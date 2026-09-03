@@ -17,7 +17,6 @@ import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
 import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
 import { renderLine } from "@/components/line.mjs";
-import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 import {
   createScales,
@@ -177,21 +176,6 @@ export const renderChart = <T,>(
         dims,
       );
     }
-  }
-
-  if (context.flags.hasTooltip) {
-    addTooltip<T>(
-      context.bounds,
-      context.state.currentSeries,
-      xScale,
-      yScale,
-      context.config.xSerie.accessor,
-      {
-        ...context.state.tooltipOptions,
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-      },
-    );
   }
 
   if (context.flags.hasZoomPan) {
