@@ -40,8 +40,7 @@ export interface FeatureDefinition<K extends FeatureKey> {
   /** Which boolean flag on FeatureFlags controls this feature */
   readonly flagKey: keyof FeatureFlags;
   /** Shallow-equality check for the feature's options */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly isEqual: (a: any, b: any) => boolean;
+  readonly isEqual: (a: unknown, b: unknown) => boolean;
   readonly key: K;
   /**
    * Zoom-path render — called inside the zoom behavior callback.

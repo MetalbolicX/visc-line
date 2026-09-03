@@ -24,11 +24,16 @@ export const areAxesOptionsEqual = (
 };
 
 export const areGridOptionsEqual = (
-  previous: WithGridOptions,
-  next: WithGridOptions,
-): boolean =>
-  (previous.showX ?? true) === (next.showX ?? true) &&
-  (previous.showY ?? true) === (next.showY ?? true);
+  previous: unknown,
+  next: unknown,
+): boolean => {
+  const prev = previous as WithGridOptions;
+  const nextOpts = next as WithGridOptions;
+  return (
+    (prev.showX ?? true) === (nextOpts.showX ?? true) &&
+    (prev.showY ?? true) === (nextOpts.showY ?? true)
+  );
+};
 
 /**
  * Compare title options for shallow equality.
