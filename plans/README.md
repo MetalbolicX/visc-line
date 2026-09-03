@@ -10,8 +10,8 @@ your row when done.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 003  | Migrate tooltip to tipviz v3 API + fix dep declarations | P1 | M | — | DONE |
-| 001 | Verification baseline (`pnpm check` + CI) | P1 | S | 003 | DONE |
-| 002  | Strict characterization suite for untested core | P1 | M | 001 | TODO |
+| 001  | Verification baseline (`pnpm check` + CI) | P1 | S | 003 | DONE |
+| 002  | Strict characterization suite for untested core | P1 | M | 001 | DONE |
 | 004  | Guard empty/all-invalid data (no silent NaN charts) | P1 | S | 002 | TODO |
 | 005  | Fix tooltip listener leak (namespaced events) | P1 | S | 003 | TODO |
 | 006  | Builder correctness (zoom reset, scaleExtent, withCustom) | P2 | S | 002 | TODO |
@@ -20,10 +20,8 @@ your row when done.
 | 009  | Consolidate axis/grid/label renderers + CSS-var reader | P2 | M | 002 | TODO |
 | 010  | Playwright browser smoke tests (real Chromium, UMD build) | P2 | M | 001, 004 | TODO |
 | 011  | Restore lint (flat config, ported from tipviz) | P3 | M | 001 | TODO |
-| 012 | DESIGN: registry-driven feature architecture | P3 | M | 002, 006, 009 | DONE |
-| 013 | DESIGN: time-series axis polish | P3 | M | 009 | DONE |
-| 014 | BUILD: migrate features to FeatureDefinition registry | P2 | L | 002, 006, 009, 012 | TODO |
-| 015 | BUILD: ship timeTickFormat option | P2 | S | 009, 013 | TODO |
+| 012  | DESIGN: registry-driven feature architecture | P3 | M | 002, 006, 009 | TODO |
+| 013  | DESIGN: time-series axis polish | P3 | M | 009 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)
@@ -50,7 +48,7 @@ REJECTED (with one-line rationale)
 
 ## Findings considered and rejected
 
-- DIR-01 "time scale only on X, asymmetry" — REJECTED: mis-attributed. `ScaleType` already permits `"time"` on both axes via the same factory map; time-on-Y is rare and already possible.
+- DIR-01 "time scale only on X, asymmetry" — REJECTED: mis-attributed. `ScaleType` already permits "time" on both axes via the same factory map; time-on-Y is rare and already possible.
 - DIR-03 "fluent builder API doesn't exist" — REJECTED: refuted against live code. `createChart` with all `.with*()` methods, `update()` (createChart.mts:216), `dispose()` (:202) exists and is exported from src/index.mts.
 - DIR-06 "no destroy/update API" — REJECTED: same refutation — `update()` and `dispose()` both exist.
 - tipviz lazy-loading to shrink bundles — DEFERRED (not rejected): tipviz registers its custom element on module eval; deferring the import changes initialization order. Revisit only with dist-size measurements after 003.
