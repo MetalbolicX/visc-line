@@ -40,7 +40,6 @@ describe("chartLifecycle", () => {
 
     const bounds = select(svgEl).select<SVGGElement>("g.bounds") as BoundsSelection;
     const svg = select(svgEl) as SVGSelection;
-    const onZoomPanCleared = vi.fn();
 
     clearOptionalNodes(
       bounds,
@@ -54,7 +53,6 @@ describe("chartLifecycle", () => {
         hasTooltip: false,
         hasZoomPan: false,
       },
-      onZoomPanCleared,
     );
 
     expect(svgEl.querySelector("g.x-axis")).toBeNull();
@@ -66,7 +64,6 @@ describe("chartLifecycle", () => {
     expect(svgEl.querySelector("text.y-axis-label")).toBeNull();
     expect(svgEl.querySelector("text.chart-title")).toBeNull();
     expect(svgEl.querySelector("g.legend")).toBeNull();
-    expect(onZoomPanCleared).toHaveBeenCalledTimes(1);
   });
 
   it("clearOptionalNodes keeps optional nodes when features are enabled", () => {
@@ -86,7 +83,6 @@ describe("chartLifecycle", () => {
 
     const bounds = select(svgEl).select<SVGGElement>("g.bounds") as BoundsSelection;
     const svg = select(svgEl) as SVGSelection;
-    const onZoomPanCleared = vi.fn();
 
     clearOptionalNodes(
       bounds,
@@ -100,7 +96,6 @@ describe("chartLifecycle", () => {
         hasTooltip: true,
         hasZoomPan: true,
       },
-      onZoomPanCleared,
     );
 
     expect(svgEl.querySelector("g.x-axis")).toBeTruthy();
@@ -112,7 +107,6 @@ describe("chartLifecycle", () => {
     expect(svgEl.querySelector("text.y-axis-label")).toBeTruthy();
     expect(svgEl.querySelector("text.chart-title")).toBeTruthy();
     expect(svgEl.querySelector("g.legend")).toBeTruthy();
-    expect(onZoomPanCleared).not.toHaveBeenCalled();
   });
 
   it("cleanupAllEnhancements invokes zoom cleanup callback", () => {

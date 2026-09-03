@@ -1,6 +1,8 @@
 import type { FeatureFlags } from "@/chart/chartState.mjs";
 import type { BoundsSelection, SVGSelection } from "@/types/index.mjs";
 
+import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
+
 /**
  * Clear optional chart elements based on the active feature flags.
  *
@@ -27,8 +29,31 @@ export const clearOptionalNodes = (
   bounds: BoundsSelection,
   svg: SVGSelection,
   flags: FeatureFlags,
-  onZoomPanCleared: () => void,
 ): void => {
+  // Registry-driven cleanup for migrated features (axes, grid, points, title, legend, tooltip)
+  for (const feature of FEATURE_REGISTRY) {
+    if (!flags[feature.flagKey]) {
+      for (const selector of feature.clearSelectors) {
+        // Axes selectors split: text.* → svg, g.* / line.* → bounds
+        if (selector.startsWith("text.") || selector.startsWith("g.legend") || selector.startsWith("g.tooltip")) {
+          svg.selectAll(selector).remove();
+        } else {
+          bounds.selectAll(selector).remove();
+        }
+      }
+      // Event listener cleanup — tooltip events are on bounds, zoom events on svg
+      if (feature.clearEvents) {
+        for (const event of feature.clearEvents) {
+          if (event.includes("zoom")) {
+            svg.on(event, null);
+          } else {
+            bounds.on(event, null);
+          }
+        }
+      }
+    }
+  }
+
   if (!flags.hasAxes) {
     bounds.selectAll("g.x-axis, g.y-axis").remove();
     svg.selectAll("text.x-axis-label, text.y-axis-label").remove();
@@ -36,31 +61,6 @@ export const clearOptionalNodes = (
 
   if (!flags.hasGrid) {
     bounds.selectAll("line.grid-x, line.grid-y").remove();
-  }
-
-  if (!flags.hasPoints) {
-    bounds.selectAll("g.point-series").remove();
-  }
-
-  if (!flags.hasTitle) {
-    svg.selectAll("text.chart-title").remove();
-  }
-
-  if (!flags.hasLegend) {
-    svg.selectAll("g.legend").remove();
-  }
-
-  if (!flags.hasTooltip) {
-    bounds
-      .on("mousemove.tooltip", null)
-      .on("mouseleave.tooltip", null)
-      .selectAll("line.tooltip-cursor, circle.tooltip-dot")
-      .remove();
-  }
-
-  if (!flags.hasZoomPan) {
-    svg.on(".zoom", null);
-    onZoomPanCleared();
   }
 };
 

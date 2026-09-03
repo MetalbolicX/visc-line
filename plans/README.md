@@ -22,7 +22,7 @@ your row when done.
 | 011  | Restore lint (flat config, ported from tipviz) | P3 | M | 001 | DONE |
 | 012  | DESIGN: registry-driven feature architecture | P3 | M | 002, 006, 009 | DONE |
 | 013  | DESIGN: time-series axis polish | P3 | M | 009 | DONE |
-| 014  | BUILD: migrate features to FeatureDefinition registry | P2 | L | 002, 006, 009, 012 | TODO |
+| 014  | BUILD: migrate features to FeatureDefinition registry | P2 | L | 002, 006, 009, 012 | DONE |
 | 015  | BUILD: ship timeTickFormat option | P2 | S | 009, 013 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |

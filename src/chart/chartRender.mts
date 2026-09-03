@@ -1,32 +1,20 @@
 import type { CurveFactory } from "d3";
 
-import { timeFormat } from "d3";
-
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
+import type { FeatureRenderContext } from "@/chart/featureRegistry.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type {
-  AnyScale,
   BoundsSelection,
   ChartConfig,
-  CustomContext,
   ScaleType,
   SVGSelection,
 } from "@/types/index.mjs";
 import type { Margins } from "@/types/index.mjs";
 
-import { LEGEND_TOP_OFFSET, LEGEND_WIDTH } from "@/chart/chartConstants.mjs";
 import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
-import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
+import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
-import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
-import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
-import { renderPoints } from "@/components/points.mjs";
-import { renderTitle } from "@/components/title.mjs";
-import { renderXAxis } from "@/components/xAxis.mjs";
-import { renderYAxis } from "@/components/yAxis.mjs";
-import { addTooltip } from "@/interactivity/tooltip.mjs";
-import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 import {
   createScales,
   getDimensions,
@@ -177,208 +165,15 @@ export const renderChart = <T,>(
     { curve: context.resolvedCurve, reducedMotion: context.reducedMotion },
   );
 
-  if (context.flags.hasAxes) {
-    const {
-      timeTickFormat,
-      xTickCount,
-      xTickFormat,
-      yTickCount,
-      yTickFormat,
-    } = context.state.axesOptions;
-
-    // Resolve timeTickFormat: if xType is "time" and timeTickFormat is a string,
-    // convert it to a d3 time-format function. Function form is passed through.
-    // The cast is safe because d3-axis always passes Date values for time scales.
-    const effectiveXTickFormat:
-      | ((domainValue: import("d3").AxisDomain, index: number) => string)
-      | undefined =
-      context.xType === "time" && timeTickFormat !== undefined
-        ? typeof timeTickFormat === "string"
-          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
-          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
-        : xTickFormat;
-
-    context.bounds
-      .call(renderXAxis, xScale, dims.innerHeight, {
-        tickCount: xTickCount,
-        tickFormat: effectiveXTickFormat,
-      })
-      .call(renderYAxis, yScale, {
-        tickCount: yTickCount,
-        tickFormat: yTickFormat,
-      });
-
-    context.svg
-      .call(renderXAxisLabel, {
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-        label: context.config.xSerie.label,
-        margins: dims.margins,
-      })
-      .call(renderYAxisLabel, {
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-        label: context.yLabel ?? context.config.ySeries[0]?.label ?? "Value",
-        margins: dims.margins,
-      });
-  }
-
-  if (context.flags.hasGrid) {
-    const { showX = true, showY = true } = context.state.gridOptions;
-    if (showX) {
-      content.call(renderXGrid, xScale, yScale);
-    } else {
-      content.selectAll("line.grid-x").remove();
-    }
-    if (showY) {
-      content.call(renderYGrid, xScale, yScale);
-    } else {
-      content.selectAll("line.grid-y").remove();
+  // Registry-driven feature render loop
+  for (const feature of FEATURE_REGISTRY) {
+    if (context.flags[feature.flagKey]) {
+      feature.render(
+        { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, callbacks, content, xScale, yScale } as FeatureRenderContext<unknown>,
+        dims,
+      );
     }
   }
 
-  if (context.flags.hasPoints) {
-    renderPoints<T>(
-      content,
-      context.state.currentSeries,
-      xScale,
-      yScale,
-      context.config.xSerie.accessor,
-    );
-  }
-
-  if (context.flags.hasTooltip) {
-    addTooltip<T>(
-      context.bounds,
-      context.state.currentSeries,
-      xScale,
-      yScale,
-      context.config.xSerie.accessor,
-      {
-        ...context.state.tooltipOptions,
-        innerHeight: dims.innerHeight,
-        innerWidth: dims.innerWidth,
-      },
-    );
-  }
-
-  if (context.flags.hasTitle && context.state.titleOptions) {
-    context.svg.call(renderTitle, {
-      margins: dims.margins,
-      title: context.state.titleOptions.title,
-      width: dims.width,
-    });
-  }
-
-  if (context.flags.hasLegend && context.state.legendOptions) {
-    const derivedItems = context.state.allSeries.map((s, i) => ({
-      color: s.stroke ?? `var(--vl-palette-${String(i)}, steelblue)`,
-      label: s.label,
-    }));
-    context.svg.call(renderLegend, {
-      interactive: context.state.legendOptions.interactive,
-      items: context.state.legendOptions.items ?? derivedItems,
-      onToggle: context.state.legendOptions.onToggle,
-      visibleLabels: context.state.visibleLabels,
-      x: context.margins.left + dims.innerWidth - LEGEND_WIDTH,
-      y: context.margins.top + LEGEND_TOP_OFFSET,
-    });
-  }
-
-  if (context.flags.hasZoomPan) {
-    context.svg.on(".zoom", null);
-    const zoomBehavior = addZoomPan(context.svg, {
-      innerHeight: dims.innerHeight,
-      innerWidth: dims.innerWidth,
-      margins: context.margins,
-      onZoom:
-        context.state.zoomPanOptions.onZoom ??
-        ((newX: AnyScale, newY: AnyScale): void => {
-          if (context.flags.hasAxes) {
-            const {
-              timeTickFormat,
-              xTickCount,
-              xTickFormat,
-              yTickCount,
-              yTickFormat,
-            } = context.state.axesOptions;
-            const effectiveXTickFormat:
-              | ((domainValue: import("d3").AxisDomain, index: number) => string)
-              | undefined =
-              context.xType === "time" && timeTickFormat !== undefined
-                ? typeof timeTickFormat === "string"
-                  ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
-                  : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
-                : xTickFormat;
-            renderXAxis(context.bounds, newX, dims.innerHeight, {
-              tickCount: xTickCount,
-              tickFormat: effectiveXTickFormat,
-            });
-            renderYAxis(context.bounds, newY, {
-              tickCount: yTickCount,
-              tickFormat: yTickFormat,
-            });
-          }
-
-          if (context.flags.hasGrid) {
-            const { showX = true, showY = true } = context.state.gridOptions;
-            if (showX) {
-              content.call(renderXGrid, newX, newY);
-            } else {
-              content.selectAll("line.grid-x").remove();
-            }
-            if (showY) {
-              content.call(renderYGrid, newX, newY);
-            } else {
-              content.selectAll("line.grid-y").remove();
-            }
-          }
-
-          renderLine<T>(
-            content,
-            context.state.currentSeries,
-            newX,
-            newY,
-            context.config.xSerie.accessor,
-            {
-              curve: context.resolvedCurve,
-              reducedMotion: context.reducedMotion,
-            },
-          );
-
-          if (context.flags.hasPoints) {
-            renderPoints<T>(
-              content,
-              context.state.currentSeries,
-              newX,
-              newY,
-              context.config.xSerie.accessor,
-            );
-          }
-        }),
-      scaleExtent: context.state.zoomPanOptions.scaleExtent,
-      xScale,
-      yScale,
-    });
-
-    callbacks.onZoomBehaviorChange(zoomBehavior);
-  }
-
-  if (context.state.customCallback && context.flags.hasCustom) {
-    const customCtx: CustomContext = {
-      bounds: context.bounds,
-      content,
-      dims,
-      svg: context.svg,
-      xScale,
-      yScale,
-    };
-    context.state.customCleanup?.();
-    const cleanup = context.state.customCallback(customCtx);
-    callbacks.onCustomCleanupChange(typeof cleanup === "function" ? cleanup : null);
-  }
-
-  clearOptionalNodes(context.bounds, context.svg, context.flags, () => {
-    callbacks.onZoomBehaviorChange(null);
-  });
+  clearOptionalNodes(context.bounds, context.svg, context.flags);
 };

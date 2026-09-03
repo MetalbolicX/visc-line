@@ -69,36 +69,4 @@ export interface FeatureFlags {
   readonly hasZoomPan: boolean;
 }
 
-/**
- * Create a lightweight FeatureFlags snapshot from a ChartState.
- *
- * Why: callers frequently need a stable, shallow object that summarizes which
- * features are enabled so they can perform cheap equality checks and decide
- * whether to (re)initialize or render feature-specific components.
- *
- * Guarantees:
- * - Does not mutate the provided state or its nested objects.
- * - Returns a new plain object whose properties exactly mirror the boolean
- *   feature flags on the source state.
- *
- * @typeParam T - Series data point type; not used by the function but kept for
- *   API symmetry with ChartState.
- * @param state - Snapshot of the chart's internal state. Treated as read-only.
- * @returns A fresh FeatureFlags object derived from `state`.
- *
- * @example
- * const flags = getFeatureFlags(state);
- * if (flags.hasLegend && !prevFlags.hasLegend) {
- *   // initialize legend
- * }
- */
-export const getFeatureFlags = <T,>(state: ChartState<T>): FeatureFlags => ({
-  hasAxes: state.hasAxes,
-  hasCustom: state.hasCustom,
-  hasGrid: state.hasGrid,
-  hasLegend: state.hasLegend,
-  hasPoints: state.hasPoints,
-  hasTitle: state.hasTitle,
-  hasTooltip: state.hasTooltip,
-  hasZoomPan: state.hasZoomPan,
-});
+

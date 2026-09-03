@@ -5,15 +5,8 @@ import { observeResize } from "@/accessibility/index.mjs";
 import { DEFAULT_MARGINS } from "@/chart/chartConstants.mjs";
 import { cleanupAllEnhancements } from "@/chart/chartLifecycle.mjs";
 import { renderChart } from "@/chart/chartRender.mjs";
-import { type ChartState, getFeatureFlags } from "@/chart/chartState.mjs";
-import {
-  areAxesOptionsEqual,
-  areGridOptionsEqual,
-  areLegendOptionsEqual,
-  areTitleOptionsEqual,
-  areTooltipOptionsEqual,
-  areZoomPanOptionsEqual,
-} from "@/chart/optionComparators.mjs";
+import { type ChartState } from "@/chart/chartState.mjs";
+import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderBoundsGroup, renderSVG } from "@/components/index.mjs";
 import { disposeTooltip } from "@/interactivity/index.mjs";
 import {
@@ -170,7 +163,9 @@ export const createChart = <T,>(
         clipPathId,
         config,
         container,
-        flags: getFeatureFlags(state),
+        flags: Object.fromEntries(
+          FEATURE_REGISTRY.map((f) => [f.flagKey, Boolean(state[f.flagKey])]),
+        ) as unknown as import("@/chart/chartState.mjs").FeatureFlags,
         margins,
         reducedMotion,
         resolvedCurve,
@@ -251,9 +246,7 @@ export const createChart = <T,>(
     },
     withAxes: (options = {}): ChartInstance<T> => {
       ensureActive();
-      if (state.hasAxes && areAxesOptionsEqual(state.axesOptions, options)) {
-        return chart;
-      }
+      if (state.hasAxes) return chart;
       state.hasAxes = true;
       state.axesOptions = options;
       render();
@@ -277,9 +270,7 @@ export const createChart = <T,>(
     },
     withGrid: (options = {}): ChartInstance<T> => {
       ensureActive();
-      if (state.hasGrid && areGridOptionsEqual(state.gridOptions, options)) {
-        return chart;
-      }
+      if (state.hasGrid) return chart;
       state.hasGrid = true;
       state.gridOptions = options;
       render();
@@ -287,12 +278,7 @@ export const createChart = <T,>(
     },
     withLegend: (options): ChartInstance<T> => {
       ensureActive();
-      if (
-        state.hasLegend &&
-        areLegendOptionsEqual(state.legendOptions, options)
-      ) {
-        return chart;
-      }
+      if (state.hasLegend) return chart;
       state.hasLegend = true;
       state.legendOptions = options;
       render();
@@ -307,9 +293,7 @@ export const createChart = <T,>(
     },
     withTitle: (options): ChartInstance<T> => {
       ensureActive();
-      if (state.hasTitle && areTitleOptionsEqual(state.titleOptions, options)) {
-        return chart;
-      }
+      if (state.hasTitle) return chart;
       state.hasTitle = true;
       state.titleOptions = options;
       render();
@@ -317,12 +301,7 @@ export const createChart = <T,>(
     },
     withTooltip: (options = {}): ChartInstance<T> => {
       ensureActive();
-      if (
-        state.hasTooltip &&
-        areTooltipOptionsEqual(state.tooltipOptions, options)
-      ) {
-        return chart;
-      }
+      if (state.hasTooltip) return chart;
       state.hasTooltip = true;
       state.tooltipOptions = options;
       render();
@@ -349,12 +328,7 @@ export const createChart = <T,>(
     },
     withZoomPan: (options = {}): ChartInstance<T> => {
       ensureActive();
-      if (
-        state.hasZoomPan &&
-        areZoomPanOptionsEqual(state.zoomPanOptions, options)
-      ) {
-        return chart;
-      }
+      if (state.hasZoomPan) return chart;
       state.hasZoomPan = true;
       state.zoomPanOptions = options;
       render();
