@@ -1,6 +1,10 @@
 import type { AnyScale, BoundsSelection, SVGSelection } from "@/types/index.mjs";
 import type { Dimensions } from "@/types/index.mjs";
 
+export type CustomCallback = (
+  ctx: CustomContext,
+) => (() => void) | void;
+
 export interface CustomContext {
   readonly bounds: BoundsSelection;
   readonly content: BoundsSelection;
@@ -9,7 +13,3 @@ export interface CustomContext {
   readonly xScale: AnyScale;
   readonly yScale: AnyScale;
 }
-
-export type CustomCallback = (
-  ctx: CustomContext,
-) => (() => void) | void;

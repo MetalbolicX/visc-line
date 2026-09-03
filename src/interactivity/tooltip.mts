@@ -8,6 +8,7 @@ import type {
   BoundsSelection,
   ProcessedSeries,
 } from "@/types/index.mjs";
+
 import { asInvertibleScale, asScaleNumber } from "@/utils/scaleCast.mjs";
 
 // ── Per-chart tooltip instances ───────────────────────────────────────────────
@@ -261,7 +262,7 @@ export const addTooltip = <T,>(
       cursorLine.attr("x1", cx).attr("x2", cx).attr("display", null);
 
       const rows: TooltipRow[] = [];
-      let firstDot: SVGCircleElement | null = null;
+      let firstDot: null | SVGCircleElement = null;
 
       cursorDots.each(function (serie) {
         const sortedSeries = sortedSeriesByLabel.get(serie.label) ?? [];

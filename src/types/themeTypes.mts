@@ -58,18 +58,18 @@ export interface Theme {
     readonly strokeLinecap: string;
     readonly strokeWidth: number;
   }>;
+  readonly label: Readonly<{
+    readonly color: string;
+    readonly fontSize: number;
+    readonly fontWeight: number;
+    readonly padding: number;
+  }>;
   readonly legend: Readonly<{
     readonly fontSize: number;
     readonly itemSpacing: number;
     /** @deprecated Not used by renderLegend — position is controlled via chartRender.mts coordinates. */
     readonly position: "bottom" | "left" | "right" | "top";
     readonly symbolSize: number;
-  }>;
-  readonly label: Readonly<{
-    readonly color: string;
-    readonly fontSize: number;
-    readonly fontWeight: number;
-    readonly padding: number;
   }>;
   readonly line: Readonly<{ readonly curve: CurvePreset; readonly opacity: number; readonly strokeWidth: number; }>;
   readonly points: Readonly<{

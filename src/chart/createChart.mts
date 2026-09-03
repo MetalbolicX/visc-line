@@ -1,17 +1,11 @@
+import type { ChartInstance, ChartOptions } from "@/chart/chartTypes.mjs";
 import type { ChartConfig } from "@/types/index.mjs";
 
 import { observeResize } from "@/accessibility/index.mjs";
-import { renderBoundsGroup, renderSVG } from "@/components/index.mjs";
-import { disposeTooltip } from "@/interactivity/index.mjs";
-import {
-  getMultiSeriesExtents,
-  processAllSeries,
-} from "@/services/index.mjs";
-import { defaultTheme } from "@/themes/index.mjs";
-import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 import { DEFAULT_MARGINS } from "@/chart/chartConstants.mjs";
 import { cleanupAllEnhancements } from "@/chart/chartLifecycle.mjs";
 import { renderChart } from "@/chart/chartRender.mjs";
+import { type ChartState, getFeatureFlags } from "@/chart/chartState.mjs";
 import {
   areAxesOptionsEqual,
   areGridOptionsEqual,
@@ -20,8 +14,14 @@ import {
   areTooltipOptionsEqual,
   areZoomPanOptionsEqual,
 } from "@/chart/optionComparators.mjs";
-import { getFeatureFlags, type ChartState } from "@/chart/chartState.mjs";
-import type { ChartInstance, ChartOptions } from "@/chart/chartTypes.mjs";
+import { renderBoundsGroup, renderSVG } from "@/components/index.mjs";
+import { disposeTooltip } from "@/interactivity/index.mjs";
+import {
+  getMultiSeriesExtents,
+  processAllSeries,
+} from "@/services/index.mjs";
+import { defaultTheme } from "@/themes/index.mjs";
+import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 
 /**
  * Create and render an interactive chart inside a DOM container.
@@ -97,6 +97,7 @@ export const createChart = <T,>(
   applyThemeCssVars(container, resolvedTheme);
 
   const resolvedCurve = resolveCurve(curve ?? resolvedTheme.line.curve);
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- accessibility preference flag
   const reducedMotion = resolvedTheme.accessibility?.reducedMotion ?? false;
   const clipPathId = `visc-clip-${
     (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 10))
@@ -140,9 +141,11 @@ export const createChart = <T,>(
   const state: ChartState<T> = {
     allSeries,
     allSeriesExtents,
+    axesOptions: {},
     currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
+    gridOptions: {},
     hasAxes: false,
     hasCustom: false,
     hasGrid: false,
@@ -152,8 +155,6 @@ export const createChart = <T,>(
     hasTooltip: false,
     hasZoomPan: false,
     isDisposed: false,
-    axesOptions: {},
-    gridOptions: {},
     legendOptions: null,
     titleOptions: null,
     tooltipOptions: {},
@@ -171,19 +172,19 @@ export const createChart = <T,>(
         container,
         flags: getFeatureFlags(state),
         margins,
+        reducedMotion,
         resolvedCurve,
         state,
         svg,
         xType,
-        reducedMotion,
         yLabel,
       },
       {
-        onZoomBehaviorChange: (nextZoomBehavior): void => {
-          state.zoomBehavior = nextZoomBehavior;
-        },
         onCustomCleanupChange: (cleanup): void => {
           state.customCleanup = cleanup;
+        },
+        onZoomBehaviorChange: (nextZoomBehavior): void => {
+          state.zoomBehavior = nextZoomBehavior;
         },
       },
     );
@@ -307,23 +308,6 @@ export const createChart = <T,>(
       render();
       return chart;
     },
-    withVisibleSeries: (labels): ChartInstance<T> => {
-      ensureActive();
-      assertValidVisibleLabels(labels, state.allSeries, "withVisibleSeries");
-      const nextLabels = new Set(labels);
-      const hasSameSize = state.visibleLabels.size === nextLabels.size;
-      const hasSameMembers = hasSameSize
-        ? [...nextLabels].every((label) => state.visibleLabels.has(label))
-        : false;
-      if (hasSameMembers) {
-        return chart;
-      }
-      state.visibleLabels = nextLabels;
-      state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
-      state.zoomBehavior?.reset();
-      render();
-      return chart;
-    },
     withTitle: (options): ChartInstance<T> => {
       ensureActive();
       if (state.hasTitle && areTitleOptionsEqual(state.titleOptions, options)) {
@@ -344,6 +328,25 @@ export const createChart = <T,>(
       }
       state.hasTooltip = true;
       state.tooltipOptions = options;
+      render();
+      return chart;
+    },
+    withVisibleSeries: (labels): ChartInstance<T> => {
+      ensureActive();
+      assertValidVisibleLabels(labels, state.allSeries, "withVisibleSeries");
+      const nextLabels = new Set(labels);
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- boolean comparison results
+      const hasSameSize = state.visibleLabels.size === nextLabels.size;
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- boolean comparison result
+      const hasSameMembers = hasSameSize
+        ? [...nextLabels].every((label) => state.visibleLabels.has(label))
+        : false;
+      if (hasSameMembers) {
+        return chart;
+      }
+      state.visibleLabels = nextLabels;
+      state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.zoomBehavior?.reset();
       render();
       return chart;
     },

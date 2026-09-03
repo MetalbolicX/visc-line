@@ -22,8 +22,8 @@ export const asScaleNumber = (
  */
 export const asInvertibleScale = (
   scale: AnyScale,
-): { invert: (v: number) => unknown } =>
-  scale as unknown as { invert: (v: number) => unknown };
+): { readonly invert: (v: number) => unknown } =>
+  scale as unknown as { readonly invert: (v: number) => unknown };
 
 /**
  * Type-safe cast of AnyScale to a TickableScale (one that exposes `domain()`

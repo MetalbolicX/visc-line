@@ -1,5 +1,5 @@
-import type { BoundsSelection, SVGSelection } from "@/types/index.mjs";
 import type { FeatureFlags } from "@/chart/chartState.mjs";
+import type { BoundsSelection, SVGSelection } from "@/types/index.mjs";
 
 /**
  * Clear optional chart elements based on the active feature flags.

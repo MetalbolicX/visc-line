@@ -4,14 +4,14 @@ import type { BoundsSelection, SVGSelection } from "@/types/index.mjs";
  * Options for {@link renderContentGroup}.
  */
 interface RenderContentGroupOptions {
-  readonly innerHeight: number;
-  readonly innerWidth: number;
   /**
    * A stable, document-unique identifier for the clip path.
    * Passed from the container element to avoid collisions when
    * multiple chart instances exist on the same page.
    */
   readonly clipPathId: string;
+  readonly innerHeight: number;
+  readonly innerWidth: number;
 }
 
 /**
@@ -31,7 +31,7 @@ interface RenderContentGroupOptions {
 export const renderContentGroup = (
   bounds: BoundsSelection,
   svg: SVGSelection,
-  { innerHeight, innerWidth, clipPathId }: RenderContentGroupOptions,
+  { clipPathId, innerHeight, innerWidth }: RenderContentGroupOptions,
 ): BoundsSelection => {
   // Upsert <defs> + <clipPath> on the root SVG.
   const defs = svg

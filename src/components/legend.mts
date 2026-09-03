@@ -17,14 +17,14 @@ export interface LegendItem {
 
 /** Options for {@link renderLegend}. */
 export interface RenderLegendOptions {
-  /** Array of items to render in order. */
-  readonly items: readonly LegendItem[];
   /** Enable click events for each legend item. */
   readonly interactive?: boolean;
-  /** Active (visible) labels to render stateful legend styles. */
-  readonly visibleLabels?: ReadonlySet<string>;
+  /** Array of items to render in order. */
+  readonly items: readonly LegendItem[];
   /** Callback triggered when user toggles a legend item. */
   readonly onToggle?: (label: string, isVisible: boolean) => void;
+  /** Active (visible) labels to render stateful legend styles. */
+  readonly visibleLabels?: ReadonlySet<string>;
   /** X offset applied to the legend group (default: 0). */
   readonly x?: number;
   /** Y offset applied to the legend group (default: 0). */
@@ -55,10 +55,10 @@ export interface RenderLegendOptions {
 export const renderLegend = (
   svg: SVGSelection,
   {
-    items,
     interactive = false,
-    visibleLabels,
+    items,
     onToggle,
+    visibleLabels,
     x = 0,
     y = 0,
   }: RenderLegendOptions,
@@ -93,6 +93,7 @@ export const renderLegend = (
 
   if (interactive && onToggle) {
     entries.on("click.legend", (_event, d) => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- state transition flag
       const nextVisible = !isVisible(d.label);
       onToggle(d.label, nextVisible);
     });

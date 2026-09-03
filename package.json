@@ -3,18 +3,16 @@
   "version": "1.0.0",
   "description": "Component functions to render line charts with D3.js",
   "type": "module",
-  "packageManager": "pnpm@11.25.0",
   "scripts": {
     "start": "echo \"Hello world\"",
-    "lint": "echo 'ESLint is temporarily disabled — requires type-aware linting setup. Run type-check and test instead.'",
+    "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
     "build": "tsdown",
     "dev": "vite",
     "test": "vitest",
-    "test:e2e": "pnpm build && node tests/e2e/serve-and-run.mjs",
     "docs": "docsify serve docs",
-    "check": "pnpm type-check && pnpm test && pnpm build",
+    "check": "pnpm type-check && pnpm test && pnpm build && pnpm lint",
     "prepublishOnly": "pnpm type-check && pnpm test && pnpm build"
   },
   "author": {
@@ -44,7 +42,6 @@
   ],
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.62.1",
     "@types/d3": "^7.4.3",
     "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10.9.1",
@@ -86,10 +83,11 @@
     }
   },
   "dependencies": {
-    "tipviz": "^3.0.1"
+    "tipviz": "^2.3.2"
   },
   "peerDependencies": {
-    "d3": "^7.9.0"
+    "d3": "^7.9.0",
+    "tipviz": "^2.1.0"
   },
   "engines": {
     "node": ">20.0.0"

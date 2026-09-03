@@ -1,4 +1,3 @@
-export { createChart } from "@/chart/createChart.mjs";
 export type {
   ChartInstance,
   ChartOptions,
@@ -9,4 +8,5 @@ export type {
   WithTooltipOptions,
   WithZoomPanOptions,
 } from "@/chart/chartTypes.mjs";
+export { createChart } from "@/chart/createChart.mjs";
 export type { CustomCallback, CustomContext } from "@/types/index.mjs";

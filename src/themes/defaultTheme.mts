@@ -39,17 +39,17 @@ export const defaultTheme: Theme = {
     strokeLinecap: "round",
     strokeWidth: 1,
   },
-  legend: {
-    fontSize: 12,
-    itemSpacing: 8,
-    position: "right",
-    symbolSize: 12,
-  },
   label: {
     color: "#222222",
     fontSize: 12,
     fontWeight: 400,
     padding: 8,
+  },
+  legend: {
+    fontSize: 12,
+    itemSpacing: 8,
+    position: "right",
+    symbolSize: 12,
   },
   line: {
     curve: "linear",
