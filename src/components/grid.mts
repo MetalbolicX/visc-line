@@ -2,6 +2,48 @@ import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 import { asTickable } from "@/utils/scaleCast.mjs";
 
+// ── Internal shared grid renderer ─────────────────────────────────────────────
+// NOT exported from the package index. Use renderXGrid / renderYGrid instead.
+
+interface GridRenderParams {
+  readonly boundSelection: BoundsSelection;
+  readonly tickScale: AnyScale;
+  readonly className: "grid-x" | "grid-y";
+  /** Domain endpoint for x1/x2 (for grid-x) or y1/y2 (for grid-y). */
+  readonly domainMin: number | null;
+  readonly domainMax: number | null;
+}
+
+const renderGrid = ({
+  boundSelection,
+  tickScale,
+  className,
+  domainMin,
+  domainMax,
+}: GridRenderParams): void => {
+  const tickableScale = asTickable(tickScale);
+
+  if (domainMin == null || domainMax == null) {
+    return;
+  }
+
+  boundSelection
+    .selectAll<SVGLineElement, unknown>(`line.${className}`)
+    .data(tickableScale.ticks())
+    .join("line")
+    .attr("class", className)
+    .attr("x1", className === "grid-x" ? domainMin : tickableScale)
+    .attr("y1", className === "grid-x" ? tickableScale : domainMin)
+    .attr("x2", className === "grid-x" ? domainMax : tickableScale)
+    .attr("y2", className === "grid-x" ? tickableScale : domainMax)
+    .attr("stroke", "var(--vl-grid-stroke, #e6e6e6)")
+    .attr("stroke-width", "var(--vl-grid-stroke-width, 1)")
+    .attr("stroke-dasharray", "var(--vl-grid-dash-array, 4 7)")
+    .attr("opacity", "var(--vl-grid-opacity, 0.65)")
+    .attr("stroke-linecap", "var(--vl-grid-stroke-linecap, round)")
+    .attr("shape-rendering", "crispEdges");
+};
+
 /**
  * Render horizontal grid lines (left-to-right) across the chart area.
  *
@@ -32,28 +74,15 @@ export const renderXGrid = (
   yScale: AnyScale,
 ): void => {
   const xTickableScale = asTickable(xScale);
-  const yTickableScale = asTickable(yScale);
-  const [xMin, xMax] = xTickableScale.domain();
+  const [xMin, xMax] = xTickableScale.domain() as [number | null, number | null];
 
-  if (xMin == null || xMax == null) {
-    return;
-  }
-
-  boundSelection
-    .selectAll<SVGLineElement, unknown>("line.grid-x")
-    .data(yTickableScale.ticks())
-    .join("line")
-    .attr("class", "grid-x")
-    .attr("x1", xTickableScale(xMin))
-    .attr("y1", yTickableScale)
-    .attr("x2", xTickableScale(xMax))
-    .attr("y2", yTickableScale)
-    .attr("stroke", "var(--vl-grid-stroke, #e6e6e6)")
-    .attr("stroke-width", "var(--vl-grid-stroke-width, 1)")
-    .attr("stroke-dasharray", "var(--vl-grid-dash-array, 4 7)")
-    .attr("opacity", "var(--vl-grid-opacity, 0.65)")
-    .attr("stroke-linecap", "var(--vl-grid-stroke-linecap, round)")
-    .attr("shape-rendering", "crispEdges");
+  renderGrid({
+    boundSelection,
+    tickScale: yScale,
+    className: "grid-x",
+    domainMin: xMin,
+    domainMax: xMax,
+  });
 };
 
 /**
@@ -80,27 +109,14 @@ export const renderYGrid = (
   xScale: AnyScale,
   yScale: AnyScale,
 ): void => {
-  const xTickableScale = asTickable(xScale);
   const yTickableScale = asTickable(yScale);
-  const [yMin, yMax] = yTickableScale.domain();
+  const [yMin, yMax] = yTickableScale.domain() as [number | null, number | null];
 
-  if (yMin == null || yMax == null) {
-    return;
-  }
-
-  boundSelection
-    .selectAll<SVGLineElement, unknown>("line.grid-y")
-    .data(xTickableScale.ticks())
-    .join("line")
-    .attr("class", "grid-y")
-    .attr("x1", xTickableScale)
-    .attr("y1", yTickableScale(yMin))
-    .attr("x2", xTickableScale)
-    .attr("y2", yTickableScale(yMax))
-    .attr("stroke", "var(--vl-grid-stroke, #e6e6e6)")
-    .attr("stroke-width", "var(--vl-grid-stroke-width, 1)")
-    .attr("stroke-dasharray", "var(--vl-grid-dash-array, 4 7)")
-    .attr("opacity", "var(--vl-grid-opacity, 0.65)")
-    .attr("stroke-linecap", "var(--vl-grid-stroke-linecap, round)")
-    .attr("shape-rendering", "crispEdges");
+  renderGrid({
+    boundSelection,
+    tickScale: xScale,
+    className: "grid-y",
+    domainMin: yMin,
+    domainMax: yMax,
+  });
 };
