@@ -443,6 +443,36 @@ export const zoomPanDef: FeatureDefinition<"zoomPan"> = {
   },
 };
 
+/**
+ * Custom callback feature definition — arbitrary user-rendered content.
+ *
+ * - Options: CustomCallback function
+ * - Comparator: () => true (no options to compare; callback identity checked elsewhere)
+ * - Zoom-path: excluded (custom does not re-render on zoom)
+ * - DOM cleanup: none (custom manages its own DOM)
+ */
+export const customDef: FeatureDefinition<"custom"> = {
+  clearSelectors: [],
+  flagKey: "hasCustom",
+  isEqual: () => true,
+  key: "custom",
+  optionsKey: "customCallback",
+  render: (ctx, dims) => {
+    if (!ctx.state.customCallback || !ctx.flags.hasCustom) return;
+    const customCtx = {
+      bounds: ctx.bounds,
+      content: ctx.content,
+      dims,
+      svg: ctx.svg,
+      xScale: ctx.xScale,
+      yScale: ctx.yScale,
+    };
+    ctx.state.customCleanup?.();
+    const cleanup = ctx.state.customCallback(customCtx);
+    ctx.callbacks.onCustomCleanupChange(typeof cleanup === "function" ? cleanup : null);
+  },
+};
+
 /** Ordered registry — the array order IS the render sequence */
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   axesDef,
@@ -451,6 +481,7 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   legendDef,
   tooltipDef,
   zoomPanDef,
+  customDef,
   {
     clearSelectors: ["g.point-series"],
     flagKey: "hasPoints",

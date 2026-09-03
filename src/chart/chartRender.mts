@@ -6,7 +6,6 @@ import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type {
   BoundsSelection,
   ChartConfig,
-  CustomContext,
   ScaleType,
   SVGSelection,
 } from "@/types/index.mjs";
@@ -174,20 +173,6 @@ export const renderChart = <T,>(
         dims,
       );
     }
-  }
-
-  if (context.state.customCallback && context.flags.hasCustom) {
-    const customCtx: CustomContext = {
-      bounds: context.bounds,
-      content,
-      dims,
-      svg: context.svg,
-      xScale,
-      yScale,
-    };
-    context.state.customCleanup?.();
-    const cleanup = context.state.customCallback(customCtx);
-    callbacks.onCustomCleanupChange(typeof cleanup === "function" ? cleanup : null);
   }
 
   clearOptionalNodes(context.bounds, context.svg, context.flags);
