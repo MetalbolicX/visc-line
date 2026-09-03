@@ -114,6 +114,7 @@ export interface FeatureRenderContext<T> {
 import { areAxesOptionsEqual, areGridOptionsEqual } from "@/chart/optionComparators.mjs";
 import { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 import { renderXGrid, renderYGrid } from "@/components/grid.mjs";
+import { renderPoints } from "@/components/points.mjs";
 import { renderXAxis } from "@/components/xAxis.mjs";
 import { renderYAxis } from "@/components/yAxis.mjs";
 
@@ -243,4 +244,33 @@ export const gridDef: FeatureDefinition<"grid"> = {
 export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
   axesDef,
   gridDef,
+  {
+    clearSelectors: ["g.point-series"],
+    flagKey: "hasPoints",
+    isEqual: () => true,
+    key: "points",
+    onZoomRedraw: (ctx) => {
+      if (!ctx.flags.hasPoints) return;
+      renderPoints(
+        ctx.content,
+        ctx.state.currentSeries,
+        ctx.xScale,
+        ctx.yScale,
+        ctx.config.xSerie.accessor,
+      );
+    },
+
+    optionsKey: "hasPoints",
+
+    render: (ctx) => {
+      if (!ctx.flags.hasPoints) return;
+      renderPoints(
+        ctx.content,
+        ctx.state.currentSeries,
+        ctx.xScale,
+        ctx.yScale,
+        ctx.config.xSerie.accessor,
+      );
+    },
+  },
 ];

@@ -1,6 +1,8 @@
 import type { FeatureFlags } from "@/chart/chartState.mjs";
 import type { BoundsSelection, SVGSelection } from "@/types/index.mjs";
 
+import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
+
 /**
  * Clear optional chart elements based on the active feature flags.
  *
@@ -29,6 +31,20 @@ export const clearOptionalNodes = (
   flags: FeatureFlags,
   onZoomPanCleared: () => void,
 ): void => {
+  // Registry-driven cleanup for migrated features (axes, grid, points)
+  for (const feature of FEATURE_REGISTRY) {
+    if (!flags[feature.flagKey]) {
+      for (const selector of feature.clearSelectors) {
+        // Axes selectors split: text.* → svg, g.* / line.* → bounds
+        if (selector.startsWith("text.") || selector.startsWith("g.legend") || selector.startsWith("g.tooltip")) {
+          svg.selectAll(selector).remove();
+        } else {
+          bounds.selectAll(selector).remove();
+        }
+      }
+    }
+  }
+
   if (!flags.hasAxes) {
     bounds.selectAll("g.x-axis, g.y-axis").remove();
     svg.selectAll("text.x-axis-label, text.y-axis-label").remove();
@@ -36,10 +52,6 @@ export const clearOptionalNodes = (
 
   if (!flags.hasGrid) {
     bounds.selectAll("line.grid-x, line.grid-y").remove();
-  }
-
-  if (!flags.hasPoints) {
-    bounds.selectAll("g.point-series").remove();
   }
 
   if (!flags.hasTitle) {

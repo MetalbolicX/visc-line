@@ -19,7 +19,6 @@ import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
 import { renderLegend } from "@/components/legend.mjs";
 import { renderLine } from "@/components/line.mjs";
-import { renderPoints } from "@/components/points.mjs";
 import { renderTitle } from "@/components/title.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
@@ -183,16 +182,6 @@ export const renderChart = <T,>(
     }
   }
 
-  if (context.flags.hasPoints) {
-    renderPoints<T>(
-      content,
-      context.state.currentSeries,
-      xScale,
-      yScale,
-      context.config.xSerie.accessor,
-    );
-  }
-
   if (context.flags.hasTooltip) {
     addTooltip<T>(
       context.bounds,
@@ -264,15 +253,6 @@ export const renderChart = <T,>(
             },
           );
 
-          if (context.flags.hasPoints) {
-            renderPoints<T>(
-              content,
-              context.state.currentSeries,
-              newX,
-              newY,
-              context.config.xSerie.accessor,
-            );
-          }
         }),
       scaleExtent: context.state.zoomPanOptions.scaleExtent,
       xScale,
