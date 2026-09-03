@@ -1,5 +1,7 @@
 import type { Margins, SVGSelection } from "@/types/index.mjs";
 
+import { readCssNumber } from "@/utils/cssVariables.mjs";
+
 export interface XAxisLabelOptions {
   readonly innerHeight: number;
   readonly innerWidth: number;
@@ -37,20 +39,10 @@ export const renderXAxisLabel = (
   }: XAxisLabelOptions,
 ): void => {
   const node = svg.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const rawPadding = cs
-    ? parseFloat(cs.getPropertyValue("--vl-label-padding"))
-    : NaN;
-  const padding = Number.isNaN(rawPadding) ? 8 : rawPadding;
-  const axisTickSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6)
-    : 6;
-  const axisTickPadding = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8)
-    : 8;
-  const axisFontSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-font-size")) || 12)
-    : 12;
+  const padding = node ? readCssNumber(node, "--vl-label-padding", 8) : 8;
+  const axisTickSize = node ? readCssNumber(node, "--vl-axis-tick-size", 6) : 6;
+  const axisTickPadding = node ? readCssNumber(node, "--vl-axis-tick-padding", 8) : 8;
+  const axisFontSize = node ? readCssNumber(node, "--vl-axis-font-size", 12) : 12;
   const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
 
   svg
@@ -90,20 +82,10 @@ export const renderYAxisLabel = (
   }: YAxisLabelOptions,
 ): void => {
   const node = svg.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const rawPadding = cs
-    ? parseFloat(cs.getPropertyValue("--vl-label-padding"))
-    : NaN;
-  const padding = Number.isNaN(rawPadding) ? 8 : rawPadding;
-  const axisTickSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6)
-    : 6;
-  const axisTickPadding = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8)
-    : 8;
-  const axisFontSize = cs
-    ? (parseFloat(cs.getPropertyValue("--vl-axis-font-size")) || 12)
-    : 12;
+  const padding = node ? readCssNumber(node, "--vl-label-padding", 8) : 8;
+  const axisTickSize = node ? readCssNumber(node, "--vl-axis-tick-size", 6) : 6;
+  const axisTickPadding = node ? readCssNumber(node, "--vl-axis-tick-padding", 8) : 8;
+  const axisFontSize = node ? readCssNumber(node, "--vl-axis-font-size", 12) : 12;
   const axisLabelSpacing = axisTickSize + axisTickPadding + axisFontSize;
 
   svg

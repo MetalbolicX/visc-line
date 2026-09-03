@@ -3,6 +3,7 @@ import type { AxisDomain } from "d3";
 import { axisBottom } from "d3";
 
 import { asAxisScale } from "@/utils/axisScale.mjs";
+import { readCssNumber } from "@/utils/cssVariables.mjs";
 import type { AnyScale, BoundsSelection } from "@/types/index.mjs";
 
 /** Options for {@link renderXAxis}. */
@@ -37,9 +38,8 @@ export const renderXAxis = (
   { tickCount = 5, tickFormat }: RenderXAxisOptions = {},
 ): void => {
   const node = boundsGroup.node();
-  const cs = node ? getComputedStyle(node) : null;
-  const tickSize = cs ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-size")) || 6) : 6;
-  const tickPadding = cs ? (parseFloat(cs.getPropertyValue("--vl-axis-tick-padding")) || 8) : 8;
+  const tickSize = node ? readCssNumber(node, "--vl-axis-tick-size", 6) : 6;
+  const tickPadding = node ? readCssNumber(node, "--vl-axis-tick-padding", 8) : 8;
 
   const axis = axisBottom(asAxisScale(xScale))
     .ticks(tickCount)
