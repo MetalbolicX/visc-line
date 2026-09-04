@@ -505,13 +505,13 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
     flagKey: "hasPoints",
     isEqual: () => true,
     key: "points",
-    onZoomRedraw: (ctx) => {
+    onZoomRedraw: (ctx, _dims, newX, newY) => {
       if (!ctx.flags.hasPoints) return;
       renderPoints(
         ctx.content,
         ctx.state.currentSeries,
-        ctx.xScale,
-        ctx.yScale,
+        newX,
+        newY,
         ctx.config.xSerie.accessor,
       );
     },
