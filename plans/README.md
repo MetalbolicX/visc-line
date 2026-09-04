@@ -24,6 +24,7 @@ your row when done.
 | 013  | DESIGN: time-series axis polish | P3 | M | 009 | DONE |
 | 014  | BUILD: migrate features to FeatureDefinition registry | P2 | L | 002, 006, 009, 012 | DONE |
 | 015  | BUILD: ship timeTickFormat option | P2 | S | 009, 013 | DONE |
+| 019  | Theme tokens for the tooltip cursor layer | P2 | M | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)
