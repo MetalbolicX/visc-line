@@ -28,7 +28,7 @@ before starting, honor its STOP conditions, and update your row when done.
 | 016  | Make points follow zoom/pan (strict TDD) | P1 | S | — | DONE |
 | 017  | Dedupe render/onZoomRedraw pairs (refactor-under-green) | P2 | S | 016 | DONE |
 | 018  | Decompose featureRegistry.mts (SDD) | P2 | L | 016, 017 | DONE |
-| 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | TODO |
+| 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | DONE |
 | 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | DONE |
 | 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | DONE |
 

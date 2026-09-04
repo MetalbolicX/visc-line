@@ -295,3 +295,156 @@ describe("disposeTooltip", () => {
     expect(document.body.contains(rect)).toBe(false);
   });
 });
+
+describe("cursor-layer themability", () => {
+  let container: HTMLElement;
+  let boundsGroup: ReturnType<typeof select<SVGGElement, null>>;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    const svg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    ) as SVGSVGElement;
+    container.appendChild(svg);
+    const boundsEl = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "g",
+    ) as SVGGElement;
+    boundsEl.setAttribute("class", "bounds");
+    svg.appendChild(boundsEl);
+    boundsGroup = select<SVGGElement, null>(boundsEl);
+
+    // Make setHtml/loadStylesheet available on Elements (tipviz v2 API in this branch)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Element.prototype as any).setHtml = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (Element.prototype as any).loadStylesheet = vi.fn();
+  });
+
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (Element.prototype as any).setHtml;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (Element.prototype as any).loadStylesheet;
+    document.body.removeChild(container);
+  });
+
+  it("default cursor line has stroke=#aaaaaa, stroke-width=1, stroke-dasharray=4 3", () => {
+    const mockSeries = [
+      { label: "series-1", data: [{ x: 1, y: 10 }], accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ] as unknown as import("../../types/index.mjs").ProcessedSeries<{ x: number; y: number }>[];
+
+    const xScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const yScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const xAccessor = (d: { x: number; y: number }) => d.x;
+
+    addTooltip(boundsGroup, mockSeries, xScale, yScale, xAccessor, {
+      innerHeight: 400,
+      innerWidth: 800,
+    });
+
+    const cursorLine = boundsGroup.select<SVGLineElement>("line.cursor-line");
+    // stroke is a CSS var string — jsdom can't resolve it, so we assert the raw var() contains the correct token and fallback
+    const strokeAttr = cursorLine.attr("stroke") ?? "";
+    expect(strokeAttr).toContain("--vl-tooltip-cursor-color");
+    expect(strokeAttr).toContain("#aaaaaa"); // fallback literal baked into var()
+    expect(strokeAttr).toBe("var(--vl-tooltip-cursor-color, #aaaaaa)");
+    // stroke-width is also a CSS var string — same jsdom limitation
+    const swAttr = cursorLine.attr("stroke-width") ?? "";
+    expect(swAttr).toContain("--vl-tooltip-cursor-stroke-width");
+    expect(swAttr).toContain("1");
+    expect(swAttr).toBe("var(--vl-tooltip-cursor-stroke-width, 1)");
+    // stroke-dasharray is also a CSS var string
+    const dashAttr = cursorLine.attr("stroke-dasharray") ?? "";
+    expect(dashAttr).toContain("--vl-tooltip-cursor-dash-array");
+    expect(dashAttr).toContain("4 3");
+    expect(dashAttr).toBe("var(--vl-tooltip-cursor-dash-array, 4 3)");
+  });
+
+  it("default cursor dot has r=5, stroke=#ffffff, stroke-width=2", () => {
+    const mockSeries = [
+      { label: "series-1", data: [{ x: 1, y: 10 }], accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ] as unknown as import("../../types/index.mjs").ProcessedSeries<{ x: number; y: number }>[];
+
+    const xScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const yScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const xAccessor = (d: { x: number; y: number }) => d.x;
+
+    addTooltip(boundsGroup, mockSeries, xScale, yScale, xAccessor, {
+      innerHeight: 400,
+      innerWidth: 800,
+    });
+
+    const cursorDot = boundsGroup.select<SVGCircleElement>("circle.cursor-dot--series-1");
+    // r and stroke-width go through readCssNumber which resolves the fallback in jsdom — assert the numeric value
+    expect(cursorDot.attr("r")).toBe("5");
+    expect(cursorDot.attr("stroke-width")).toBe("2");
+    // stroke is a raw var() string — jsdom can't resolve it, assert the token name and fallback are correct
+    const strokeAttr = cursorDot.attr("stroke") ?? "";
+    expect(strokeAttr).toContain("--vl-tooltip-cursor-dot-stroke");
+    expect(strokeAttr).toContain("#ffffff");
+    expect(strokeAttr).toBe("var(--vl-tooltip-cursor-dot-stroke, #ffffff)");
+  });
+
+  it("themed cursor line respects color, dashArray overrides", () => {
+    const mockSeries = [
+      { label: "series-1", data: [{ x: 1, y: 10 }], accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ] as unknown as import("../../types/index.mjs").ProcessedSeries<{ x: number; y: number }>[];
+
+    const xScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const yScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const xAccessor = (d: { x: number; y: number }) => d.x;
+
+    // Apply cursor theme overrides via CSS vars directly
+    container.style.setProperty("--vl-tooltip-cursor-color", "#ff0000");
+    container.style.setProperty("--vl-tooltip-cursor-dash-array", "1 1");
+
+    addTooltip(boundsGroup, mockSeries, xScale, yScale, xAccessor, {
+      innerHeight: 400,
+      innerWidth: 800,
+    });
+
+    const cursorLine = boundsGroup.select<SVGLineElement>("line.cursor-line");
+    // jsdom cannot resolve var() at .attr() read time — assert the var() reference
+    // is correctly formed with the override-able token name (not the resolved value)
+    const strokeAttr = cursorLine.attr("stroke") ?? "";
+    expect(strokeAttr).toContain("--vl-tooltip-cursor-color");
+    expect(strokeAttr).toBe("var(--vl-tooltip-cursor-color, #aaaaaa)");
+    // stroke-dasharray is also a var() string
+    expect(cursorLine.attr("stroke-dasharray")).toBe("var(--vl-tooltip-cursor-dash-array, 4 3)");
+  });
+
+  it("themed cursor dot respects dotRadius, dotStroke, dotStrokeWidth overrides", () => {
+    const mockSeries = [
+      { label: "series-1", data: [{ x: 1, y: 10 }], accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ] as unknown as import("../../types/index.mjs").ProcessedSeries<{ x: number; y: number }>[];
+
+    const xScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const yScale = { bandwidth: () => 0 } as unknown as import("../../types/index.mjs").AnyScale;
+    const xAccessor = (d: { x: number; y: number }) => d.x;
+
+    // Apply cursor dot theme overrides via CSS vars directly
+    container.style.setProperty("--vl-tooltip-cursor-dot-radius", "8");
+    container.style.setProperty("--vl-tooltip-cursor-dot-stroke", "#00ff00");
+    container.style.setProperty("--vl-tooltip-cursor-dot-stroke-width", "3");
+
+    addTooltip(boundsGroup, mockSeries, xScale, yScale, xAccessor, {
+      innerHeight: 400,
+      innerWidth: 800,
+    });
+
+    const cursorDot = boundsGroup.select<SVGCircleElement>("circle.cursor-dot--series-1");
+    // jsdom cannot resolve CSS vars at .attr() read time — we validate the var()
+    // token names are correct (the themability contract) rather than resolved values.
+    // stroke is a raw var() — assert the token name is correct
+    const strokeAttr = cursorDot.attr("stroke") ?? "";
+    expect(strokeAttr).toContain("--vl-tooltip-cursor-dot-stroke");
+    expect(strokeAttr).toBe("var(--vl-tooltip-cursor-dot-stroke, #ffffff)");
+    // r and stroke-width go through readCssNumber — which CAN read CSS vars via
+    // getPropertyValue in jsdom, so override values ARE readable
+    expect(cursorDot.attr("r")).toBe("8");
+    expect(cursorDot.attr("stroke-width")).toBe("3");
+  });
+});

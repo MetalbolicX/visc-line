@@ -9,6 +9,7 @@ import type {
   ProcessedSeries,
 } from "@/types/index.mjs";
 
+import { readCssNumber } from "@/utils/cssVariables.mjs";
 import { asInvertibleScale, asScaleNumber } from "@/utils/scaleCast.mjs";
 
 // ── Per-chart tooltip instances ───────────────────────────────────────────────
@@ -218,9 +219,9 @@ export const addTooltip = <T,>(
     .attr("class", "cursor-line")
     .attr("y1", 0)
     .attr("y2", innerHeight)
-    .attr("stroke", "#aaa")
-    .attr("stroke-width", 1)
-    .attr("stroke-dasharray", "4 3")
+    .attr("stroke", "var(--vl-tooltip-cursor-color, #aaaaaa)")
+    .attr("stroke-width", "var(--vl-tooltip-cursor-stroke-width, 1)")
+    .attr("stroke-dasharray", "var(--vl-tooltip-cursor-dash-array, 4 3)")
     .attr("pointer-events", "none")
     .attr("display", "none");
   const cursorDots = tooltipLayer
@@ -228,12 +229,13 @@ export const addTooltip = <T,>(
     .data(series, ({ label }) => label)
     .join("circle")
     .attr("class", ({ label }) => `cursor-dot cursor-dot--${label}`)
-    .attr("r", 5)
     .attr("fill", ({ stroke }) => stroke ?? "steelblue")
-    .attr("stroke", "white")
-    .attr("stroke-width", 2)
+    .attr("stroke", "var(--vl-tooltip-cursor-dot-stroke, #ffffff)")
     .attr("pointer-events", "none")
     .attr("display", "none");
+  // Numeric attrs via readCssNumber — use index-based access to avoid circular ref
+  cursorDots.attr("r", (_d, _i, nodes) => readCssNumber(nodes[_i]!, "--vl-tooltip-cursor-dot-radius", 5));
+  cursorDots.attr("stroke-width", (_d, _i, nodes) => readCssNumber(nodes[_i]!, "--vl-tooltip-cursor-dot-stroke-width", 2));
 
   // ── Mouse capture rectangle ──────────────────────────────────────────────
   boundsGroup
