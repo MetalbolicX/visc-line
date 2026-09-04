@@ -29,8 +29,8 @@ before starting, honor its STOP conditions, and update your row when done.
 | 017  | Dedupe render/onZoomRedraw pairs (refactor-under-green) | P2 | S | 016 | DONE |
 | 018  | Decompose featureRegistry.mts (SDD) | P2 | L | 016, 017 | DONE |
 | 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | TODO |
-| 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | TODO |
-| 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | TODO |
+| 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | DONE |
+| 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)
@@ -57,6 +57,11 @@ REJECTED (with one-line rationale)
 - 018 before 020: the decomposition decides the final export surface; 020's greps re-run against the post-018 layout. If 018 stalls long-term, 020 can run standalone (its drift note says how).
 - 018 before 021: AGENTS.md must document the post-018 architecture, not today's.
 - Methodology per plan: 016 strict TDD, 017 refactor-under-green, 018 SDD (spec first), 019 strict TDD, 020/021 simple edits.
+
+### Round 2 outcomes
+
+- **020 absorbed by 018.** The decomposition moved `Dimensions` consumers to `featureContext.mts`/`zoomDispatch.mts` (both re-export from `@/types/layoutTypes.mts` — single source). `FeatureOptionsMap` was deleted during the file split (zero references post-018, grep-confirmed). The plan's "un-export `axesDef`/etc." criterion is impossible post-018: `featureRegistry.mts:27-34` uses `import * as axesDefSrc from "@/chart/featureDefs/axes.mjs"` (namespace import) — TypeScript exposes no cross-module binding for non-exported consts. The defs remain `export const` but are internal-only (no re-export from `src/index.mts` or `src/internal.mts`, grep-confirmed). Net: the public-API hygiene property the plan cared about (defs not reachable from public surface) is already true.
+- **019 (theme tokens) + 021 (AGENTS.md)** landed on independent branches; both verified `pnpm type-check && pnpm test --run && pnpm lint && pnpm build` clean. Tests pass at 428/428 (29/29 tooltip).
 
 > Note (prior sequence): the original ordering had 001 first, but a pre-existing broken test suite blocks `pnpm check` from going green. Plan 003 is the true first execution; plans 001 and 002 were re-ordered to depend on it.
 

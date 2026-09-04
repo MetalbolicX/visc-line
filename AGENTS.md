@@ -13,6 +13,7 @@ pnpm lint:fix
 pnpm type-check   # tsc --noEmit
 pnpm test         # vitest (jsdom, v8 coverage, src/**/*.test.mts)
 pnpm docs         # docsify serve docs/
+pnpm check        # type-check → test → build → lint
 ```
 
 ## Command Order
@@ -23,8 +24,8 @@ type-check → test → build
 
 ## Architecture
 
-- **Entry**: `src/index.mts`
-- **Source dirs**: `components/`, `services/`, `interactivity/`, `types/`, `utils/`, `themes/`, `accessibility/`
+- **Entry**: `src/index.mts` + `src/internal.mts` (package export `./internal`)
+- **Source dirs**: `chart/` (entry point, render flow, feature registry, per-feature defs, state/lifecycle, chart types), `components/`, `services/`, `interactivity/`, `types/`, `utils/`, `themes/`, `accessibility/`
 - **Examples**: `examples/main.mts` (runnable demo)
 - **Peer deps**: `d3@^7.9.0`
 - **Bundled dep**: `tipviz@^3.0.1` (forced into bundle by tsdown); `d3` remains external (UMD global)
@@ -38,11 +39,11 @@ Charts render via a specific sequence — skip or reorder components and dimensi
 1. `renderSVG`
 2. `renderBoundsGroup`
 3. `renderContentGroup` (clip-path content layer, inside the re-render loop)
-4. `renderLine` (hardcoded — NOT in registry)
+4. `renderLine` — via shared `redrawLine` helper (`src/chart/redrawLine.mts`); called by both the render loop and `zoomDispatch`
 5. **Registry-driven feature loop**: iterate `FEATURE_REGISTRY` in order, calling `feature.render` for each enabled feature. Registry order (and thus render order): axes → grid → title → legend → tooltip → zoomPan → custom → points.
 6. `clearOptionalNodes` — cleanup DOM for disabled features (registry-driven via `feature.clearSelectors` and `feature.clearEvents`)
 
-**Zoom path**: when zoom/pan triggers, `zoomPanDef.render` sets up the `onZoom` callback which:
+**Zoom path**: when zoom/pan triggers, `zoomPanDef.render` sets up the `onZoom` callback in `src/chart/zoomDispatch.mts` which:
 1. Iterates `FEATURE_REGISTRY` calling `feature.onZoomRedraw` for features that define it (axes, grid, points; title/legend/tooltip/custom intentionally excluded)
 2. Re-renders the line directly
 
@@ -50,7 +51,7 @@ Charts render via a specific sequence — skip or reorder components and dimensi
 - Removes DOM nodes via `feature.clearSelectors` (axes, grid, title, legend, tooltip)
 - Unbinds event listeners via `feature.clearEvents` (tooltip: mousemove/mouseleave; zoomPan: .zoom)
 
-**Adding a new feature**: add one entry to `FEATURE_REGISTRY` + write a characterization test — no lockstep edits across 6 files.
+**Adding a new feature**: add one entry to `FEATURE_REGISTRY` + write a per-feature def file (`src/chart/featureDefs/<name>.mts`) + write a characterization test — no lockstep edits across 6 files.
 
 ## Idempotent Rendering
 
