@@ -31,6 +31,7 @@ before starting, honor its STOP conditions, and update your row when done.
 | 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | DONE |
 | 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | DONE |
 | 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | DONE |
+| 022  | Add reference lines and annotations features | P1 | M | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)

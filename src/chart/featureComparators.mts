@@ -8,7 +8,7 @@
  * @internal
  */
 
-import type { WithAxesOptions, WithGridOptions, WithLegendOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
+import type { WithAnnotationsOptions, WithAxesOptions, WithGridOptions, WithLegendOptions, WithReferenceLinesOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
 
 /**
  * Shallow equality for WithAxesOptions.
@@ -30,6 +30,29 @@ export const areAxesOptionsEqual = (a: unknown, b: unknown): boolean => {
 };
 
 /**
+ * Shallow equality for WithAnnotationsOptions.
+ * Null-safe; compares annotations array length and per-item x, y, text, dx, dy, showConnector.
+ */
+export const areAnnotationsOptionsEqual = (a: unknown, b: unknown): boolean => {
+  const pa = a as null | WithAnnotationsOptions;
+  const pb = b as null | WithAnnotationsOptions;
+  if (pa === pb) return true; // both null or same reference
+  if (!pa || !pb) return false;
+  if (pa.annotations.length !== pb.annotations.length) return false;
+  for (const [i, prev] of pa.annotations.entries()) {
+    const next = pb.annotations[i];
+    if (!next) return false;
+    if (prev.x !== next.x) return false;
+    if (prev.y !== next.y) return false;
+    if (prev.text !== next.text) return false;
+    if ((prev.dx ?? 8) !== (next.dx ?? 8)) return false;
+    if ((prev.dy ?? -8) !== (next.dy ?? -8)) return false;
+    if (prev.showConnector !== next.showConnector) return false;
+  }
+  return true;
+};
+
+/**
  * Shallow equality for WithGridOptions.
  * Compares showX, showY.
  */
@@ -40,6 +63,26 @@ export const areGridOptionsEqual = (a: unknown, b: unknown): boolean => {
     (pa.showX ?? true) === (pb.showX ?? true) &&
     (pa.showY ?? true) === (pb.showY ?? true)
   );
+};
+
+/**
+ * Shallow equality for WithReferenceLinesOptions.
+ * Compares lines array: false when either side is falsy or lengths differ;
+ * else per-item axis, value, and label equality.
+ */
+export const areReferenceLinesOptionsEqual = (a: unknown, b: unknown): boolean => {
+  const pa = a as WithReferenceLinesOptions;
+  const pb = b as WithReferenceLinesOptions;
+  if (!pa || !pb) return false;
+  if (pa.lines.length !== pb.lines.length) return false;
+  for (const [i, prev] of pa.lines.entries()) {
+    const next = pb.lines[i];
+    if (!next) return false;
+    if (prev.axis !== next.axis) return false;
+    if (prev.value !== next.value) return false;
+    if (prev.label !== next.label) return false;
+  }
+  return true;
 };
 
 /**

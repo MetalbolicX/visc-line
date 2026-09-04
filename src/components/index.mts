@@ -1,3 +1,6 @@
+export { renderAnnotations } from "@/components/annotations.mjs";
+export type { ChartAnnotation, WithAnnotationsOptions } from "@/components/annotations.mjs";
+
 export { renderXAxisLabel, renderYAxisLabel } from "@/components/axisLabel.mjs";
 export type { XAxisLabelOptions, YAxisLabelOptions } from "@/components/axisLabel.mjs";
 
@@ -14,6 +17,9 @@ export { renderLine } from "@/components/line.mjs";
 export type { RenderLineOptions } from "@/components/line.mjs";
 
 export { renderPoints } from "@/components/points.mjs";
+export { renderReferenceLines } from "@/components/referenceLines.mjs";
+
+export type { ReferenceLine, WithReferenceLinesOptions } from "@/components/referenceLines.mjs";
 
 export { renderSVG } from "@/components/SVG.mjs";
 

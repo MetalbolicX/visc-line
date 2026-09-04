@@ -14,6 +14,18 @@ import type {
   Theme,
 } from "@/types/index.mjs";
 
+export interface ChartAnnotation {
+  /** Pixel offsets from the anchor. Defaults: dx = 8, dy = -8. */
+  readonly dx?: number;
+  readonly dy?: number;
+  /** Draw a leader line from anchor to text. Default: false. */
+  readonly showConnector?: boolean;
+  readonly text: string;
+  /** Data coordinate to anchor to. Date when xType is "time". */
+  readonly x: Date | number;
+  readonly y: number;
+}
+
 /**
  * A live, mounted chart handle returned by createChart.
  */
@@ -25,14 +37,16 @@ export interface ChartInstance<T> {
   readonly svg: SVGSelection;
   readonly update: (newData: readonly T[]) => void;
   readonly updateVisibleSeries: (labels: readonly string[]) => void;
+  readonly withAnnotations: (options: WithAnnotationsOptions) => ChartInstance<T>;
   readonly withAxes: (options?: WithAxesOptions) => ChartInstance<T>;
   readonly withCustom: (callback: CustomCallback | null) => ChartInstance<T>;
   readonly withGrid: (options?: WithGridOptions) => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
   readonly withPoints: () => ChartInstance<T>;
+  readonly withReferenceLines: (options: WithReferenceLinesOptions) => ChartInstance<T>;
   readonly withTitle: (options: WithTitleOptions) => ChartInstance<T>;
   readonly withTooltip: (options?: WithTooltipOptions) => ChartInstance<T>;
-  readonly withVisibleSeries: (labels: readonly string[]) => ChartInstance<T>;
+  readonly withVisibleSeries: (labels: readonly string[]) => void;
   readonly withZoomPan: (options?: WithZoomPanOptions) => ChartInstance<T>;
   /** Exposes the internal zoom behavior for testing observation. */
   readonly zoomBehavior: null | ZoomBehaviorWithReset;
@@ -44,6 +58,17 @@ export interface ChartOptions {
   readonly theme?: Partial<Theme>;
   readonly xType?: ScaleType;
   readonly yLabel?: string;
+}
+
+export interface ReferenceLine {
+  /** "y" renders a horizontal line at a y-domain value; "x" renders vertical. */
+  readonly axis: "x" | "y";
+  readonly label?: string;
+  readonly value: Date | number;
+}
+
+export interface WithAnnotationsOptions {
+  readonly annotations: readonly ChartAnnotation[];
 }
 
 export interface WithAxesOptions {
@@ -69,6 +94,10 @@ export interface WithLegendOptions {
   readonly interactive?: boolean;
   readonly items?: readonly LegendItem[];
   readonly onToggle?: (label: string, isVisible: boolean) => void;
+}
+
+export interface WithReferenceLinesOptions {
+  readonly lines: readonly ReferenceLine[];
 }
 
 export interface WithTitleOptions {

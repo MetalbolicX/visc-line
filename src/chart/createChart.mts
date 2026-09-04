@@ -134,21 +134,25 @@ export const createChart = <T,>(
   const state: ChartState<T> = {
     allSeries,
     allSeriesExtents,
+    annotationsOptions: null,
     axesOptions: {},
     currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
     gridOptions: {},
+    hasAnnotations: false,
     hasAxes: false,
     hasCustom: false,
     hasGrid: false,
     hasLegend: false,
     hasPoints: false,
+    hasReferenceLines: false,
     hasTitle: false,
     hasTooltip: false,
     hasZoomPan: false,
     isDisposed: false,
     legendOptions: null,
+    referenceLinesOptions: { lines: [] },
     titleOptions: null,
     tooltipOptions: {},
     visibleLabels: defaultVisibleLabels,
@@ -244,6 +248,14 @@ export const createChart = <T,>(
       state.zoomBehavior?.reset();
       render();
     },
+    withAnnotations: (options): ChartInstance<T> => {
+      ensureActive();
+      if (state.hasAnnotations) return chart;
+      state.hasAnnotations = true;
+      state.annotationsOptions = options;
+      render();
+      return chart;
+    },
     withAxes: (options = {}): ChartInstance<T> => {
       ensureActive();
       if (state.hasAxes) return chart;
@@ -288,6 +300,14 @@ export const createChart = <T,>(
       ensureActive();
       if (state.hasPoints) return chart;
       state.hasPoints = true;
+      render();
+      return chart;
+    },
+    withReferenceLines: (options): ChartInstance<T> => {
+      ensureActive();
+      if (state.hasReferenceLines) return chart;
+      state.hasReferenceLines = true;
+      state.referenceLinesOptions = options;
       render();
       return chart;
     },
