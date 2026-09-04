@@ -139,6 +139,41 @@ import { renderYAxis } from "@/components/yAxis.mjs";
 import { addTooltip } from "@/interactivity/tooltip.mjs";
 import { addZoomPan } from "@/interactivity/zoomPan.mjs";
 
+// ─── File-local helpers ───────────────────────────────────────────────────────
+
+type TickFormat = (domainValue: import("d3").AxisDomain, index: number) => string;
+
+const resolveEffectiveXTickFormat = (
+  xType: ScaleType,
+  axesOptions: WithAxesOptions,
+): TickFormat | undefined =>
+  xType === "time" && axesOptions.timeTickFormat !== undefined
+    ? typeof axesOptions.timeTickFormat === "string"
+      ? (timeFormat(axesOptions.timeTickFormat) as TickFormat)
+      : (axesOptions.timeTickFormat as TickFormat)
+    : axesOptions.xTickFormat;
+
+const renderGridScales = (
+  content: import("@/types/index.mjs").BoundsSelection,
+  xScale: AnyScale,
+  yScale: AnyScale,
+  gridOptions: WithGridOptions,
+): void => {
+  const { showX = true, showY = true } = gridOptions;
+  if (showX) { content.call(renderXGrid, xScale, yScale); }
+  else { content.selectAll("line.grid-x").remove(); }
+  if (showY) { content.call(renderYGrid, xScale, yScale); }
+  else { content.selectAll("line.grid-y").remove(); }
+};
+
+const renderPointsAt = (
+  ctx: FeatureRenderContext<unknown>,
+  xScale: AnyScale,
+  yScale: AnyScale,
+): void => {
+  renderPoints(ctx.content, ctx.state.currentSeries, xScale, yScale, ctx.config.xSerie.accessor);
+};
+
 /**
  * Axes feature definition.
  *
@@ -167,16 +202,8 @@ export const axesDef: FeatureDefinition<"axes"> = {
   key: "axes",
   onZoomRedraw: (ctx, dims, newX, newY) => {
     if (!ctx.flags.hasAxes) return;
-    const { timeTickFormat, xTickCount, xTickFormat, yTickCount, yTickFormat } =
-      ctx.state.axesOptions;
-    const effectiveXTickFormat:
-      | ((domainValue: import("d3").AxisDomain, index: number) => string)
-      | undefined =
-      ctx.xType === "time" && timeTickFormat !== undefined
-        ? typeof timeTickFormat === "string"
-          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
-          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
-        : xTickFormat;
+    const { xTickCount, yTickCount, yTickFormat } = ctx.state.axesOptions;
+    const effectiveXTickFormat = resolveEffectiveXTickFormat(ctx.xType, ctx.state.axesOptions);
     ctx.bounds.call(renderXAxis, newX, dims.innerHeight, {
       tickCount: xTickCount,
       tickFormat: effectiveXTickFormat,
@@ -191,16 +218,8 @@ export const axesDef: FeatureDefinition<"axes"> = {
 
   render: (ctx, dims) => {
     if (!ctx.flags.hasAxes) return;
-    const { timeTickFormat, xTickCount, xTickFormat, yTickCount, yTickFormat } =
-      ctx.state.axesOptions;
-    const effectiveXTickFormat:
-      | ((domainValue: import("d3").AxisDomain, index: number) => string)
-      | undefined =
-      ctx.xType === "time" && timeTickFormat !== undefined
-        ? typeof timeTickFormat === "string"
-          ? (timeFormat(timeTickFormat) as (domainValue: import("d3").AxisDomain, index: number) => string)
-          : (timeTickFormat as (domainValue: import("d3").AxisDomain, index: number) => string)
-        : xTickFormat;
+    const { xTickCount, yTickCount, yTickFormat } = ctx.state.axesOptions;
+    const effectiveXTickFormat = resolveEffectiveXTickFormat(ctx.xType, ctx.state.axesOptions);
     ctx.bounds
       .call(renderXAxis, ctx.xScale, dims.innerHeight, {
         tickCount: xTickCount,
@@ -249,34 +268,14 @@ export const gridDef: FeatureDefinition<"grid"> = {
   key: "grid",
   onZoomRedraw: (ctx, _dims, newX, newY) => {
     if (!ctx.flags.hasGrid) return;
-    const { showX = true, showY = true } = ctx.state.gridOptions as WithGridOptions;
-    if (showX) {
-      ctx.content.call(renderXGrid, newX, newY);
-    } else {
-      ctx.content.selectAll("line.grid-x").remove();
-    }
-    if (showY) {
-      ctx.content.call(renderYGrid, newX, newY);
-    } else {
-      ctx.content.selectAll("line.grid-y").remove();
-    }
+    renderGridScales(ctx.content, newX, newY, ctx.state.gridOptions as WithGridOptions);
   },
 
   optionsKey: "gridOptions",
 
   render: (ctx, _dims) => {
     if (!ctx.flags.hasGrid) return;
-    const { showX = true, showY = true } = ctx.state.gridOptions as WithGridOptions;
-    if (showX) {
-      ctx.content.call(renderXGrid, ctx.xScale, ctx.yScale);
-    } else {
-      ctx.content.selectAll("line.grid-x").remove();
-    }
-    if (showY) {
-      ctx.content.call(renderYGrid, ctx.xScale, ctx.yScale);
-    } else {
-      ctx.content.selectAll("line.grid-y").remove();
-    }
+    renderGridScales(ctx.content, ctx.xScale, ctx.yScale, ctx.state.gridOptions as WithGridOptions);
   },
 };
 
@@ -507,26 +506,14 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition<FeatureKey>[] = [
     key: "points",
     onZoomRedraw: (ctx, _dims, newX, newY) => {
       if (!ctx.flags.hasPoints) return;
-      renderPoints(
-        ctx.content,
-        ctx.state.currentSeries,
-        newX,
-        newY,
-        ctx.config.xSerie.accessor,
-      );
+      renderPointsAt(ctx, newX, newY);
     },
 
     optionsKey: "hasPoints",
 
     render: (ctx) => {
       if (!ctx.flags.hasPoints) return;
-      renderPoints(
-        ctx.content,
-        ctx.state.currentSeries,
-        ctx.xScale,
-        ctx.yScale,
-        ctx.config.xSerie.accessor,
-      );
+      renderPointsAt(ctx, ctx.xScale, ctx.yScale);
     },
   },
 ];

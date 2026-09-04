@@ -26,7 +26,7 @@ before starting, honor its STOP conditions, and update your row when done.
 | 014  | BUILD: migrate features to FeatureDefinition registry | P2 | L | 002, 006, 009, 012 | DONE |
 | 015  | BUILD: ship timeTickFormat option | P2 | S | 009, 013 | DONE |
 | 016  | Make points follow zoom/pan (strict TDD) | P1 | S | — | DONE |
-| 017  | Dedupe render/onZoomRedraw pairs (refactor-under-green) | P2 | S | 016 | TODO |
+| 017  | Dedupe render/onZoomRedraw pairs (refactor-under-green) | P2 | S | 016 | DONE |
 | 018  | Decompose featureRegistry.mts (SDD) | P2 | L | 016, 017 | TODO |
 | 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | TODO |
 | 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | TODO |
