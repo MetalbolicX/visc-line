@@ -13,8 +13,8 @@ import type { Margins } from "@/types/index.mjs";
 
 import { clearOptionalNodes } from "@/chart/chartLifecycle.mjs";
 import { FEATURE_REGISTRY } from "@/chart/featureRegistry.mjs";
+import { redrawLine } from "@/chart/redrawLine.mjs";
 import { renderContentGroup } from "@/components/contentGroup.mjs";
-import { renderLine } from "@/components/line.mjs";
 import {
   createScales,
   getDimensions,
@@ -156,13 +156,10 @@ export const renderChart = <T,>(
     yDomain: yDomainToUse,
   });
 
-  renderLine<T>(
-    content,
-    context.state.currentSeries,
+  redrawLine<T>(
+    { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, callbacks, content, xScale, yScale } as FeatureRenderContext<T>,
     xScale,
     yScale,
-    context.config.xSerie.accessor,
-    { curve: context.resolvedCurve, reducedMotion: context.reducedMotion },
   );
 
   // Registry-driven feature render loop
