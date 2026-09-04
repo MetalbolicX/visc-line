@@ -63,6 +63,14 @@ export const applyThemeCssVars = (root: HTMLElement, theme: Theme): void => {
     style.setProperty("--vl-tooltip-padding", `${String(theme.tooltip.padding)}px`);
     style.setProperty("--vl-tooltip-font-size", `${String(theme.tooltip.fontSize)}px`);
     style.setProperty("--vl-tooltip-color", theme.tooltip.color);
+    if (theme.tooltip.cursor) {
+      style.setProperty("--vl-tooltip-cursor-color", theme.tooltip.cursor.color);
+      style.setProperty("--vl-tooltip-cursor-dash-array", theme.tooltip.cursor.dashArray);
+      style.setProperty("--vl-tooltip-cursor-dot-radius", String(theme.tooltip.cursor.dotRadius));
+      style.setProperty("--vl-tooltip-cursor-dot-stroke", theme.tooltip.cursor.dotStroke);
+      style.setProperty("--vl-tooltip-cursor-dot-stroke-width", String(theme.tooltip.cursor.dotStrokeWidth));
+      style.setProperty("--vl-tooltip-cursor-stroke-width", String(theme.tooltip.cursor.lineStrokeWidth));
+    }
   }
 
   if (theme.accessibility?.highContrast) {

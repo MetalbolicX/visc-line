@@ -90,6 +90,14 @@ export interface Theme {
     readonly border: string;
     readonly borderRadius: number;
     readonly color: string;
+    readonly cursor: Readonly<{
+      readonly color: string;
+      readonly dashArray: string;
+      readonly dotRadius: number;
+      readonly dotStroke: string;
+      readonly dotStrokeWidth: number;
+      readonly lineStrokeWidth: number;
+    }>;
     readonly fontSize: number;
     readonly padding: number;
   }>;
