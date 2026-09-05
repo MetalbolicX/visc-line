@@ -40,6 +40,7 @@ export interface ChartInstance<T> {
   readonly withAnnotations: (options: WithAnnotationsOptions) => ChartInstance<T>;
   readonly withAxes: (options?: WithAxesOptions) => ChartInstance<T>;
   readonly withCustom: (callback: CustomCallback | null) => ChartInstance<T>;
+  readonly withEndLabels: (options?: WithEndLabelsOptions) => ChartInstance<T>;
   readonly withFocus: (labels: null | readonly string[] | string) => ChartInstance<T>;
   readonly withGrid: (options?: WithGridOptions) => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
@@ -108,6 +109,12 @@ export interface WithAxesOptions {
   readonly xTickFormat?: (domainValue: AxisDomain, index: number) => string;
   readonly yTickCount?: number;
   readonly yTickFormat?: (domainValue: AxisDomain, index: number) => string;
+}
+
+export interface WithEndLabelsOptions {
+  readonly collision?: "hide" | "legend" | "nudge";
+  readonly format?: (label: string, lastValue: number) => string;
+  readonly offset?: number;
 }
 
 export interface WithGridOptions {

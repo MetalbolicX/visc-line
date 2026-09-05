@@ -28,6 +28,7 @@ import type { FeatureDefinition } from "@/chart/featureContext.mjs";
 import { annotationsDef } from "@/chart/featureDefs/annotations.mjs";
 import { axesDef } from "@/chart/featureDefs/axes.mjs";
 import { customDef } from "@/chart/featureDefs/custom.mjs";
+import { endLabelsDef } from "@/chart/featureDefs/endLabels.mjs";
 import { gridDef } from "@/chart/featureDefs/grid.mjs";
 import { legendDef } from "@/chart/featureDefs/legend.mjs";
 import { pointsDef } from "@/chart/featureDefs/points.mjs";
@@ -39,7 +40,7 @@ import { zoomPanDef } from "@/chart/featureDefs/zoomPan.mjs";
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 /** Ordered registry — the array order IS the render sequence */
-export const FEATURE_REGISTRY: readonly FeatureDefinition<"annotations" | "axes" | "custom" | "grid" | "legend" | "points" | "referenceLines" | "title" | "tooltip" | "zoomPan">[] = [
+export const FEATURE_REGISTRY: readonly FeatureDefinition<"annotations" | "axes" | "custom" | "endLabels" | "grid" | "legend" | "points" | "referenceLines" | "title" | "tooltip" | "zoomPan">[] = [
   axesDef,
   gridDef,
   referenceLinesDef,
@@ -49,5 +50,6 @@ export const FEATURE_REGISTRY: readonly FeatureDefinition<"annotations" | "axes"
   zoomPanDef,
   customDef,
   annotationsDef,
+  endLabelsDef,
   pointsDef,
 ];

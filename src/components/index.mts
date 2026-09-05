@@ -8,6 +8,9 @@ export { renderBoundsGroup } from "@/components/boundsGroup.mjs";
 
 export { renderContentGroup } from "@/components/contentGroup.mjs";
 
+export { renderEndLabels } from "@/components/endLabels.mjs";
+
+export type { RenderEndLabelsOptions } from "@/components/endLabels.mjs";
 export { renderXGrid, renderYGrid } from "@/components/grid.mjs";
 
 export { renderLegend } from "@/components/legend.mjs";

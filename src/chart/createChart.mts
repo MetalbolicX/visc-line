@@ -149,11 +149,13 @@ export const createChart = <T,>(
     currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
+    endLabelsOptions: null,
     focusLabels: new Set<string>(),
     gridOptions: {},
     hasAnnotations: false,
     hasAxes: false,
     hasCustom: false,
+    hasEndLabels: false,
     hasGrid: false,
     hasLegend: false,
     hasPoints: false,
@@ -339,6 +341,13 @@ export const createChart = <T,>(
         resolvedTheme.focus.dimOpacity,
       );
       state.zoomBehavior?.reset();
+      render();
+      return chart;
+    },
+    withEndLabels: (options = {}): ChartInstance<T> => {
+      ensureActive();
+      state.endLabelsOptions = options;
+      state.hasEndLabels = true;
       render();
       return chart;
     },

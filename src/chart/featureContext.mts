@@ -9,7 +9,7 @@
  */
 
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
-import type { WithAnnotationsOptions, WithAxesOptions, WithGridOptions, WithLegendOptions, WithReferenceLinesOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
+import type { WithAnnotationsOptions, WithAxesOptions, WithEndLabelsOptions, WithGridOptions, WithLegendOptions, WithReferenceLinesOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType } from "@/types/index.mjs";
 import type { Dimensions } from "@/types/layoutTypes.mjs";
@@ -60,7 +60,7 @@ export interface FeatureDefinition<K extends FeatureKey> {
 
 /** Discriminated union key for all registered features */
 export type FeatureKey =
-  | "annotations" | "axes" | "custom" | "grid"
+  | "annotations" | "axes" | "custom" | "endLabels" | "grid"
   | "legend" | "points" | "referenceLines" | "title"
   | "tooltip" | "zoomPan";
 
@@ -69,6 +69,7 @@ export type FeatureOptionsMap = {
   annotations: null | WithAnnotationsOptions;
   axes: WithAxesOptions;
   custom: CustomCallback | null;
+  endLabels: null | WithEndLabelsOptions;
   grid: WithGridOptions;
   legend: null | WithLegendOptions;
   points: null;

@@ -8,7 +8,7 @@
  * @internal
  */
 
-import type { WithAnnotationsOptions, WithAxesOptions, WithGridOptions, WithLegendOptions, WithReferenceLinesOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
+import type { WithAnnotationsOptions, WithAxesOptions, WithEndLabelsOptions, WithGridOptions, WithLegendOptions, WithReferenceLinesOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
 
 /**
  * Shallow equality for WithAxesOptions.
@@ -93,6 +93,20 @@ export const areTitleOptionsEqual = (a: unknown, b: unknown): boolean => {
   const pa = a as null | WithTitleOptions;
   const pb = b as WithTitleOptions;
   return pa?.title === pb.title;
+};
+
+/**
+ * Shallow equality for WithEndLabelsOptions.
+ * Compares collision, format, and offset.
+ */
+export const areEndLabelsOptionsEqual = (a: unknown, b: unknown): boolean => {
+  const pa = a as null | WithEndLabelsOptions;
+  const pb = b as WithEndLabelsOptions;
+  if (pa == null) return false;
+  if ((pa.collision ?? "nudge") !== (pb.collision ?? "nudge")) return false;
+  if (pa.format !== pb.format) return false;
+  if ((pa.offset ?? 8) !== (pb.offset ?? 8)) return false;
+  return true;
 };
 
 /**
