@@ -53,6 +53,11 @@ export interface ChartInstance<T> {
 }
 
 export interface ChartOptions {
+  /**
+   * Accessible name for the chart SVG (role=img). Defaults to
+   * 'Interactive line chart'.
+   */
+  readonly ariaLabel?: string;
   readonly curve?: CurveFactory | CurvePreset;
   /**
    * Controls how missing / invalid y values are rendered in the line.
@@ -71,6 +76,10 @@ export interface ChartOptions {
   readonly gapPolicy?: "break" | "bridge";
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
+  /**
+   * X-axis label text; rendered only when axes are enabled.
+   */
+  readonly xLabel?: string;
   readonly xType?: ScaleType;
   readonly yLabel?: string;
 }

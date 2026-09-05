@@ -111,6 +111,7 @@ export interface FeatureRenderContext<T> {
   readonly resolvedCurve: import("d3").CurveFactory;
   readonly state: ChartState<unknown>;
   readonly svg: import("@/types/index.mjs").SVGSelection;
+  readonly xLabel?: string;
   readonly xScale: AnyScale;
   readonly xType: ScaleType;
   readonly yLabel?: string;

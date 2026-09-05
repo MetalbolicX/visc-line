@@ -89,6 +89,7 @@ export interface RenderContext<T> {
   readonly resolvedCurve: CurveFactory;
   readonly state: ChartState<T>;
   readonly svg: SVGSelection;
+  readonly xLabel?: string;
   readonly xType: ScaleType;
   readonly yLabel?: string;
 }
