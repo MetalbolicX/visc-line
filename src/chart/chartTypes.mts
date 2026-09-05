@@ -40,6 +40,21 @@ export interface ChartInstance<T> {
 
 export interface ChartOptions {
   readonly curve?: CurveFactory | CurvePreset;
+  /**
+   * Controls how missing / invalid y values are rendered in the line.
+   *
+   * - `"break"` (default): when a y value is `NaN`, `null`, `undefined`, or
+   *   `Infinity`, the line generator skips that point and produces a visible gap
+   *   rather than silently bridging over the missing measurement. This is the
+   *   honest rendering for explanatory charts.
+   *
+   * - `"bridge"`: `d3.line()` draws a straight segment between the valid
+   *   neighbors, ignoring the gap. This was the previous default behavior.
+   *   Pass `gapPolicy: "bridge"` to restore it.
+   *
+   * @default "break"
+   */
+  readonly gapPolicy?: "break" | "bridge";
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
   readonly xType?: ScaleType;

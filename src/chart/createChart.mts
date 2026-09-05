@@ -61,6 +61,7 @@ export const createChart = <T,>(
   config: ChartConfig<T>,
   {
     curve,
+    gapPolicy = "break",
     margins = DEFAULT_MARGINS,
     theme,
     xType = "time",
@@ -120,11 +121,7 @@ export const createChart = <T,>(
     }
   };
 
-  const allSeries = processAllSeries<T>(
-    config.data,
-    config.xSerie.accessor,
-    config.ySeries,
-  );
+  const allSeries = processAllSeries<T>(config.data, config.xSerie.accessor, config.ySeries, gapPolicy);
   const allSeriesExtents = getMultiSeriesExtents(
     allSeries,
     config.xSerie.accessor,
@@ -166,6 +163,7 @@ export const createChart = <T,>(
         flags: Object.fromEntries(
           FEATURE_REGISTRY.map((f) => [f.flagKey, Boolean(state[f.flagKey])]),
         ) as unknown as import("@/chart/chartState.mjs").FeatureFlags,
+        gapPolicy,
         margins,
         reducedMotion,
         resolvedCurve,

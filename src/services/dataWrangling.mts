@@ -10,7 +10,7 @@ import type { ProcessedSeries, SeriesDescriptor } from "@/types/index.mjs";
  * @param v - Any value to validate.
  * @returns True if v is a usable numeric value or a Date, false otherwise.
  */
-const isValidNumber = (v: unknown): boolean =>
+export const isValidNumber = (v: unknown): boolean =>
   v !== null &&
   v !== undefined &&
   (v instanceof Date
@@ -40,6 +40,33 @@ export const processNumericData = <T,>(
   );
 
 /**
+ * Filters an array of data items, keeping only those where the x value
+ * (obtained via the provided accessor) is a valid number or Date.
+ * Unlike `processNumericData`, y validity is NOT checked — this preserves
+ * gap rows so that `line.defined()` can break the path rather than silently bridging.
+ *
+ * @template T
+ * @param rawData - Array of raw data items to filter.
+ * @param xAccessor - Function that returns the x value for an item (number or Date).
+ * @param _yAccessor - Not used; kept for API symmetry with processNumericData.
+ * @returns Array of data items for which xAccessor(item) is valid.
+ */
+export const processNumericDataXOnly = <T,>(
+  rawData: readonly T[],
+  xAccessor: (d: T) => unknown,
+  _yAccessor: (d: T) => unknown,
+): readonly T[] => {
+   
+  const isXValid = (v: unknown): boolean =>
+    v !== null &&
+    v !== undefined &&
+    (v instanceof Date
+      ? !Number.isNaN(v.getTime())
+      : !Number.isNaN(Number(v)) && Number.isFinite(Number(v)));
+  return rawData.filter((d) => isXValid(xAccessor(d)));
+};
+
+/**
  * Processes all series descriptors by computing numeric data for each series.
  *
  * For each entry in ySeries this returns a new descriptor object that preserves
@@ -55,10 +82,13 @@ export const processAllSeries = <T,>(
   rawData: readonly T[],
   xAccessor: (d: T) => unknown,
   ySeries: readonly SeriesDescriptor<T>[],
+  gapPolicy: "break" | "bridge" = "bridge",
 ): readonly ProcessedSeries<T>[] =>
   ySeries.map((serie) => ({
     ...serie,
-    data: processNumericData(rawData, xAccessor, serie.accessor),
+    data: gapPolicy === "break"
+      ? processNumericDataXOnly(rawData, xAccessor, serie.accessor)
+      : processNumericData(rawData, xAccessor, serie.accessor),
   }));
 
 /**
