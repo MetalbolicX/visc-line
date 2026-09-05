@@ -46,7 +46,7 @@
 
   <!-- d3 MUST load before the UMD bundle so the global is available -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-  <script src="./index.umd.js"></script>
+  <script src="../../dist/index.umd.js"></script>
   <script>
     window.__chartError = null;
     window.onerror = function (msg) {
@@ -54,6 +54,7 @@
     };
 
     // ── #chart-full: time-series, all features ───────────────────────────────
+    window.__charts = {};
     var timeData = [
       { date: new Date('2024-01-01'), revenue: 100 },
       { date: new Date('2024-02-01'), revenue: 130 },
@@ -63,7 +64,7 @@
       { date: new Date('2024-06-01'), revenue: 180 },
     ];
 
-    ViscLine.createChart(
+    window.__charts.full = ViscLine.createChart(
       document.getElementById('chart-full'),
       {
         data: timeData,
@@ -89,7 +90,7 @@
       { x: 5, y: 22 },
     ];
 
-    ViscLine.createChart(
+    window.__charts.minimal = ViscLine.createChart(
       document.getElementById('chart-minimal'),
       {
         data: numericData,
@@ -100,7 +101,7 @@
     );
 
     // ── #chart-empty: empty array — plan-004 guard ─────────────────────────
-    ViscLine.createChart(
+    window.__charts.empty = ViscLine.createChart(
       document.getElementById('chart-empty'),
       {
         data: [],
