@@ -51,6 +51,7 @@ createChart<T>(
 | `dispose()`             | `() => void`                                   | Tear down resize observer, enhancements, and listeners |
 | `withAxes(options?)` | `(WithAxesOptions?) => ChartInstance<T>` | Enable x/y axes and axis labels                    |
 | `withCustom(callback)` | `(CustomCallback \| null) => ChartInstance<T>` | Inject custom D3 drawing code (see below)            |
+| `withEndLabels(options?)` | `(WithEndLabelsOptions?) => ChartInstance<T>` | Enable direct labels at series ends                   |
 | `withGrid(options?)` | `(WithGridOptions?) => ChartInstance<T>` | Enable x/y grid lines                               |
 | `withLegend(options?)`  | `(WithLegendOptions?) => ChartInstance<T>`     | Enable legend (optionally interactive)                 |
 | `withPoints()`          | `() => ChartInstance<T>`                       | Enable point markers                                   |
@@ -60,6 +61,53 @@ createChart<T>(
 | `withZoomPan(options?)` | `(WithZoomPanOptions?) => ChartInstance<T>`    | Enable zoom/pan behavior                               |
 
 All fluent methods return `this` for chaining. After `dispose()`, all methods throw.
+
+---
+
+### `withEndLabels(options?)` — direct labels at series ends
+
+Adds a text label at the end of each visible series (anchored at max-x).
+For printed/static output this is the Storytelling-with-Data-recommended
+alternative to legends.
+
+```ts
+interface WithEndLabelsOptions {
+  /** Collision policy: "nudge" (default) | "hide" | "legend" */
+  readonly collision?: "hide" | "legend" | "nudge";
+  /** Format function: (label, lastValue) => string */
+  readonly format?: (label: string, lastValue: number) => string;
+  /** Horizontal offset in pixels (default: 8) */
+  readonly offset?: number;
+}
+```
+
+**Collision behavior**:
+
+- `"nudge"` (default): pushes overlapping labels apart vertically within bounds;
+  unresolvable labels are dropped with one `console.warn` per render.
+- `"hide"`: skips overlapping labels silently.
+- `"legend"`: if any overlap detected, renders NO labels and warns
+  "consider chart.withLegend() instead". The library does not silently
+  add a legend.
+
+```ts
+// Default: nudge policy
+chart.withEndLabels();
+
+// Explicit nudge
+chart.withEndLabels({ collision: "nudge" });
+
+// Hide overlapping labels
+chart.withEndLabels({ collision: "hide" });
+
+// Legend policy: all-or-nothing
+chart.withEndLabels({ collision: "legend" });
+
+// Custom format
+chart.withEndLabels({
+  format: (label, lastValue) => `${label}: ${lastValue}`
+});
+```
 
 ---
 

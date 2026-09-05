@@ -61,6 +61,12 @@ export interface WithAxesOptions {
   readonly yTickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
+export interface WithEndLabelsOptions {
+  readonly collision?: "hide" | "legend" | "nudge";
+  readonly format?: (label: string, lastValue: number) => string;
+  readonly offset?: number;
+}
+
 export interface WithGridOptions {
   readonly showX?: boolean;
   readonly showY?: boolean;
@@ -81,12 +87,6 @@ export interface WithTooltipOptions {
   readonly formatY?: (v: unknown) => string;
   readonly stylesheetUrl?: string;
   readonly tooltipHtml?: (data: TooltipData) => string;
-}
-
-export interface WithEndLabelsOptions {
-  readonly collision?: "hide" | "legend" | "nudge";
-  readonly format?: (label: string, lastValue: number) => string;
-  readonly offset?: number;
 }
 
 export interface WithZoomPanOptions {

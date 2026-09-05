@@ -1,5 +1,6 @@
-import { select } from "d3";
 import type { Selection } from "d3";
+
+import { select } from "d3";
 
 import type { AnyScale, BoundsSelection, ProcessedSeries } from "@/types/index.mjs";
 
@@ -10,48 +11,48 @@ export interface RenderEndLabelsOptions {
 }
 
 interface LabelRect<S extends Selection<SVGTextElement, unknown, null, undefined>> {
-  readonly node: S;
-  readonly y: number;
   readonly height: number;
   readonly label: string;
+  readonly node: S;
+  readonly y: number;
 }
 
 /** Pure collision resolution — testable without getBBox. */
 export const resolveCollisions = <S extends Selection<SVGTextElement, unknown, null, undefined>>(
   labels: ReadonlyArray<LabelRect<S>>,
   policy: "hide" | "legend" | "nudge",
-  bounds: { minY: number; maxY: number; lineHeight: number },
-): { kept: ReadonlyArray<{ node: S; y: number; height: number }>; dropped: readonly string[] } => {
-  if (labels.length === 0) return { kept: [], dropped: [] };
+  bounds: { lineHeight: number; maxY: number; minY: number; },
+): { dropped: readonly string[]; kept: ReadonlyArray<{ height: number; node: S; y: number; }>; } => {
+  if (labels.length === 0) return { dropped: [], kept: [] };
 
   const sorted = [...labels].sort((a, b) => a.y - b.y);
   const requiredGap = (a: LabelRect<S>, b: LabelRect<S>): number =>
     Math.max(bounds.lineHeight, a.height, b.height);
-  const hasCollision = sorted.some((label, index) =>
+  const hascollision = sorted.some((label, index) =>
     index > 0 && label.y - sorted[index - 1].y < requiredGap(sorted[index - 1], label),
   );
 
   if (policy === "legend") {
-    return hasCollision
-      ? { kept: [], dropped: sorted.map(({ label }) => label) }
-      : { kept: sorted.map(({ node, y, height }) => ({ node, y, height })), dropped: [] };
+    return hascollision
+      ? { dropped: sorted.map(({ label }) => label), kept: [] }
+      : { dropped: [], kept: sorted.map(({ height, node, y }) => ({ height, node, y })) };
   }
 
   if (policy === "hide") {
-    const kept: Array<{ node: S; y: number; height: number }> = [];
+    const kept: Array<{ height: number; node: S; y: number; }> = [];
     const dropped: string[] = [];
     for (const label of sorted) {
       const previous = kept.at(-1);
       if (previous && label.y - previous.y < Math.max(bounds.lineHeight, label.height, previous.height)) {
         dropped.push(label.label);
       } else {
-        kept.push({ node: label.node, y: label.y, height: label.height });
+        kept.push({ height: label.height, node: label.node, y: label.y });
       }
     }
-    return { kept, dropped };
+    return { dropped, kept };
   }
 
-  const kept: Array<{ node: S; y: number; height: number }> = [];
+  const kept: Array<{ height: number; node: S; y: number; }> = [];
   const dropped: string[] = [];
   for (const label of sorted) {
     const previous = kept.at(-1);
@@ -61,10 +62,10 @@ export const resolveCollisions = <S extends Selection<SVGTextElement, unknown, n
     if (y > bounds.maxY) {
       dropped.push(label.label);
     } else {
-      kept.push({ node: label.node, y, height: label.height });
+      kept.push({ height: label.height, node: label.node, y });
     }
   }
-  return { kept, dropped };
+  return { dropped, kept };
 };
 
 export const renderEndLabels = <T,>(
@@ -77,7 +78,7 @@ export const renderEndLabels = <T,>(
 ): void => {
   const { collision = "nudge", format, offset = 8 } = options;
   const labelsPerSeries = series.map((serie) => {
-    let last = serie.data[0];
+    let [last] = serie.data;
     let maxX = -Infinity;
     for (const datum of serie.data) {
       const xValue = Number(xAccessor(datum));
@@ -117,7 +118,7 @@ export const renderEndLabels = <T,>(
     return { height: rect.height, label: labelsPerSeries[index].label, node: select(node), y: labelsPerSeries[index].y };
   });
   const contentBox = (content.node() as SVGGElement).getBBox();
-  const { kept, dropped } = resolveCollisions(measured, collision, {
+  const { dropped, kept } = resolveCollisions(measured, collision, {
     lineHeight: 16,
     maxY: contentBox.y + contentBox.height,
     minY: contentBox.y,
