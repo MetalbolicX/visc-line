@@ -255,7 +255,18 @@ env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cd
 `minimalSvgAfterDispose` reflects the library's disposal behavior (the SVG node
 remains in the DOM; only chart-instance internal state is cleaned up).
 
+> **Important**: `ChartInstance.dispose()` deliberately does **not** remove the SVG
+> from the DOM. It releases lifecycle resources (zoom behavior, resize observers,
+> tooltip state) and cleans up optional feature enhancements, but the SVG element
+> stays in the container. If the application needs DOM removal, it must clear the
+> container element itself.
+
 ---
+
+> **Alpine/musl limitation**: Playwright's downloaded Chromium is glibc-only and does
+> not run on this Alpine/musl host; its CDN download also times out on this
+> network. The system Chromium route (documented in Prerequisites) is the
+> verified, supported path for this environment.
 
 ## Cleanup
 

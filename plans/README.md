@@ -96,6 +96,15 @@ REJECTED (with one-line rationale)
 
 > Note (prior sequence): the original ordering had 001 first, but a pre-existing broken test suite blocks `pnpm check` from going green. Plan 003 is the true first execution; plans 001 and 002 were re-ordered to depend on it.
 
+## Known verification blockers
+
+- **`pnpm test` hangs in Vitest watch mode** on this Alpine CI executor (non-TTY).
+  `pnpm exec vitest --run` is the correct substitute, but it fails on both `main`
+  and this branch before these e2e changes with `ERR_LOAD_URL` from `.mjs` test
+  imports resolving against `.mts` sources via Vite aliases. This is a
+  pre-existing, environment-level Vite/Vitest incompatibility unrelated to plan
+  023.
+
 ## Verification flow after every plan
 
 `pnpm check` (type-check → test → build; lint appended by plan 011). CI
