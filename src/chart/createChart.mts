@@ -305,6 +305,13 @@ export const createChart = <T,>(
       render();
       return chart;
     },
+    withEndLabels: (options = {}): ChartInstance<T> => {
+      ensureActive();
+      state.endLabelsOptions = options;
+      state.hasEndLabels = true;
+      render();
+      return chart;
+    },
     withFocus: (labels): ChartInstance<T> => {
       ensureActive();
       if (labels === null) {
@@ -341,13 +348,6 @@ export const createChart = <T,>(
         resolvedTheme.focus.dimOpacity,
       );
       state.zoomBehavior?.reset();
-      render();
-      return chart;
-    },
-    withEndLabels: (options = {}): ChartInstance<T> => {
-      ensureActive();
-      state.endLabelsOptions = options;
-      state.hasEndLabels = true;
       render();
       return chart;
     },
