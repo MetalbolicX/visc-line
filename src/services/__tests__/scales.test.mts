@@ -223,6 +223,47 @@ describe("createScales", () => {
       expect(warnSpy).not.toHaveBeenCalled();
     });
 
+    it("accepts historical Date domains without warning and maps them in range", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [new Date("2020-02-01"), new Date("2020-06-01")],
+        xType: "time",
+        yDomain: [0, 100],
+      });
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      expect(result.xScale(new Date("2020-02-01"))).toBeGreaterThanOrEqual(0);
+      expect(result.xScale(new Date("2020-06-01"))).toBeLessThanOrEqual(800);
+    });
+
+    it("preserves the year of a historical Date domain", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [new Date("2020-02-01"), new Date("2020-06-01")],
+        xType: "time",
+        yDomain: [0, 100],
+      });
+
+      expect((result.xScale.domain()[0] as Date).getFullYear()).toBe(2020);
+    });
+
+    it("maps dates older than 24 hours to finite in-range pixels", () => {
+      const result = createScales({
+        innerHeight: 400,
+        innerWidth: 800,
+        xDomain: [new Date("2020-02-01"), new Date("2020-06-01")],
+        xType: "time",
+        yDomain: [0, 100],
+      });
+      const mapped = result.xScale(new Date("2020-03-15"));
+
+      expect(Number.isFinite(mapped)).toBe(true);
+      expect(mapped).toBeGreaterThanOrEqual(0);
+      expect(mapped).toBeLessThanOrEqual(800);
+    });
+
     it("returns [0, 1] and warns once when yDomain is [undefined, undefined] (linear)", () => {
       const result = createScales({
         innerHeight: 400,
