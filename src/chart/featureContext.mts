@@ -89,7 +89,21 @@ export interface FeatureRenderContext<T> {
   readonly container: HTMLElement;
   /** Clip-path content group — the proper target for grid/points rendering */
   readonly content: import("@/types/index.mjs").BoundsSelection;
+  /**
+   * Y-validity predicate used for line gap handling.
+   * When set and gapPolicy is "break", the line generator uses this to break
+   * at invalid y values rather than bridging over them.
+   * Undefined when gapPolicy is "bridge" (or unset).
+   */
+  readonly defined?: <U>(serie: import("@/types/index.mjs").ProcessedSeries<U>) => (d: U) => boolean;
   readonly flags: FeatureFlags;
+  /**
+   * X-only filtered series used for line rendering when gapPolicy is "break".
+   * When set, the line renderer uses this series instead of currentSeries,
+   * preserving rows with valid x but invalid y so .defined() can break the path.
+   * Undefined when gapPolicy is "bridge" (or unset).
+   */
+  readonly lineSeries?: readonly import("@/types/index.mjs").ProcessedSeries<T>[];
   readonly margins: Margins;
   readonly reducedMotion: boolean;
   readonly resolvedCurve: import("d3").CurveFactory;

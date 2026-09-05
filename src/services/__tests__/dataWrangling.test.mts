@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ProcessedSeries } from "../../types/index.mjs";
 
-import { getMultiSeriesExtents, processNumericData } from "../../services/dataWrangling.mjs";
+import { getMultiSeriesExtents, processNumericData, processNumericDataXOnly } from "../../services/dataWrangling.mjs";
 
 interface SeriesPoint {
   readonly x: number;
@@ -132,6 +132,46 @@ describe("processNumericData", () => {
      */
     const result = processNumericData(rawData, (d) => d.x, (d) => d.y);
     expect(result).toEqual([]);
+  });
+});
+
+describe("processNumericDataXOnly (plan-025)", () => {
+  it("keeps rows with valid x regardless of y validity", () => {
+    const rawData = [
+      { x: 1, y: NaN },
+      { x: 2, y: 3 },
+    ];
+    const result = processNumericDataXOnly(rawData, (d) => d.x, (d) => d.y);
+    expect(result.length).toBe(2);
+    expect(result.map((d: { x: number; y: number }) => d.x)).toEqual([1, 2]);
+  });
+
+  it("still removes rows with invalid x even if y is valid", () => {
+    const rawData = [
+      { x: NaN, y: 2 },
+      { x: 1, y: 3 },
+    ];
+    const result = processNumericDataXOnly(rawData, (d) => d.x, (d) => d.y);
+    expect(result.length).toBe(1);
+    expect(result[0].x).toBe(1);
+  });
+
+  it("keeps rows where y is Infinity but x is valid", () => {
+    const rawData = [
+      { x: 1, y: Infinity },
+      { x: 2, y: 3 },
+    ];
+    const result = processNumericDataXOnly(rawData, (d) => d.x, (d) => d.y);
+    expect(result.length).toBe(2);
+  });
+
+  it("returns empty array when all x values are invalid", () => {
+    const rawData = [
+      { x: NaN, y: 1 },
+      { x: null, y: 2 },
+    ];
+    const result = processNumericDataXOnly(rawData, (d) => d.x, (d) => d.y);
+    expect(result.length).toBe(0);
   });
 });
 
