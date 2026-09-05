@@ -78,6 +78,9 @@ const isDomainValidForScale = (
   return isFinite(min) && isFinite(max) && min > 0 && max > 0;
 };
 
+const isFiniteEndpoint = (value: unknown): boolean =>
+  value !== undefined && value !== null && Number.isFinite(Number(value));
+
 /**
  * Guards a domain tuple against undefined or NaN endpoints, substituting a
  * scale-type-appropriate default and logging a warning.
@@ -94,8 +97,8 @@ export const ensureFiniteDomain = (
   silent = false,
 ): [number, number] => {
   const [a, b] = domain;
-  if (Number.isFinite(a as number) && Number.isFinite(b as number)) {
-    return [a as number, b as number];
+  if (isFiniteEndpoint(a) && isFiniteEndpoint(b)) {
+    return [Number(a), Number(b)];
   }
   if (!silent) {
     console.warn(
@@ -150,7 +153,7 @@ export const createScales = ({
   // Determine if domains are invalid so we warn only once when both are bad
   const [xa, xb] = xDomain;
   // eslint-disable-next-line @typescript-eslint/naming-convention -- internal logic variable
-  const xInvalid = !Number.isFinite(xa as number) || !Number.isFinite(xb as number);
+  const xInvalid = !isFiniteEndpoint(xa) || !isFiniteEndpoint(xb);
   // eslint-disable-next-line @typescript-eslint/naming-convention -- mirrors xInvalid
   const ySilent = xInvalid;
 
