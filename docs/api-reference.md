@@ -49,17 +49,62 @@ createChart<T>(
 | `update(newData)`       | `(readonly T[]) => void`                       | Re-render with new data (preserves visibility)         |
 | `updateVisibleSeries(labels)` | `(readonly string[]) => void`            | Change visibility at runtime                           |
 | `dispose()`             | `() => void`                                   | Tear down resize observer, enhancements, and listeners |
+| `withAnnotations(options)` | `(WithAnnotationsOptions) => ChartInstance<T>` | Enable data-anchored text callouts with optional connectors |
 | `withAxes(options?)` | `(WithAxesOptions?) => ChartInstance<T>` | Enable x/y axes and axis labels                    |
 | `withCustom(callback)` | `(CustomCallback \| null) => ChartInstance<T>` | Inject custom D3 drawing code (see below)            |
 | `withGrid(options?)` | `(WithGridOptions?) => ChartInstance<T>` | Enable x/y grid lines                               |
 | `withLegend(options?)`  | `(WithLegendOptions?) => ChartInstance<T>`     | Enable legend (optionally interactive)                 |
 | `withPoints()`          | `() => ChartInstance<T>`                       | Enable point markers                                   |
+| `withReferenceLines(options)` | `(WithReferenceLinesOptions) => ChartInstance<T>` | Enable horizontal/vertical reference lines      |
 | `withTitle(options)`    | `(WithTitleOptions) => ChartInstance<T>`       | Enable chart title                                     |
 | `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>`    | Enable tooltip interactivity                           |
 | `withVisibleSeries(labels)` | `(readonly string[]) => ChartInstance<T>`  | Declare which series to show (fluent, creation-time)   |
 | `withZoomPan(options?)` | `(WithZoomPanOptions?) => ChartInstance<T>`    | Enable zoom/pan behavior                               |
 
 All fluent methods return `this` for chaining. After `dispose()`, all methods throw.
+
+---
+
+### `withAnnotations` — Data-anchored callouts
+
+Render text callouts anchored to data coordinates with optional leader lines.
+
+```ts
+interface ChartAnnotation {
+  readonly x: number | Date;       // Data x coordinate
+  readonly y: number;               // Data y coordinate
+  readonly text: string;            // Annotation text
+  readonly dx?: number;            // Horizontal offset (default: 8)
+  readonly dy?: number;            // Vertical offset (default: -8)
+  readonly showConnector?: boolean; // Draw leader line (default: false)
+}
+```
+
+**`WithAnnotationsOptions`**
+
+| Field         | Type                        | Default | Description                     |
+| ------------- | --------------------------- | ------- | ------------------------------- |
+| `annotations` | `readonly ChartAnnotation[]` | `[]`    | Array of annotation definitions |
+
+---
+
+### `withReferenceLines` — Threshold and target lines
+
+Render horizontal or vertical dashed reference lines at data values.
+
+```ts
+interface ReferenceLine {
+  readonly axis: "x" | "y"; // Line orientation
+  readonly value: number | Date; // Domain value to line
+  readonly label?: string;    // Optional label text
+}
+```
+
+**`WithReferenceLinesOptions`**
+
+| Field  | Type                     | Default | Description                |
+| ------- | ------------------------ | ------- | -------------------------- |
+| `lines` | `readonly ReferenceLine[]` | `[]`    | Array of reference line definitions |
 
 ---
 

@@ -7,21 +7,25 @@ import type { ProcessedSeries } from "../../types/index.mjs";
 const makeState = (overrides: Partial<ChartState<unknown>> = {}): ChartState<unknown> => ({
   allSeries: [] as unknown as readonly ProcessedSeries<unknown>[],
   allSeriesExtents: { xDomain: [undefined, undefined], yDomain: [undefined, undefined] },
+  annotationsOptions: null,
+  axesOptions: {},
   currentSeries: [] as unknown as readonly ProcessedSeries<unknown>[],
   customCallback: null,
   customCleanup: null,
+  gridOptions: {},
+  hasAnnotations: false,
   hasAxes: false,
   hasCustom: false,
   hasGrid: false,
   hasLegend: false,
   hasPoints: false,
+  hasReferenceLines: false,
   hasTitle: false,
   hasTooltip: false,
   hasZoomPan: false,
   isDisposed: false,
-  axesOptions: {},
-  gridOptions: {},
   legendOptions: null,
+  referenceLinesOptions: { lines: [] },
   titleOptions: null,
   tooltipOptions: {},
   visibleLabels: new Set(),
@@ -86,19 +90,21 @@ describe("chartState", () => {
       expect(flags.hasZoomPan).toBe(true);
     });
 
-    it("returns a plain object with all 8 flag keys", () => {
+    it("returns a plain object with all 10 flag keys", () => {
       const state = makeState();
       const flags = deriveFlags(state);
       const flagKeys = Object.keys(flags) as (keyof FeatureFlags)[];
+      expect(flagKeys).toContain("hasAnnotations");
       expect(flagKeys).toContain("hasAxes");
       expect(flagKeys).toContain("hasCustom");
       expect(flagKeys).toContain("hasGrid");
       expect(flagKeys).toContain("hasLegend");
       expect(flagKeys).toContain("hasPoints");
+      expect(flagKeys).toContain("hasReferenceLines");
       expect(flagKeys).toContain("hasTitle");
       expect(flagKeys).toContain("hasTooltip");
       expect(flagKeys).toContain("hasZoomPan");
-      expect(flagKeys.length).toBe(8);
+      expect(flagKeys.length).toBe(10);
     });
 
     it("default state has all features off", () => {

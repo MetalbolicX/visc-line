@@ -36,16 +36,16 @@ starting, honor its STOP conditions, and update your row when done.
 | 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | DONE |
 | 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | DONE |
 | 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | DONE |
-| 022  | Data-anchored reference lines + annotations features | P1 | M | — | DONE (branch `feature/022-reference-lines-annotations`; NOT yet on main — merge is plan 027) |
-| 023  | playwright-cli-driven e2e harness (revive orphaned browser layer) | P2 | M | 001, 004 | DONE |
-| 024  | Fix Date-domain fallback in ensureFiniteDomain | P1 | S | — | TODO |
-| 025  | Honest missing-data rendering (gapPolicy via line.defined) | P1 | M | 024 first | TODO |
-| 026  | Time-series data contract (sort, duplicates, timezone, docs) | P2 | M | 025 | TODO |
-| 027  | Merge 022 branch to main + e2e scenario G | P1 | S | — | TODO |
-| 028  | Public ariaLabel + xLabel on ChartOptions | P2 | S | — | TODO |
-| 029  | Focus/emphasis API (withFocus) | P2 | M | — | TODO |
-| 030  | End-of-line direct labels with collision policy | P2 | M | 024 (soft 026) | TODO |
-| 031  | Release hygiene (vitest run, CI coverage, blocking lint) | P1 | S | last in round | TODO |
+ | 022  | Data-anchored reference lines + annotations features | P1 | M | — | DONE (branch `feature/022-reference-lines-annotations`; NOT yet on main — merge is plan 027) |
+ | 023  | playwright-cli-driven e2e harness (revive orphaned browser layer) | P2 | M | 001, 004 | DONE |
+ | 024  | Fix Date-domain fallback in ensureFiniteDomain | P1 | S | — | TODO |
+ | 025  | Honest missing-data rendering (gapPolicy via line.defined) | P1 | M | 024 first | TODO |
+ | 026  | Time-series data contract (sort, duplicates, timezone, docs) | P2 | M | 025 | TODO |
+ | 027  | Merge 022 branch to main + e2e scenario G | P1 | S | — | DONE |
+ | 028  | Public ariaLabel + xLabel on ChartOptions | P2 | S | — | TODO |
+ | 029  | Focus/emphasis API (withFocus) | P2 | M | — | TODO |
+ | 030  | End-of-line direct labels with collision policy | P2 | M | 024 (soft 026) | TODO |
+ | 031  | Release hygiene (vitest run, CI coverage, blocking lint) | P1 | S | last in round | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)

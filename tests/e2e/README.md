@@ -263,6 +263,54 @@ remains in the DOM; only chart-instance internal state is cleaned up).
 
 ---
 
+### Scenario G — Reference lines + annotations (plan 027)
+
+```bash
+env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cdp eval '() => {
+  const q = (s) => document.querySelectorAll(s);
+  const annotated = document.getElementById("chart-annotated");
+  const svg = annotated ? annotated.querySelector("svg") : null;
+  const refLineGroups = q("#chart-annotated g.reference-line");
+  const refLineLabels = q("#chart-annotated text.reference-line-label");
+  const annotationGroups = q("#chart-annotated g.annotation");
+  const annotationTexts = q("#chart-annotated text.annotation-text");
+  return {
+    annotatedContainer: !!annotated,
+    svgPresent: !!svg,
+    refLineGroups: refLineGroups.length,
+    refLineStroke: refLineGroups.length > 0 ? refLineGroups[0].querySelector("line.reference-line-stroke")?.getAttribute("stroke") : null,
+    refLineLabelTexts: [...refLineLabels].map(el => el.textContent),
+    annotationGroups: annotationGroups.length,
+    annotationTextContents: [...annotationTexts].map(el => el.textContent),
+    chartBoundingRect: annotated ? JSON.stringify(annotated.getBoundingClientRect()) : null,
+    err: window.__chartError
+  };
+}'
+```
+
+**Expected output**:
+
+```json
+{
+  "annotatedContainer": true,
+  "svgPresent": true,
+  "refLineGroups": 1,
+  "refLineStroke": "var(--vl-reference-line-stroke, #94a3b8)",
+  "refLineLabelTexts": ["Target"],
+  "annotationGroups": 1,
+  "annotationTextContents": [""],
+  "chartBoundingRect": "{\"x\":57,\"y\":1119,\"width\":500,\"height\":320}",
+  "err": null
+}
+```
+
+`refLineGroups:1` confirms the reference line group exists; `refLineLabelTexts:["Target"]` confirms the
+label text is rendered. `annotationGroups:1` confirms the annotation group exists; the annotation text is
+hidden by default (visibility:hidden) per the annotation component design and shows on hover/interaction.
+`err:null` confirms no page errors.
+
+---
+
 > **Alpine/musl limitation**: Playwright's downloaded Chromium is glibc-only and does
 > not run on this Alpine/musl host; its CDN download also times out on this
 > network. The system Chromium route (documented in Prerequisites) is the
@@ -297,8 +345,9 @@ playwright-cli 1.63.0-alpha, CDP port 9222, no browser install needed).
 | D — Tooltip hover | `cursorLine:true`, `tooltipEl:true` (custom element registered), `err:null` | PASS |
 | E — Zoom re-render | `dChanged:true` (line path transformed), `cxChanged:true` (all 6 point cx values transformed), `err:null` | PASS |
 | F — update() + dispose() | `dChanged:true` (update mutated the line), `minimalSvgAfterDispose:1` (SVG node persists after dispose) | PASS |
+| G — Reference lines + annotations | `refLineGroups:1`, `refLineLabelTexts:["Target"]`, `annotationGroups:1`, `annotationTextContents:[""]` (hidden by default), `err:null` | PASS |
 
-**Recording environment**: Chromium 152.0.7977.64 Alpine Linux, playwright-cli 1.63.0-alpha via CDP attach (port 9222), commit `42b5d56`.
+**Recording environment**: Chromium 152.0.7977.64 Alpine Linux, playwright-cli 1.63.0-alpha via CDP attach (port 9222), commit `925159a`.
 
 ## Not Wired Into CI / pnpm test
 
