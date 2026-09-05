@@ -153,6 +153,9 @@ dist
 *.prompt.md
 .qodo
 .atl/
+.claude/
+.playwright-cli/
+.worktrees/
 
 # For data
 /data
