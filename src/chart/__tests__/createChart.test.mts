@@ -77,6 +77,41 @@ describe("createChart", () => {
       expect(container.querySelector("text.chart-title")).toBeNull();
     });
 
+    it("plan-026: unsorted input renders non-backtracking path", () => {
+      // Dates deliberately out of order
+      const unsortedData: TestData[] = [
+        { date: new Date("2023-01-03"), revenue: 90, cost: 12 },
+        { date: new Date("2023-01-01"), revenue: 100, cost: 10 },
+        { date: new Date("2023-01-04"), revenue: 150, cost: 20 },
+        { date: new Date("2023-01-02"), revenue: 120, cost: 15 },
+      ];
+
+      const unsortedConfig: ChartConfig<TestData> = {
+        data: unsortedData,
+        xSerie: { accessor: (d) => d.date, label: "Date" },
+        ySeries: [{ accessor: (d) => d.revenue, label: "Revenue" }],
+      };
+
+      createChart(container, unsortedConfig);
+      const linePath = container.querySelector("g.content path.chart-line") as SVGPathElement | null;
+      expect(linePath).not.toBeNull();
+
+      // Parse the path's 'd' attribute to extract x pixel coordinates from M and L commands
+      const d = linePath!.getAttribute("d") ?? "";
+      const coords: number[] = [];
+      // Match M (moveTo) and L (lineTo) commands with numbers
+      const cmdRe = /[ML]\s*([\d.]+),([\d.-]+)/g;
+      let m: RegExpExecArray | null;
+      while ((m = cmdRe.exec(d)) !== null) {
+        coords.push(parseFloat(m[1]));
+      }
+
+      // After sorting, x coords must be strictly non-decreasing (no backtracking)
+      for (let i = 1; i < coords.length; i++) {
+        expect(coords[i]).toBeGreaterThanOrEqual(coords[i - 1]);
+      }
+    });
+
     it("exposes allSeries and series with all visible by default", () => {
       const chart = createChart(container, config);
       expect(chart.allSeries.length).toBe(2);

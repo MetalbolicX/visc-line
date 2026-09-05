@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ProcessedSeries } from "../../types/index.mjs";
 
-import { getMultiSeriesExtents, processNumericData, processNumericDataXOnly } from "../../services/dataWrangling.mjs";
+import { getMultiSeriesExtents, processAllSeries, processNumericData, processNumericDataXOnly } from "../../services/dataWrangling.mjs";
 
 interface SeriesPoint {
   readonly x: number;
@@ -172,6 +172,67 @@ describe("processNumericDataXOnly (plan-025)", () => {
     ];
     const result = processNumericDataXOnly(rawData, (d) => d.x, (d) => d.y);
     expect(result.length).toBe(0);
+  });
+});
+
+describe("processAllSeries — sorting", () => {
+  it("plan-026: sorts numeric x values ascending", () => {
+    const rawData = [
+      { x: 3, y: 3 },
+      { x: 1, y: 1 },
+      { x: 2, y: 2 },
+    ];
+    const result = processAllSeries(rawData, (d: { x: number; y: number }) => d.x, [
+      { label: "series", accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ]);
+    expect(result[0].data.map((d: { x: number }) => d.x)).toEqual([1, 2, 3]);
+  });
+
+  it("plan-026: sorts Date x values ascending", () => {
+    const d1 = new Date(2023, 0, 3);
+    const d2 = new Date(2023, 0, 1);
+    const d3 = new Date(2023, 0, 2);
+    const rawData = [
+      { x: d3, y: 3 },
+      { x: d1, y: 1 },
+      { x: d2, y: 2 },
+    ];
+    const result = processAllSeries(rawData, (d: { x: Date; y: number }) => d.x, [
+      { label: "series", accessor: (d: { x: Date; y: number }) => d.y, stroke: "steelblue" },
+    ]);
+    expect(result[0].data.map((d: { x: Date }) => d.x.toDateString())).toEqual([
+      new Date(2023, 0, 1).toDateString(),
+      new Date(2023, 0, 2).toDateString(),
+      new Date(2023, 0, 3).toDateString(),
+    ]);
+  });
+
+  it("plan-026: stable sort — equal x values keep original relative order", () => {
+    const rawData = [
+      { x: 5, y: 1 },
+      { x: 5, y: 2 },
+      { x: 5, y: 3 },
+      { x: 3, y: 4 },
+      { x: 3, y: 5 },
+    ];
+    const result = processAllSeries(rawData, (d: { x: number; y: number }) => d.x, [
+      { label: "series", accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ]);
+    // x=3 comes first (sorted), then x=5 in original relative order
+    expect(result[0].data.map((d: { x: number; y: number }) => d.y)).toEqual([4, 5, 1, 2, 3]);
+  });
+
+  it("plan-026: does not mutate the caller's raw array", () => {
+    const rawData: readonly { x: number; y: number }[] = [
+      { x: 3, y: 3 },
+      { x: 1, y: 1 },
+    ];
+    const originalFirst = rawData[0];
+    processAllSeries(rawData, (d: { x: number; y: number }) => d.x, [
+      { label: "series", accessor: (d: { x: number; y: number }) => d.y, stroke: "steelblue" },
+    ]);
+    expect(rawData[0]).toBe(originalFirst);
+    expect(rawData[0].x).toBe(3); // order unchanged
   });
 });
 

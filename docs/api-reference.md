@@ -156,6 +156,17 @@ only the **visible** subset.
 This prevents visual confusion: when comparing multiple series the axes are
 stable; when isolating a single series it uses the full chart area.
 
+### Data Contract
+
+| Topic | Behavior |
+|-------|----------|
+| **Sorting** | Series data is sorted ascending by x before rendering; input order is not trusted. |
+| **Invalid rows** | Rows where x or y is null, undefined, NaN, ±Infinity, or an invalid Date are dropped per series. With `gapPolicy: "break"` (plan 025), only x validity is checked — NaN-y rows are kept and skipped by `line.defined()`. |
+| **Date strings** | x values must be `Date` objects or finite numbers. ISO strings like `"2023-01-01"` fail `isValidNumber` and are silently dropped. Construct `new Date("2023-01-01")` explicitly. |
+| **Duplicates** | Duplicate x values are kept and rendered in stable sort order. Tooltip tie-breaking among equal x values is unspecified. |
+| **Timezone** | Time scales use `d3.scaleTime` (browser-local time). A `new Date("2023-01-01")` is parsed at UTC-midnight per the ES spec but rendered at the local offset — day-boundary labels can shift. `scaleUtc` is not yet supported. |
+| **Single-point series** | `extent([v, v])` yields a zero-width domain. The single point maps to the left edge; pad your data or set explicit domains if this matters. |
+
 ### Legend Interactivity
 
 The legend is an **event emitter** — it does not mutate chart state. Legend

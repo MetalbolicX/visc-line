@@ -42,6 +42,10 @@ chart.dispose();
 
 Use the example `main` to mount a chart into an existing container — the example shows the recommended integration pattern. The runnable example is at [examples/main.mts](examples/main.mts).
 
+**Data contract**: input data is validated, sorted ascending by x, and gaps
+are rendered honestly (see `gapPolicy` in the [API reference](docs/api-reference.md#data-contract)).
+Your data need not be pre-sorted — the library handles it.
+
 Builder examples:
 
 - Full composition: [examples/chart-builder.mts](examples/chart-builder.mts)
