@@ -67,29 +67,50 @@ export const processNumericDataXOnly = <T,>(
 };
 
 /**
+ * Sorts data ascending by x value using a stable sort.
+ * Uses Number() coercion so both Date (→ epoch ms) and numeric x values sort correctly.
+ *
+ * @internal
+ */
+const sortByX =
+  <T,>(xAccessor: (d: T) => unknown) =>
+  (data: readonly T[]): readonly T[] =>
+    data.toSorted((a, b) => Number(xAccessor(a)) - Number(xAccessor(b)));
+
+/**
  * Processes all series descriptors by computing numeric data for each series.
  *
  * For each entry in ySeries this returns a new descriptor object that preserves
  * the original properties and adds a `data` property produced by
  * `processNumericData(rawData, xAccessor, serie.accessor)`.
  *
+ * **Data contract**: input data is NOT required to be sorted — this function
+ * sorts it ascending by x before returning. Duplicates are preserved (rendered
+ * in stable order after sort). NaN-y rows from `processNumericDataXOnly` (gapPolicy="break")
+ * remain in the output and will be skipped by `line.defined()` during rendering.
+ *
  * @param rawData - The raw dataset (array of records) to be processed.
  * @param xAccessor - A function that, given a datum, returns the x value.
  * @param ySeries - Array of series descriptors.
- * @returns New array of series descriptors where each descriptor includes a `data` array.
+ * @param gapPolicy - "bridge" (default) drops NaN-y rows; "break" keeps them for gap rendering.
+ * @returns New array of series descriptors where each descriptor includes a sorted `data` array.
  */
 export const processAllSeries = <T,>(
   rawData: readonly T[],
   xAccessor: (d: T) => unknown,
   ySeries: readonly SeriesDescriptor<T>[],
   gapPolicy: "break" | "bridge" = "bridge",
-): readonly ProcessedSeries<T>[] =>
-  ySeries.map((serie) => ({
+): readonly ProcessedSeries<T>[] => {
+  const sort = sortByX(xAccessor);
+  return ySeries.map((serie) => ({
     ...serie,
-    data: gapPolicy === "break"
-      ? processNumericDataXOnly(rawData, xAccessor, serie.accessor)
-      : processNumericData(rawData, xAccessor, serie.accessor),
+    data: sort(
+      gapPolicy === "break"
+        ? processNumericDataXOnly(rawData, xAccessor, serie.accessor)
+        : processNumericData(rawData, xAccessor, serie.accessor),
+    ),
   }));
+};
 
 /**
  * Identity-keyed cache for multi-series extent results.
