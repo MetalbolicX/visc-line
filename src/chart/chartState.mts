@@ -1,7 +1,9 @@
 import type {
+  WithAnnotationsOptions,
   WithAxesOptions,
   WithGridOptions,
   WithLegendOptions,
+  WithReferenceLinesOptions,
   WithTitleOptions,
   WithTooltipOptions,
   WithZoomPanOptions,
@@ -27,21 +29,25 @@ export interface ChartState<T> {
     readonly xDomain: readonly [undefined, undefined] | readonly [unknown, unknown];
     readonly yDomain: readonly [number, number] | readonly [undefined, undefined];
   }>;
+  annotationsOptions: null | WithAnnotationsOptions;
   axesOptions: WithAxesOptions;
   currentSeries: readonly ProcessedSeries<T>[];
   customCallback: CustomCallback | null;
   customCleanup: (() => void) | null;
   gridOptions: WithGridOptions;
+  hasAnnotations: boolean;
   hasAxes: boolean;
   hasCustom: boolean;
   hasGrid: boolean;
   hasLegend: boolean;
   hasPoints: boolean;
+  hasReferenceLines: boolean;
   hasTitle: boolean;
   hasTooltip: boolean;
   hasZoomPan: boolean;
   isDisposed: boolean;
   legendOptions: null | WithLegendOptions;
+  referenceLinesOptions: WithReferenceLinesOptions;
   titleOptions: null | WithTitleOptions;
   tooltipOptions: WithTooltipOptions;
   visibleLabels: ReadonlySet<string>;
@@ -59,11 +65,13 @@ export interface ChartState<T> {
  *   render or initialization logic should run.
  */
 export interface FeatureFlags {
+  readonly hasAnnotations: boolean;
   readonly hasAxes: boolean;
   readonly hasCustom: boolean;
   readonly hasGrid: boolean;
   readonly hasLegend: boolean;
   readonly hasPoints: boolean;
+  readonly hasReferenceLines: boolean;
   readonly hasTitle: boolean;
   readonly hasTooltip: boolean;
   readonly hasZoomPan: boolean;

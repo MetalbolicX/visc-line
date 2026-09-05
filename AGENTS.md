@@ -40,7 +40,7 @@ Charts render via a specific sequence — skip or reorder components and dimensi
 2. `renderBoundsGroup`
 3. `renderContentGroup` (clip-path content layer, inside the re-render loop)
 4. `renderLine` — via shared `redrawLine` helper (`src/chart/redrawLine.mts`); called by both the render loop and `zoomDispatch`
-5. **Registry-driven feature loop**: iterate `FEATURE_REGISTRY` in order, calling `feature.render` for each enabled feature. Registry order (and thus render order): axes → grid → title → legend → tooltip → zoomPan → custom → points.
+5. **Registry-driven feature loop**: iterate `FEATURE_REGISTRY` in order, calling `feature.render` for each enabled feature. Registry order (and thus render order): axes → grid → referenceLines → title → legend → tooltip → zoomPan → custom → annotations → points.
 6. `clearOptionalNodes` — cleanup DOM for disabled features (registry-driven via `feature.clearSelectors` and `feature.clearEvents`)
 
 **Zoom path**: when zoom/pan triggers, `zoomPanDef.render` sets up the `onZoom` callback in `src/chart/zoomDispatch.mts` which:
