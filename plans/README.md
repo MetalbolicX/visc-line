@@ -41,7 +41,7 @@ starting, honor its STOP conditions, and update your row when done.
  | 024  | Fix Date-domain fallback in ensureFiniteDomain | P1 | S | — | TODO |
  | 025  | Honest missing-data rendering (gapPolicy via line.defined) | P1 | M | 024 first | TODO |
  | 026  | Time-series data contract (sort, duplicates, timezone, docs) | P2 | M | 025 | TODO |
- | 027  | Merge 022 branch to main + e2e scenario G | P1 | S | — | TODO |
+ | 027  | Merge 022 branch to main + e2e scenario G | P1 | S | — | DONE |
  | 028  | Public ariaLabel + xLabel on ChartOptions | P2 | S | — | TODO |
  | 029  | Focus/emphasis API (withFocus) | P2 | M | — | TODO |
  | 030  | End-of-line direct labels with collision policy | P2 | M | 024 (soft 026) | TODO |
