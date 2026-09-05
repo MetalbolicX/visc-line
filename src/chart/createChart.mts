@@ -59,10 +59,12 @@ import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 export const createChart = <T,>(
   container: HTMLElement,
   config: ChartConfig<T>,
-  {
+      {
+    ariaLabel,
     curve,
     margins = DEFAULT_MARGINS,
     theme,
+    xLabel,
     xType = "time",
     yLabel,
   }: ChartOptions = {},
@@ -98,7 +100,7 @@ export const createChart = <T,>(
       .slice(0, 8)
   }`;
 
-  const svg = renderSVG(container, "Interactive line chart");
+  const svg = renderSVG(container, ariaLabel ?? "Interactive line chart");
   const bounds = renderBoundsGroup(svg, margins);
 
   const filterSeriesByLabels = (
@@ -171,6 +173,7 @@ export const createChart = <T,>(
         resolvedCurve,
         state,
         svg,
+        xLabel,
         xType,
         yLabel,
       },

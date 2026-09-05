@@ -75,7 +75,7 @@ export const axesDef: FeatureDefinition<"axes"> = {
       .call(renderXAxisLabel, {
         innerHeight: dims.innerHeight,
         innerWidth: dims.innerWidth,
-        label: ctx.config.xSerie.label,
+        label: ctx.xLabel ?? ctx.config.xSerie.label,
         margins: dims.margins,
       })
       .call(renderYAxisLabel, {
