@@ -51,6 +51,7 @@ export interface Theme {
     readonly palette: readonly string[]; // series colors
     readonly text: string;
   }>;
+  readonly focus: Readonly<{ readonly dimOpacity: number }>;
   readonly grid: Readonly<{
     readonly dashArray: string;
     readonly opacity: number;

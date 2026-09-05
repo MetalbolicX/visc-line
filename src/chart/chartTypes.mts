@@ -27,6 +27,7 @@ export interface ChartInstance<T> {
   readonly updateVisibleSeries: (labels: readonly string[]) => void;
   readonly withAxes: (options?: WithAxesOptions) => ChartInstance<T>;
   readonly withCustom: (callback: CustomCallback | null) => ChartInstance<T>;
+  readonly withFocus: (labels: null | readonly string[] | string) => ChartInstance<T>;
   readonly withGrid: (options?: WithGridOptions) => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
   readonly withPoints: () => ChartInstance<T>;

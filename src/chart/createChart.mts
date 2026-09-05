@@ -106,6 +106,17 @@ export const createChart = <T,>(
     visibleLabels: ReadonlySet<string>,
   ) => allSeries.filter(({ label }) => visibleLabels.has(label));
 
+  const applyFocus = (
+    series: readonly ReturnType<typeof processAllSeries<T>>[number][],
+    focusLabels: ReadonlySet<string>,
+    dimOpacity: number,
+  ): readonly ReturnType<typeof processAllSeries<T>>[number][] => {
+    if (focusLabels.size === 0) return series;
+    return series.map((s) =>
+      focusLabels.has(s.label) ? s : { ...s, opacity: dimOpacity },
+    );
+  };
+
   const assertValidVisibleLabels = (
     labels: readonly string[],
     allSeries: readonly ReturnType<typeof processAllSeries<T>>[number][],
@@ -138,6 +149,7 @@ export const createChart = <T,>(
     currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
+    focusLabels: new Set<string>(),
     gridOptions: {},
     hasAxes: false,
     hasCustom: false,
@@ -233,6 +245,11 @@ export const createChart = <T,>(
         state.allSeries,
         state.visibleLabels,
       );
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
       state.zoomBehavior?.reset();
       render();
     },
@@ -241,6 +258,11 @@ export const createChart = <T,>(
       assertValidVisibleLabels(labels, state.allSeries, "updateVisibleSeries");
       state.visibleLabels = new Set(labels);
       state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
       state.zoomBehavior?.reset();
       render();
     },
@@ -265,6 +287,45 @@ export const createChart = <T,>(
       if (state.customCallback === callback) return chart;
       state.customCallback = callback;
       state.hasCustom = true;
+      render();
+      return chart;
+    },
+    withFocus: (labels): ChartInstance<T> => {
+      ensureActive();
+      if (labels === null) {
+        state.focusLabels = new Set<string>();
+        state.currentSeries = filterSeriesByLabels(
+          state.allSeries,
+          state.visibleLabels,
+        );
+        state.currentSeries = applyFocus(
+          state.currentSeries,
+          state.focusLabels,
+          resolvedTheme.focus.dimOpacity,
+        );
+        state.zoomBehavior?.reset();
+        render();
+        return chart;
+      }
+      const normalized = Array.isArray(labels) ? labels : [labels];
+      const validLabels = new Set(state.allSeries.map(({ label }) => label));
+      const invalidLabels = normalized.filter((l) => !validLabels.has(l));
+      if (invalidLabels.length > 0) {
+        throw new Error(
+          `createChart.withFocus: Unknown series labels [${invalidLabels.join(", ")}]. Valid labels: [${Array.from(validLabels).join(", ")}]`,
+        );
+      }
+      state.focusLabels = new Set(normalized);
+      state.currentSeries = filterSeriesByLabels(
+        state.allSeries,
+        state.visibleLabels,
+      );
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
+      state.zoomBehavior?.reset();
       render();
       return chart;
     },
@@ -322,6 +383,11 @@ export const createChart = <T,>(
       }
       state.visibleLabels = nextLabels;
       state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
       state.zoomBehavior?.reset();
       render();
       return chart;

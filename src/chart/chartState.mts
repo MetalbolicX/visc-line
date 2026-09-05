@@ -31,6 +31,7 @@ export interface ChartState<T> {
   currentSeries: readonly ProcessedSeries<T>[];
   customCallback: CustomCallback | null;
   customCleanup: (() => void) | null;
+  focusLabels: ReadonlySet<string>;
   gridOptions: WithGridOptions;
   hasAxes: boolean;
   hasCustom: boolean;
