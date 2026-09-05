@@ -138,9 +138,11 @@ export const createChart = <T,>(
     currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
+    endLabelsOptions: null,
     gridOptions: {},
     hasAxes: false,
     hasCustom: false,
+    hasEndLabels: false,
     hasGrid: false,
     hasLegend: false,
     hasPoints: false,
@@ -265,6 +267,13 @@ export const createChart = <T,>(
       if (state.customCallback === callback) return chart;
       state.customCallback = callback;
       state.hasCustom = true;
+      render();
+      return chart;
+    },
+    withEndLabels: (options = {}): ChartInstance<T> => {
+      ensureActive();
+      state.endLabelsOptions = options;
+      state.hasEndLabels = true;
       render();
       return chart;
     },

@@ -13,6 +13,9 @@ export type { LegendItem, RenderLegendOptions } from "@/components/legend.mjs";
 export { renderLine } from "@/components/line.mjs";
 export type { RenderLineOptions } from "@/components/line.mjs";
 
+export { renderEndLabels } from "@/components/endLabels.mjs";
+export type { RenderEndLabelsOptions } from "@/components/endLabels.mjs";
+
 export { renderPoints } from "@/components/points.mjs";
 
 export { renderSVG } from "@/components/SVG.mjs";

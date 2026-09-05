@@ -27,6 +27,7 @@ export interface ChartInstance<T> {
   readonly updateVisibleSeries: (labels: readonly string[]) => void;
   readonly withAxes: (options?: WithAxesOptions) => ChartInstance<T>;
   readonly withCustom: (callback: CustomCallback | null) => ChartInstance<T>;
+  readonly withEndLabels: (options?: WithEndLabelsOptions) => ChartInstance<T>;
   readonly withGrid: (options?: WithGridOptions) => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
   readonly withPoints: () => ChartInstance<T>;
@@ -80,6 +81,12 @@ export interface WithTooltipOptions {
   readonly formatY?: (v: unknown) => string;
   readonly stylesheetUrl?: string;
   readonly tooltipHtml?: (data: TooltipData) => string;
+}
+
+export interface WithEndLabelsOptions {
+  readonly collision?: "hide" | "legend" | "nudge";
+  readonly format?: (label: string, lastValue: number) => string;
+  readonly offset?: number;
 }
 
 export interface WithZoomPanOptions {

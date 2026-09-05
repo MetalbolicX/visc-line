@@ -1,5 +1,6 @@
 import type {
   WithAxesOptions,
+  WithEndLabelsOptions,
   WithGridOptions,
   WithLegendOptions,
   WithTitleOptions,
@@ -31,9 +32,11 @@ export interface ChartState<T> {
   currentSeries: readonly ProcessedSeries<T>[];
   customCallback: CustomCallback | null;
   customCleanup: (() => void) | null;
+  endLabelsOptions: null | WithEndLabelsOptions;
   gridOptions: WithGridOptions;
   hasAxes: boolean;
   hasCustom: boolean;
+  hasEndLabels: boolean;
   hasGrid: boolean;
   hasLegend: boolean;
   hasPoints: boolean;
@@ -61,6 +64,7 @@ export interface ChartState<T> {
 export interface FeatureFlags {
   readonly hasAxes: boolean;
   readonly hasCustom: boolean;
+  readonly hasEndLabels: boolean;
   readonly hasGrid: boolean;
   readonly hasLegend: boolean;
   readonly hasPoints: boolean;
