@@ -173,6 +173,30 @@ chart.withVisibleSeries([]);               // show none (empty chart)
 
 Throws `Error` if any label does not match a `ySeries` entry.
 
+### `withFocus`
+
+Highlight one or more series in full strength while dimming all others to a subdued opacity. This implements the "focus the important stuff, eliminate distractions" principle from *Storytelling with Data*:
+
+```ts
+chart.withFocus("Revenue");           // focus single series
+chart.withFocus(["Revenue", "Cost"]); // focus multiple
+chart.withFocus(null);                // clear focus — restore all series
+```
+
+**Dim opacity**: controlled by the `focus.dimOpacity` theme token (default `0.25`). Override via the `theme` option:
+
+```ts
+createChart(container, config, {
+  theme: { focus: { dimOpacity: 0.4 } },
+});
+```
+
+**Interaction with explicit `opacity`**: if a series descriptor has an explicit `opacity` set, focus dimming **overrides** it for non-focused series. The consumer can clear focus with `withFocus(null)` to restore explicit opacity.
+
+**Interaction with legend swatches**: legend swatches always render at full strength — focus dimming affects only the chart lines (and points when enabled). This is a deliberate v1 limitation.
+
+**Persistence**: focus survives `update()` and `updateVisibleSeries()` re-renders. If `updateVisibleSeries` hides a focused series, focus silently narrows to the visible intersection.
+
 ### `updateVisibleSeries`
 
 Change visibility at runtime without rebuilding the chart:
