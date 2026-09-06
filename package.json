@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "build": "tsdown",
     "dev": "vite",
-    "test": "vitest",
+    "test": "vitest run",
     "docs": "docsify serve docs",
     "check": "pnpm type-check && pnpm test && pnpm build && pnpm lint",
     "prepublishOnly": "pnpm type-check && pnpm test && pnpm build"
