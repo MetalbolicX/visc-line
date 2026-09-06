@@ -36,7 +36,7 @@ starting, honor its STOP conditions, and update your row when done.
 | 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | DONE |
 | 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | DONE |
 | 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | DONE |
- | 022  | Data-anchored reference lines + annotations features | P1 | M | — | DONE (branch `feature/022-reference-lines-annotations`; NOT yet on main — merge is plan 027) |
+ | 022  | Data-anchored reference lines + annotations features | P1 | M | — | DONE (merged via plan 027) |
  | 023  | playwright-cli-driven e2e harness (revive orphaned browser layer) | P2 | M | 001, 004 | DONE |
 | 024  | Fix Date-domain fallback in ensureFiniteDomain | P1 | S | — | DONE (`advisor/024-date-domain-fix`) |
 | 025  | Honest missing-data rendering (gapPolicy via line.defined) | P1 | M | 024 first | DONE (`advisor/025-gap-policy`) |
@@ -49,20 +49,19 @@ starting, honor its STOP conditions, and update your row when done.
 
 ## Round 5 integration
 
-All 7 source branches merged into `advisor/round5-integration` (`def1281`):
-024 → 025 → 026 → 027 → 028 → 029 → 030.
+All 7 feature branches (024–030) merged into `advisor/round5-integration`,
+then merged into `main` as `08e3221`. Plan 031 merged as `0be19b1`.
 
-**Verification on integration branch**:
+**Final state on `main`** (as of `0be19b1`):
 - `pnpm type-check`: exit 0
-- `pnpm exec vitest run`: exit 0 — 482 tests pass (37 files)
-- `pnpm lint`: exit 0
+- `pnpm test`: exit 0 — 482 tests pass (37 files), runs once (no watch hang)
+- `pnpm lint`: exit 0 (blocking)
 - `pnpm build`: exit 0
+- Coverage gate enforced at measured reality (branches 59 / functions 85 / lines 79), up-only ratchet
+- `pnpm check` is the single local gate
 
-**Plan 031 NOT merged**: BLOCKED on coverage thresholds (numbers above). The branch
-`advisor/031-release-hygiene` (`c3bd9f0`) is ready to merge once the owner decides
-between writing more tests or lowering the thresholds. Note: `pnpm test` on the
-integration branch still runs watch mode (the run-mode fix lives on the blocked
-031 branch).
+**Branches and worktrees**: all `advisor/*` and `feature/022-reference-lines-annotations`
+branches and 9 worktrees cleaned up after merge.
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)
@@ -152,11 +151,10 @@ live code, including a confirmed Date-domain defect with an exact call chain).
 
 ## Known verification blockers
 
-- **RESOLVED (2026-09-04, plan 031)**: the earlier `.mjs`/`.mts`
-  `ERR_LOAD_URL` failure is fixed by the `mjsToMtsPlugin` in
-  `vitest.config.mts:7-20` — `pnpm exec vitest run` passes 429/429 at
-  `ca94562`. The watch-mode hang of bare `pnpm test` is fixed by Step 1 of
-  plan 031 (`"test": "vitest run"`).
+- **RESOLVED**: `.mjs`/`.mts` `ERR_LOAD_URL` failures fixed by the `mjsToMtsPlugin`
+  in `vitest.config.mts:7-20`. `pnpm exec vitest run` is green.
+- **RESOLVED**: watch-mode hang of bare `pnpm test` fixed by plan 031
+  (`"test": "vitest run"`).
 - The browser e2e layer (`tests/e2e/`) remains a MANUAL verification suite
   driven by playwright-cli CDP attach to system Chromium (Alpine/musl
   constraint: playwright's own Chromium is glibc-only). It is intentionally

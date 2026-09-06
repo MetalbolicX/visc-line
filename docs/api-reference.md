@@ -30,13 +30,16 @@ createChart<T>(
 
 **`ChartOptions`**
 
-| Field     | Type                                   | Default                                        | Description                                            |
-| --------- | -------------------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
-| `curve`   | `CurvePreset \| CurveFactory`          | `theme.line.curve`                             | Line curve; preset string or D3 factory                |
-| `margins` | `Margins`                              | `{ top: 50, right: 60, bottom: 70, left: 55 }` | SVG margin box                                         |
-| `theme`   | `ThemeOverride`                        | `{}`                                           | Deep-partial theme override merged over `defaultTheme` |
-| `xType`   | `"linear" \| "log" \| "pow" \| "time"` | `"time"`                                       | D3 scale type for the x-axis                           |
-| `yLabel`  | `string`                               | `undefined`                                    | Optional Y-axis label text                             |
+| Field        | Type                                   | Default                                        | Description                                            |
+| ------------ | -------------------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| `ariaLabel`  | `string`                               | `"Interactive line chart"`                     | Accessible label for the chart's root `<svg>` element  |
+| `curve`      | `CurvePreset \| CurveFactory`          | `theme.line.curve`                             | Line curve; preset string or D3 factory                |
+| `gapPolicy`  | `"break" \| "bridge"`                  | `"break"`                                      | How to render invalid/missing data points (plan 025)  |
+| `margins`    | `Margins`                              | `{ top: 50, right: 60, bottom: 70, left: 55 }` | SVG margin box                                         |
+| `theme`      | `ThemeOverride`                        | `{}`                                           | Deep-partial theme override merged over `defaultTheme` |
+| `xLabel`     | `string`                               | `undefined`                                    | Optional X-axis label text (overrides `xSerie.label`) |
+| `xType`      | `"linear" \| "log" \| "pow" \| "time"` | `"time"`                                       | D3 scale type for the x-axis                           |
+| `yLabel`     | `string`                               | `undefined`                                    | Optional Y-axis label text                             |
 
 **`ChartInstance<T>`**
 
@@ -132,6 +135,8 @@ interface WithEndLabelsOptions {
 - `"legend"`: if any overlap detected, renders NO labels and warns
   "consider chart.withLegend() instead". The library does not silently
   add a legend.
+
+**Interaction with `withFocus`**: when `withFocus` is active, only the **focused** series receive end labels — dimmed context series lose theirs. This implements the SWD principle "labels mark what to read": if a series is dimmed, its end label would compete for attention with the focused series. Pass `chart.withFocus(null)` to restore all labels.
 
 ```ts
 // Default: nudge policy
@@ -240,6 +245,8 @@ createChart(container, config, {
 **Interaction with explicit `opacity`**: if a series descriptor has an explicit `opacity` set, focus dimming **overrides** it for non-focused series. The consumer can clear focus with `withFocus(null)` to restore explicit opacity.
 
 **Interaction with legend swatches**: legend swatches always render at full strength — focus dimming affects only the chart lines (and points when enabled). This is a deliberate v1 limitation.
+
+**Interaction with `withEndLabels`**: when both `withFocus` and `withEndLabels` are active, only the **focused** series receive end labels. Dimmed context series have their end labels removed. Clear focus with `withFocus(null)` to restore labels for all visible series.
 
 **Persistence**: focus survives `update()` and `updateVisibleSeries()` re-renders. If `updateVisibleSeries` hides a focused series, focus silently narrows to the visible intersection.
 

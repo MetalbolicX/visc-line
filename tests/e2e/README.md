@@ -285,7 +285,31 @@ env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cd
     chartBoundingRect: annotated ? JSON.stringify(annotated.getBoundingClientRect()) : null,
     err: window.__chartError
   };
-### Scenario H — endLabels with collision policies
+}'
+```
+
+**Expected output** (G):
+
+```json
+{
+  "annotatedContainer": true,
+  "svgPresent": true,
+  "refLineGroups": 1,
+  "refLineStroke": "var(--vl-reference-line-stroke, #94a3b8)",
+  "refLineLabelTexts": ["Target"],
+  "annotationGroups": 1,
+  "annotationTextContents": [""],
+  "chartBoundingRect": "{\"x\":57,\"y\":1119,\"width\":500,\"height\":320}",
+  "err": null
+}
+```
+
+`refLineGroups: 1` confirms the reference line group exists; `refLineLabelTexts: ["Target"]` confirms the
+label text is rendered. `annotationGroups: 1` confirms the annotation group exists; the annotation text is
+hidden by default (`visibility: hidden`) per the annotation component design and shows on hover/interaction.
+`err: null` confirms no page errors.
+
+### Scenario H — endLabels with collision policies (plan 030)
 
 ```bash
 env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cdp eval '() => {
@@ -308,26 +332,9 @@ env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cd
 }'
 ```
 
-**Expected output**:
+**Expected output** (H):
 
 ```json
-{
-  "annotatedContainer": true,
-  "svgPresent": true,
-  "refLineGroups": 1,
-  "refLineStroke": "var(--vl-reference-line-stroke, #94a3b8)",
-  "refLineLabelTexts": ["Target"],
-  "annotationGroups": 1,
-  "annotationTextContents": [""],
-  "chartBoundingRect": "{\"x\":57,\"y\":1119,\"width\":500,\"height\":320}",
-  "err": null
-}
-```
-
-`refLineGroups:1` confirms the reference line group exists; `refLineLabelTexts:["Target"]` confirms the
-label text is rendered. `annotationGroups:1` confirms the annotation group exists; the annotation text is
-hidden by default (visibility:hidden) per the annotation component design and shows on hover/interaction.
-`err:null` confirms no page errors.
 { "endlabels_count": 2, "endlabels_bboxes_no_overlap": true, "endlabelsLegend_count": 0 }
 ```
 
@@ -359,7 +366,7 @@ pkill -9 -f "remote-debugging-port=9222"
 
 ## Live-Verified Outputs
 
-All six scenarios executed against the live UMD bundle via a single
+All eight scenarios A–H executed against the live UMD bundle via a single
 `playwright-cli` CDP-attach session (system Chromium 152.0.7977.64 Alpine,
 playwright-cli 1.63.0-alpha, CDP port 9222, no browser install needed).
 
@@ -374,7 +381,7 @@ playwright-cli 1.63.0-alpha, CDP port 9222, no browser install needed).
 | G — Reference lines + annotations | `refLineGroups:1`, `refLineLabelTexts:["Target"]`, `annotationGroups:1`, `annotationTextContents:[""]` (hidden by default), `err:null` | PASS |
 | H — endLabels collision | `endlabels_count:2`, `endlabels_bboxes_no_overlap:true`, `endlabelsLegend_count:0` | PASS |
 
-**Recording environment**: Chromium 152.0.7977.64 Alpine Linux, playwright-cli 1.63.0-alpha via CDP attach (port 9222), commit `925159a`.
+**Recording environment**: Chromium 152.0.7977.64 Alpine Linux, playwright-cli 1.63.0-alpha via CDP attach (port 9222), commit `0be19b1` (main, after Round 5 merge).
 
 ## Not Wired Into CI / pnpm test
 
@@ -391,7 +398,7 @@ The automated-driver decision was explicitly reverted when `@playwright/test` wa
 dropped at merge `107bc0d`; wiring an automated CDP driver is a separate,
 deferred decision (see Maintenance notes).
 
-Run `pnpm test --run` for the automated unit test suite (~429 passing).
+Run `pnpm test` for the automated unit test suite (482 passing as of Round 5 merge).
 
 ## Add a New Chart Case
 
@@ -405,11 +412,10 @@ Run `pnpm test --run` for the automated unit test suite (~429 passing).
 
 ## Maintenance Notes
 
-- **Plan 022 (reference lines/annotations)**: when branch
-  `feature/022-reference-lines-annotations` merges to `main`, add a fourth
-  harness chart exercising `withReferenceLines`/`withAnnotations` plus a
-  scenario G asserting the rendered line/annotation groups and their behavior
-  under zoom.
+- **Scenario coverage**: scenarios A–H cover `createChart` builder features
+  (full, minimal, empty guard, tooltip hover, zoom, update/dispose, reference
+  lines + annotations, end-of-line labels). Add new scenarios here as new
+  builder features land.
 - **CI driver decision (deferred)**: if the suite grows past ~10 scenarios,
   reconsider an automated CDP runner as a new plan.
 - **Port 8742** is chosen to not collide with tipviz's port 8741 when both
