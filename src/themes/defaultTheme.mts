@@ -32,6 +32,9 @@ export const defaultTheme: Theme = {
     ],
     text: "#222222",
   },
+  focus: {
+    dimOpacity: 0.25,
+  },
   grid: {
     dashArray: "4 7",
     opacity: 0.65,

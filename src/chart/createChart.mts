@@ -59,10 +59,13 @@ import { applyThemeCssVars, mergeTheme, resolveCurve } from "@/utils/index.mjs";
 export const createChart = <T,>(
   container: HTMLElement,
   config: ChartConfig<T>,
-  {
+      {
+    ariaLabel,
     curve,
+    gapPolicy = "break",
     margins = DEFAULT_MARGINS,
     theme,
+    xLabel,
     xType = "time",
     yLabel,
   }: ChartOptions = {},
@@ -98,13 +101,24 @@ export const createChart = <T,>(
       .slice(0, 8)
   }`;
 
-  const svg = renderSVG(container, "Interactive line chart");
+  const svg = renderSVG(container, ariaLabel ?? "Interactive line chart");
   const bounds = renderBoundsGroup(svg, margins);
 
   const filterSeriesByLabels = (
     allSeries: readonly ReturnType<typeof processAllSeries<T>>[number][],
     visibleLabels: ReadonlySet<string>,
   ) => allSeries.filter(({ label }) => visibleLabels.has(label));
+
+  const applyFocus = (
+    series: readonly ReturnType<typeof processAllSeries<T>>[number][],
+    focusLabels: ReadonlySet<string>,
+    dimOpacity: number,
+  ): readonly ReturnType<typeof processAllSeries<T>>[number][] => {
+    if (focusLabels.size === 0) return series;
+    return series.map((s) =>
+      focusLabels.has(s.label) ? s : { ...s, opacity: dimOpacity },
+    );
+  };
 
   const assertValidVisibleLabels = (
     labels: readonly string[],
@@ -120,11 +134,7 @@ export const createChart = <T,>(
     }
   };
 
-  const allSeries = processAllSeries<T>(
-    config.data,
-    config.xSerie.accessor,
-    config.ySeries,
-  );
+  const allSeries = processAllSeries<T>(config.data, config.xSerie.accessor, config.ySeries, gapPolicy);
   const allSeriesExtents = getMultiSeriesExtents(
     allSeries,
     config.xSerie.accessor,
@@ -134,21 +144,28 @@ export const createChart = <T,>(
   const state: ChartState<T> = {
     allSeries,
     allSeriesExtents,
+    annotationsOptions: null,
     axesOptions: {},
     currentSeries: allSeries,
     customCallback: null,
     customCleanup: null,
+    endLabelsOptions: null,
+    focusLabels: new Set<string>(),
     gridOptions: {},
+    hasAnnotations: false,
     hasAxes: false,
     hasCustom: false,
+    hasEndLabels: false,
     hasGrid: false,
     hasLegend: false,
     hasPoints: false,
+    hasReferenceLines: false,
     hasTitle: false,
     hasTooltip: false,
     hasZoomPan: false,
     isDisposed: false,
     legendOptions: null,
+    referenceLinesOptions: { lines: [] },
     titleOptions: null,
     tooltipOptions: {},
     visibleLabels: defaultVisibleLabels,
@@ -166,11 +183,13 @@ export const createChart = <T,>(
         flags: Object.fromEntries(
           FEATURE_REGISTRY.map((f) => [f.flagKey, Boolean(state[f.flagKey])]),
         ) as unknown as import("@/chart/chartState.mjs").FeatureFlags,
+        gapPolicy,
         margins,
         reducedMotion,
         resolvedCurve,
         state,
         svg,
+        xLabel,
         xType,
         yLabel,
       },
@@ -233,6 +252,11 @@ export const createChart = <T,>(
         state.allSeries,
         state.visibleLabels,
       );
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
       state.zoomBehavior?.reset();
       render();
     },
@@ -241,8 +265,21 @@ export const createChart = <T,>(
       assertValidVisibleLabels(labels, state.allSeries, "updateVisibleSeries");
       state.visibleLabels = new Set(labels);
       state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
       state.zoomBehavior?.reset();
       render();
+    },
+    withAnnotations: (options): ChartInstance<T> => {
+      ensureActive();
+      if (state.hasAnnotations) return chart;
+      state.hasAnnotations = true;
+      state.annotationsOptions = options;
+      render();
+      return chart;
     },
     withAxes: (options = {}): ChartInstance<T> => {
       ensureActive();
@@ -268,6 +305,52 @@ export const createChart = <T,>(
       render();
       return chart;
     },
+    withEndLabels: (options = {}): ChartInstance<T> => {
+      ensureActive();
+      state.endLabelsOptions = options;
+      state.hasEndLabels = true;
+      render();
+      return chart;
+    },
+    withFocus: (labels): ChartInstance<T> => {
+      ensureActive();
+      if (labels === null) {
+        state.focusLabels = new Set<string>();
+        state.currentSeries = filterSeriesByLabels(
+          state.allSeries,
+          state.visibleLabels,
+        );
+        state.currentSeries = applyFocus(
+          state.currentSeries,
+          state.focusLabels,
+          resolvedTheme.focus.dimOpacity,
+        );
+        state.zoomBehavior?.reset();
+        render();
+        return chart;
+      }
+      const normalized = Array.isArray(labels) ? labels : [labels];
+      const validLabels = new Set(state.allSeries.map(({ label }) => label));
+      const invalidLabels = normalized.filter((l) => !validLabels.has(l));
+      if (invalidLabels.length > 0) {
+        throw new Error(
+          `createChart.withFocus: Unknown series labels [${invalidLabels.join(", ")}]. Valid labels: [${Array.from(validLabels).join(", ")}]`,
+        );
+      }
+      state.focusLabels = new Set(normalized);
+      state.currentSeries = filterSeriesByLabels(
+        state.allSeries,
+        state.visibleLabels,
+      );
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
+      state.zoomBehavior?.reset();
+      render();
+      return chart;
+    },
     withGrid: (options = {}): ChartInstance<T> => {
       ensureActive();
       if (state.hasGrid) return chart;
@@ -288,6 +371,14 @@ export const createChart = <T,>(
       ensureActive();
       if (state.hasPoints) return chart;
       state.hasPoints = true;
+      render();
+      return chart;
+    },
+    withReferenceLines: (options): ChartInstance<T> => {
+      ensureActive();
+      if (state.hasReferenceLines) return chart;
+      state.hasReferenceLines = true;
+      state.referenceLinesOptions = options;
       render();
       return chart;
     },
@@ -322,6 +413,11 @@ export const createChart = <T,>(
       }
       state.visibleLabels = nextLabels;
       state.currentSeries = filterSeriesByLabels(state.allSeries, state.visibleLabels);
+      state.currentSeries = applyFocus(
+        state.currentSeries,
+        state.focusLabels,
+        resolvedTheme.focus.dimOpacity,
+      );
       state.zoomBehavior?.reset();
       render();
       return chart;

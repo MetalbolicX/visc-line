@@ -9,7 +9,7 @@
  */
 
 import type { ChartState, FeatureFlags } from "@/chart/chartState.mjs";
-import type { WithAxesOptions, WithGridOptions, WithLegendOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
+import type { WithAnnotationsOptions, WithAxesOptions, WithEndLabelsOptions, WithGridOptions, WithLegendOptions, WithReferenceLinesOptions, WithTitleOptions, WithTooltipOptions, WithZoomPanOptions } from "@/chart/chartTypes.mjs";
 import type { ZoomBehaviorWithReset } from "@/interactivity/index.mjs";
 import type { AnyScale, ChartConfig, CustomCallback, Margins, ScaleType } from "@/types/index.mjs";
 import type { Dimensions } from "@/types/layoutTypes.mjs";
@@ -60,17 +60,20 @@ export interface FeatureDefinition<K extends FeatureKey> {
 
 /** Discriminated union key for all registered features */
 export type FeatureKey =
-  | "axes" | "custom" | "grid"
-  | "legend" | "points" | "title"
+  | "annotations" | "axes" | "custom" | "endLabels" | "grid"
+  | "legend" | "points" | "referenceLines" | "title"
   | "tooltip" | "zoomPan";
 
 /** Options type per feature — discriminated union */
 export type FeatureOptionsMap = {
+  annotations: null | WithAnnotationsOptions;
   axes: WithAxesOptions;
   custom: CustomCallback | null;
+  endLabels: null | WithEndLabelsOptions;
   grid: WithGridOptions;
   legend: null | WithLegendOptions;
   points: null;
+  referenceLines: WithReferenceLinesOptions;
   title: null | WithTitleOptions;
   tooltip: WithTooltipOptions;
   zoomPan: WithZoomPanOptions;
@@ -89,12 +92,27 @@ export interface FeatureRenderContext<T> {
   readonly container: HTMLElement;
   /** Clip-path content group — the proper target for grid/points rendering */
   readonly content: import("@/types/index.mjs").BoundsSelection;
+  /**
+   * Y-validity predicate used for line gap handling.
+   * When set and gapPolicy is "break", the line generator uses this to break
+   * at invalid y values rather than bridging over them.
+   * Undefined when gapPolicy is "bridge" (or unset).
+   */
+  readonly defined?: <U>(serie: import("@/types/index.mjs").ProcessedSeries<U>) => (d: U) => boolean;
   readonly flags: FeatureFlags;
+  /**
+   * X-only filtered series used for line rendering when gapPolicy is "break".
+   * When set, the line renderer uses this series instead of currentSeries,
+   * preserving rows with valid x but invalid y so .defined() can break the path.
+   * Undefined when gapPolicy is "bridge" (or unset).
+   */
+  readonly lineSeries?: readonly import("@/types/index.mjs").ProcessedSeries<T>[];
   readonly margins: Margins;
   readonly reducedMotion: boolean;
   readonly resolvedCurve: import("d3").CurveFactory;
   readonly state: ChartState<unknown>;
   readonly svg: import("@/types/index.mjs").SVGSelection;
+  readonly xLabel?: string;
   readonly xScale: AnyScale;
   readonly xType: ScaleType;
   readonly yLabel?: string;

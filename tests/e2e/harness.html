@@ -21,7 +21,7 @@
       margin: 16px;
       vertical-align: top;
     }
-    #chart-full, #chart-minimal, #chart-empty {
+    #chart-full, #chart-minimal, #chart-empty, #chart-annotated {
       width: 500px;
       height: 320px;
     }
@@ -42,6 +42,19 @@
   <!-- Empty-data chart: data: [], verifies plan-004 guard (no NaN) -->
   <div class="chart-container">
     <div id="chart-empty"></div>
+  </div>
+
+  <!-- Reference lines + annotations chart (scenario G) -->
+  <div class="chart-container">
+    <div id="chart-annotated"></div>
+  <!-- End-labels chart: collision="nudge" (default, scenario H) -->
+  <div class="chart-container">
+    <div id="chart-endlabels" style="width: 800px; height: 200px;"></div>
+  </div>
+
+  <!-- End-labels chart: collision="legend" -->
+  <div class="chart-container">
+    <div id="chart-endlabels-legend" style="width: 800px; height: 200px;"></div>
   </div>
 
   <!-- d3 MUST load before the UMD bundle so the global is available -->
@@ -110,6 +123,59 @@
       },
       {}
     );
+
+    // ── #chart-annotated: reference lines + annotations (scenario G) ─────
+    window.__charts.annotated = ViscLine.createChart(
+      document.getElementById('chart-annotated'),
+      {
+        data: timeData,
+        xSerie: { accessor: function(d) { return d.date; }, label: 'Month' },
+        ySeries: [{ accessor: function(d) { return d.revenue; }, label: 'Revenue' }]
+      },
+      { xType: 'time' }
+    )
+      .withAxes()
+      .withGrid()
+      .withPoints()
+      .withTitle({ title: 'Revenue with Target' })
+      .withReferenceLines({
+        lines: [
+          { value: 150, label: 'Target', placement: 'horizontal' }
+        ]
+      })
+      .withAnnotations({
+        annotations: [
+          { date: new Date('2024-04-01'), revenue: 160, text: 'Peak' }
+        ]
+      });
+    // ── #chart-endlabels: collision="nudge" (default, scenario H) ─────────────
+    var endlabelsData = [
+      { x: 1, a: 50, b: 52 },
+      { x: 2, a: 60, b: 55 },
+      { x: 3, a: 55, b: 58 },
+      { x: 4, a: 70, b: 65 },
+      { x: 5, a: 75, b: 78 },
+    ];
+    window.__charts.endlabels = ViscLine.createChart(
+      document.getElementById('chart-endlabels'),
+      {
+        data: endlabelsData,
+        xSerie: { accessor: function(d) { return d.x; }, label: 'X' },
+        ySeries: [{ accessor: function(d) { return d.a; }, label: 'Series A' }, { accessor: function(d) { return d.b; }, label: 'Series B' }]
+      },
+      { xType: 'linear' }
+    ).withEndLabels();
+
+    // ── #chart-endlabels-legend: collision="legend" ───────────────────────────
+    window.__charts.endlabelsLegend = ViscLine.createChart(
+      document.getElementById('chart-endlabels-legend'),
+      {
+        data: endlabelsData,
+        xSerie: { accessor: function(d) { return d.x; }, label: 'X' },
+        ySeries: [{ accessor: function(d) { return d.a; }, label: 'Series A' }, { accessor: function(d) { return d.b; }, label: 'Series B' }]
+      },
+      { xType: 'linear' }
+    ).withEndLabels({ collision: 'legend' });
   </script>
 </body>
 </html>

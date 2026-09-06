@@ -36,16 +36,33 @@ starting, honor its STOP conditions, and update your row when done.
 | 019  | Cursor-layer theme tokens + single-sourced fallbacks (strict TDD) | P2 | M | — | DONE |
 | 020  | Dead exports + duplicate Dimensions cleanup (simple edits) | P3 | S | 018 | DONE |
 | 021  | AGENTS.md architecture truth-sync (simple edits) | P3 | S | 018 | DONE |
-| 022  | Data-anchored reference lines + annotations features | P1 | M | — | DONE (branch `feature/022-reference-lines-annotations`; NOT yet on main — merge is plan 027) |
-| 023  | playwright-cli-driven e2e harness (revive orphaned browser layer) | P2 | M | 001, 004 | DONE |
-| 024  | Fix Date-domain fallback in ensureFiniteDomain | P1 | S | — | TODO |
-| 025  | Honest missing-data rendering (gapPolicy via line.defined) | P1 | M | 024 first | TODO |
-| 026  | Time-series data contract (sort, duplicates, timezone, docs) | P2 | M | 025 | TODO |
-| 027  | Merge 022 branch to main + e2e scenario G | P1 | S | — | TODO |
-| 028  | Public ariaLabel + xLabel on ChartOptions | P2 | S | — | TODO |
-| 029  | Focus/emphasis API (withFocus) | P2 | M | — | TODO |
-| 030  | End-of-line direct labels with collision policy | P2 | M | 024 (soft 026) | TODO |
-| 031  | Release hygiene (vitest run, CI coverage, blocking lint) | P1 | S | last in round | TODO |
+ | 022  | Data-anchored reference lines + annotations features | P1 | M | — | DONE (branch `feature/022-reference-lines-annotations`; NOT yet on main — merge is plan 027) |
+ | 023  | playwright-cli-driven e2e harness (revive orphaned browser layer) | P2 | M | 001, 004 | DONE |
+| 024  | Fix Date-domain fallback in ensureFiniteDomain | P1 | S | — | DONE (`advisor/024-date-domain-fix`) |
+| 025  | Honest missing-data rendering (gapPolicy via line.defined) | P1 | M | 024 first | DONE (`advisor/025-gap-policy`) |
+| 026  | Time-series data contract (sort, duplicates, timezone, docs) | P2 | M | 025 | DONE (`advisor/026-timeseries-data-contract`) |
+| 027  | Merge 022 branch to main + e2e scenario G | P1 | S | — | DONE (`advisor/027-merge-022-e2e`) |
+| 028  | Public ariaLabel + xLabel on ChartOptions | P2 | S | — | DONE (`advisor/028-public-a11y`) |
+| 029  | Focus/emphasis API (withFocus) | P2 | M | — | DONE (`advisor/029-focus-api`) |
+| 030  | End-of-line direct labels with collision policy | P2 | M | 024 (soft 026) | DONE (`advisor/030-end-labels`) |
+| 031  | Release hygiene (vitest run, CI coverage, blocking lint) | P1 | S | last in round | BLOCKED on coverage thresholds (branches 65.95 vs 79; functions 88.09 vs 89; lines 85.26 vs 87) — needs owner decision: more tests vs lower thresholds |
+
+## Round 5 integration
+
+All 7 source branches merged into `advisor/round5-integration` (`def1281`):
+024 → 025 → 026 → 027 → 028 → 029 → 030.
+
+**Verification on integration branch**:
+- `pnpm type-check`: exit 0
+- `pnpm exec vitest run`: exit 0 — 482 tests pass (37 files)
+- `pnpm lint`: exit 0
+- `pnpm build`: exit 0
+
+**Plan 031 NOT merged**: BLOCKED on coverage thresholds (numbers above). The branch
+`advisor/031-release-hygiene` (`c3bd9f0`) is ready to merge once the owner decides
+between writing more tests or lowering the thresholds. Note: `pnpm test` on the
+integration branch still runs watch mode (the run-mode fix lives on the blocked
+031 branch).
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale)

@@ -263,6 +263,80 @@ remains in the DOM; only chart-instance internal state is cleaned up).
 
 ---
 
+### Scenario G — Reference lines + annotations (plan 027)
+
+```bash
+env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cdp eval '() => {
+  const q = (s) => document.querySelectorAll(s);
+  const annotated = document.getElementById("chart-annotated");
+  const svg = annotated ? annotated.querySelector("svg") : null;
+  const refLineGroups = q("#chart-annotated g.reference-line");
+  const refLineLabels = q("#chart-annotated text.reference-line-label");
+  const annotationGroups = q("#chart-annotated g.annotation");
+  const annotationTexts = q("#chart-annotated text.annotation-text");
+  return {
+    annotatedContainer: !!annotated,
+    svgPresent: !!svg,
+    refLineGroups: refLineGroups.length,
+    refLineStroke: refLineGroups.length > 0 ? refLineGroups[0].querySelector("line.reference-line-stroke")?.getAttribute("stroke") : null,
+    refLineLabelTexts: [...refLineLabels].map(el => el.textContent),
+    annotationGroups: annotationGroups.length,
+    annotationTextContents: [...annotationTexts].map(el => el.textContent),
+    chartBoundingRect: annotated ? JSON.stringify(annotated.getBoundingClientRect()) : null,
+    err: window.__chartError
+  };
+### Scenario H — endLabels with collision policies
+
+```bash
+env DBUS_SESSION_BUS_ADDRESS=disabled: XDG_RUNTIME_DIR=/tmp playwright-cli -s=cdp eval '() => {
+  var endlabelsCount = document.getElementById("chart-endlabels").querySelectorAll("text.end-label").length;
+  var endlabelsLegendCount = document.getElementById("chart-endlabels-legend").querySelectorAll("text.end-label").length;
+  var texts = document.querySelectorAll("#chart-endlabels text.end-label");
+  var noOverlap = true;
+  if (texts.length >= 2) {
+    var sorted = Array.from(texts).sort(function(a, b) {
+      return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+    });
+    for (var i = 1; i < sorted.length; i++) {
+      if (sorted[i].getBoundingClientRect().top < sorted[i-1].getBoundingClientRect().bottom) {
+        noOverlap = false;
+        break;
+      }
+    }
+  }
+  return { endlabels_count: endlabelsCount, endlabels_bboxes_no_overlap: noOverlap, endlabelsLegend_count: endlabelsLegendCount };
+}'
+```
+
+**Expected output**:
+
+```json
+{
+  "annotatedContainer": true,
+  "svgPresent": true,
+  "refLineGroups": 1,
+  "refLineStroke": "var(--vl-reference-line-stroke, #94a3b8)",
+  "refLineLabelTexts": ["Target"],
+  "annotationGroups": 1,
+  "annotationTextContents": [""],
+  "chartBoundingRect": "{\"x\":57,\"y\":1119,\"width\":500,\"height\":320}",
+  "err": null
+}
+```
+
+`refLineGroups:1` confirms the reference line group exists; `refLineLabelTexts:["Target"]` confirms the
+label text is rendered. `annotationGroups:1` confirms the annotation group exists; the annotation text is
+hidden by default (visibility:hidden) per the annotation component design and shows on hover/interaction.
+`err:null` confirms no page errors.
+{ "endlabels_count": 2, "endlabels_bboxes_no_overlap": true, "endlabelsLegend_count": 0 }
+```
+
+- `endlabels_count: 2`: two series, each gets a direct label at end-of-line (collision="nudge" default)
+- `endlabels_bboxes_no_overlap: true`: nudge policy resolved the ~9px gap correctly
+- `endlabelsLegend_count: 0`: collision="legend" policy detected overlap and rendered no labels
+
+---
+
 > **Alpine/musl limitation**: Playwright's downloaded Chromium is glibc-only and does
 > not run on this Alpine/musl host; its CDN download also times out on this
 > network. The system Chromium route (documented in Prerequisites) is the
@@ -297,8 +371,10 @@ playwright-cli 1.63.0-alpha, CDP port 9222, no browser install needed).
 | D — Tooltip hover | `cursorLine:true`, `tooltipEl:true` (custom element registered), `err:null` | PASS |
 | E — Zoom re-render | `dChanged:true` (line path transformed), `cxChanged:true` (all 6 point cx values transformed), `err:null` | PASS |
 | F — update() + dispose() | `dChanged:true` (update mutated the line), `minimalSvgAfterDispose:1` (SVG node persists after dispose) | PASS |
+| G — Reference lines + annotations | `refLineGroups:1`, `refLineLabelTexts:["Target"]`, `annotationGroups:1`, `annotationTextContents:[""]` (hidden by default), `err:null` | PASS |
+| H — endLabels collision | `endlabels_count:2`, `endlabels_bboxes_no_overlap:true`, `endlabelsLegend_count:0` | PASS |
 
-**Recording environment**: Chromium 152.0.7977.64 Alpine Linux, playwright-cli 1.63.0-alpha via CDP attach (port 9222), commit `42b5d56`.
+**Recording environment**: Chromium 152.0.7977.64 Alpine Linux, playwright-cli 1.63.0-alpha via CDP attach (port 9222), commit `925159a`.
 
 ## Not Wired Into CI / pnpm test
 

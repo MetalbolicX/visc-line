@@ -19,6 +19,8 @@ import {
   createScales,
   getDimensions,
   getMultiSeriesExtents,
+  isValidNumber,
+  processNumericDataXOnly,
 } from "@/services/index.mjs";
 
 /**
@@ -81,11 +83,13 @@ export interface RenderContext<T> {
   readonly config: ChartConfig<T>;
   readonly container: HTMLElement;
   readonly flags: FeatureFlags;
+  readonly gapPolicy: "break" | "bridge";
   readonly margins: Margins;
   readonly reducedMotion: boolean;
   readonly resolvedCurve: CurveFactory;
   readonly state: ChartState<T>;
   readonly svg: SVGSelection;
+  readonly xLabel?: string;
   readonly xType: ScaleType;
   readonly yLabel?: string;
 }
@@ -156,8 +160,24 @@ export const renderChart = <T,>(
     yDomain: yDomainToUse,
   });
 
+  // When gapPolicy is "break", compute x-only filtered series for the line and
+  // a defined predicate so D3 skips segments where y is invalid.
+  // currentSeries stays y-filtered for points/extents/tooltip.
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const isBreak = context.gapPolicy === "break";
+  const lineSeries = isBreak
+    ? context.state.currentSeries.map((s) => ({
+        ...s,
+        data: processNumericDataXOnly(s.data, context.config.xSerie.accessor, s.accessor),
+      }))
+    : undefined;
+  const definedFn = isBreak
+    ? (s: import("@/types/index.mjs").ProcessedSeries<T>) =>
+        (d: T) => isValidNumber(s.accessor(d))
+    : undefined;
+
   redrawLine<T>(
-    { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, callbacks, content, xScale, yScale } as FeatureRenderContext<T>,
+    { ...context, allSeriesExtents: { xDomain: xDomainToUse as readonly [unknown, unknown], yDomain: yDomainToUse as readonly [number, number] }, callbacks, content, defined: definedFn, lineSeries, xScale, yScale } as FeatureRenderContext<T>,
     xScale,
     yScale,
   );

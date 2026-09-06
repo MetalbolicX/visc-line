@@ -49,17 +49,108 @@ createChart<T>(
 | `update(newData)`       | `(readonly T[]) => void`                       | Re-render with new data (preserves visibility)         |
 | `updateVisibleSeries(labels)` | `(readonly string[]) => void`            | Change visibility at runtime                           |
 | `dispose()`             | `() => void`                                   | Tear down resize observer, enhancements, and listeners |
+| `withAnnotations(options)` | `(WithAnnotationsOptions) => ChartInstance<T>` | Enable data-anchored text callouts with optional connectors |
 | `withAxes(options?)` | `(WithAxesOptions?) => ChartInstance<T>` | Enable x/y axes and axis labels                    |
 | `withCustom(callback)` | `(CustomCallback \| null) => ChartInstance<T>` | Inject custom D3 drawing code (see below)            |
+| `withEndLabels(options?)` | `(WithEndLabelsOptions?) => ChartInstance<T>` | Enable direct labels at series ends                   |
 | `withGrid(options?)` | `(WithGridOptions?) => ChartInstance<T>` | Enable x/y grid lines                               |
 | `withLegend(options?)`  | `(WithLegendOptions?) => ChartInstance<T>`     | Enable legend (optionally interactive)                 |
 | `withPoints()`          | `() => ChartInstance<T>`                       | Enable point markers                                   |
+| `withReferenceLines(options)` | `(WithReferenceLinesOptions) => ChartInstance<T>` | Enable horizontal/vertical reference lines      |
 | `withTitle(options)`    | `(WithTitleOptions) => ChartInstance<T>`       | Enable chart title                                     |
 | `withTooltip(options?)` | `(WithTooltipOptions?) => ChartInstance<T>`    | Enable tooltip interactivity                           |
 | `withVisibleSeries(labels)` | `(readonly string[]) => ChartInstance<T>`  | Declare which series to show (fluent, creation-time)   |
 | `withZoomPan(options?)` | `(WithZoomPanOptions?) => ChartInstance<T>`    | Enable zoom/pan behavior                               |
 
 All fluent methods return `this` for chaining. After `dispose()`, all methods throw.
+
+---
+
+### `withAnnotations` — Data-anchored callouts
+
+Render text callouts anchored to data coordinates with optional leader lines.
+
+```ts
+interface ChartAnnotation {
+  readonly x: number | Date;       // Data x coordinate
+  readonly y: number;               // Data y coordinate
+  readonly text: string;            // Annotation text
+  readonly dx?: number;            // Horizontal offset (default: 8)
+  readonly dy?: number;            // Vertical offset (default: -8)
+  readonly showConnector?: boolean; // Draw leader line (default: false)
+}
+```
+
+**`WithAnnotationsOptions`**
+
+| Field         | Type                        | Default | Description                     |
+| ------------- | --------------------------- | ------- | ------------------------------- |
+| `annotations` | `readonly ChartAnnotation[]` | `[]`    | Array of annotation definitions |
+
+---
+
+### `withReferenceLines` — Threshold and target lines
+
+Render horizontal or vertical dashed reference lines at data values.
+
+```ts
+interface ReferenceLine {
+  readonly axis: "x" | "y"; // Line orientation
+  readonly value: number | Date; // Domain value to line
+  readonly label?: string;    // Optional label text
+}
+```
+
+**`WithReferenceLinesOptions`**
+
+| Field  | Type                     | Default | Description                |
+| ------- | ------------------------ | ------- | -------------------------- |
+| `lines` | `readonly ReferenceLine[]` | `[]`    | Array of reference line definitions |
+
+### `withEndLabels(options?)` — direct labels at series ends
+
+Adds a text label at the end of each visible series (anchored at max-x).
+For printed/static output this is the Storytelling-with-Data-recommended
+alternative to legends.
+
+```ts
+interface WithEndLabelsOptions {
+  /** Collision policy: "nudge" (default) | "hide" | "legend" */
+  readonly collision?: "hide" | "legend" | "nudge";
+  /** Format function: (label, lastValue) => string */
+  readonly format?: (label: string, lastValue: number) => string;
+  /** Horizontal offset in pixels (default: 8) */
+  readonly offset?: number;
+}
+```
+
+**Collision behavior**:
+
+- `"nudge"` (default): pushes overlapping labels apart vertically within bounds;
+  unresolvable labels are dropped with one `console.warn` per render.
+- `"hide"`: skips overlapping labels silently.
+- `"legend"`: if any overlap detected, renders NO labels and warns
+  "consider chart.withLegend() instead". The library does not silently
+  add a legend.
+
+```ts
+// Default: nudge policy
+chart.withEndLabels();
+
+// Explicit nudge
+chart.withEndLabels({ collision: "nudge" });
+
+// Hide overlapping labels
+chart.withEndLabels({ collision: "hide" });
+
+// Legend policy: all-or-nothing
+chart.withEndLabels({ collision: "legend" });
+
+// Custom format
+chart.withEndLabels({
+  format: (label, lastValue) => `${label}: ${lastValue}`
+});
+```
 
 ---
 
@@ -128,6 +219,30 @@ chart.withVisibleSeries([]);               // show none (empty chart)
 
 Throws `Error` if any label does not match a `ySeries` entry.
 
+### `withFocus`
+
+Highlight one or more series in full strength while dimming all others to a subdued opacity. This implements the "focus the important stuff, eliminate distractions" principle from *Storytelling with Data*:
+
+```ts
+chart.withFocus("Revenue");           // focus single series
+chart.withFocus(["Revenue", "Cost"]); // focus multiple
+chart.withFocus(null);                // clear focus — restore all series
+```
+
+**Dim opacity**: controlled by the `focus.dimOpacity` theme token (default `0.25`). Override via the `theme` option:
+
+```ts
+createChart(container, config, {
+  theme: { focus: { dimOpacity: 0.4 } },
+});
+```
+
+**Interaction with explicit `opacity`**: if a series descriptor has an explicit `opacity` set, focus dimming **overrides** it for non-focused series. The consumer can clear focus with `withFocus(null)` to restore explicit opacity.
+
+**Interaction with legend swatches**: legend swatches always render at full strength — focus dimming affects only the chart lines (and points when enabled). This is a deliberate v1 limitation.
+
+**Persistence**: focus survives `update()` and `updateVisibleSeries()` re-renders. If `updateVisibleSeries` hides a focused series, focus silently narrows to the visible intersection.
+
 ### `updateVisibleSeries`
 
 Change visibility at runtime without rebuilding the chart:
@@ -155,6 +270,17 @@ only the **visible** subset.
 
 This prevents visual confusion: when comparing multiple series the axes are
 stable; when isolating a single series it uses the full chart area.
+
+### Data Contract
+
+| Topic | Behavior |
+|-------|----------|
+| **Sorting** | Series data is sorted ascending by x before rendering; input order is not trusted. |
+| **Invalid rows** | Rows where x or y is null, undefined, NaN, ±Infinity, or an invalid Date are dropped per series. With `gapPolicy: "break"` (plan 025), only x validity is checked — NaN-y rows are kept and skipped by `line.defined()`. |
+| **Date strings** | x values must be `Date` objects or finite numbers. ISO strings like `"2023-01-01"` fail `isValidNumber` and are silently dropped. Construct `new Date("2023-01-01")` explicitly. |
+| **Duplicates** | Duplicate x values are kept and rendered in stable sort order. Tooltip tie-breaking among equal x values is unspecified. |
+| **Timezone** | Time scales use `d3.scaleTime` (browser-local time). A `new Date("2023-01-01")` is parsed at UTC-midnight per the ES spec but rendered at the local offset — day-boundary labels can shift. `scaleUtc` is not yet supported. |
+| **Single-point series** | `extent([v, v])` yields a zero-width domain. The single point maps to the left edge; pad your data or set explicit domains if this matters. |
 
 ### Legend Interactivity
 

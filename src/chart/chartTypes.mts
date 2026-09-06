@@ -14,6 +14,18 @@ import type {
   Theme,
 } from "@/types/index.mjs";
 
+export interface ChartAnnotation {
+  /** Pixel offsets from the anchor. Defaults: dx = 8, dy = -8. */
+  readonly dx?: number;
+  readonly dy?: number;
+  /** Draw a leader line from anchor to text. Default: false. */
+  readonly showConnector?: boolean;
+  readonly text: string;
+  /** Data coordinate to anchor to. Date when xType is "time". */
+  readonly x: Date | number;
+  readonly y: number;
+}
+
 /**
  * A live, mounted chart handle returned by createChart.
  */
@@ -25,25 +37,64 @@ export interface ChartInstance<T> {
   readonly svg: SVGSelection;
   readonly update: (newData: readonly T[]) => void;
   readonly updateVisibleSeries: (labels: readonly string[]) => void;
+  readonly withAnnotations: (options: WithAnnotationsOptions) => ChartInstance<T>;
   readonly withAxes: (options?: WithAxesOptions) => ChartInstance<T>;
   readonly withCustom: (callback: CustomCallback | null) => ChartInstance<T>;
+  readonly withEndLabels: (options?: WithEndLabelsOptions) => ChartInstance<T>;
+  readonly withFocus: (labels: null | readonly string[] | string) => ChartInstance<T>;
   readonly withGrid: (options?: WithGridOptions) => ChartInstance<T>;
   readonly withLegend: (options: WithLegendOptions) => ChartInstance<T>;
   readonly withPoints: () => ChartInstance<T>;
+  readonly withReferenceLines: (options: WithReferenceLinesOptions) => ChartInstance<T>;
   readonly withTitle: (options: WithTitleOptions) => ChartInstance<T>;
   readonly withTooltip: (options?: WithTooltipOptions) => ChartInstance<T>;
-  readonly withVisibleSeries: (labels: readonly string[]) => ChartInstance<T>;
+  readonly withVisibleSeries: (labels: readonly string[]) => void;
   readonly withZoomPan: (options?: WithZoomPanOptions) => ChartInstance<T>;
   /** Exposes the internal zoom behavior for testing observation. */
   readonly zoomBehavior: null | ZoomBehaviorWithReset;
 }
 
 export interface ChartOptions {
+  /**
+   * Accessible name for the chart SVG (role=img). Defaults to
+   * 'Interactive line chart'.
+   */
+  readonly ariaLabel?: string;
   readonly curve?: CurveFactory | CurvePreset;
+  /**
+   * Controls how missing / invalid y values are rendered in the line.
+   *
+   * - `"break"` (default): when a y value is `NaN`, `null`, `undefined`, or
+   *   `Infinity`, the line generator skips that point and produces a visible gap
+   *   rather than silently bridging over the missing measurement. This is the
+   *   honest rendering for explanatory charts.
+   *
+   * - `"bridge"`: `d3.line()` draws a straight segment between the valid
+   *   neighbors, ignoring the gap. This was the previous default behavior.
+   *   Pass `gapPolicy: "bridge"` to restore it.
+   *
+   * @default "break"
+   */
+  readonly gapPolicy?: "break" | "bridge";
   readonly margins?: Margins;
   readonly theme?: Partial<Theme>;
+  /**
+   * X-axis label text; rendered only when axes are enabled.
+   */
+  readonly xLabel?: string;
   readonly xType?: ScaleType;
   readonly yLabel?: string;
+}
+
+export interface ReferenceLine {
+  /** "y" renders a horizontal line at a y-domain value; "x" renders vertical. */
+  readonly axis: "x" | "y";
+  readonly label?: string;
+  readonly value: Date | number;
+}
+
+export interface WithAnnotationsOptions {
+  readonly annotations: readonly ChartAnnotation[];
 }
 
 export interface WithAxesOptions {
@@ -60,6 +111,12 @@ export interface WithAxesOptions {
   readonly yTickFormat?: (domainValue: AxisDomain, index: number) => string;
 }
 
+export interface WithEndLabelsOptions {
+  readonly collision?: "hide" | "legend" | "nudge";
+  readonly format?: (label: string, lastValue: number) => string;
+  readonly offset?: number;
+}
+
 export interface WithGridOptions {
   readonly showX?: boolean;
   readonly showY?: boolean;
@@ -69,6 +126,10 @@ export interface WithLegendOptions {
   readonly interactive?: boolean;
   readonly items?: readonly LegendItem[];
   readonly onToggle?: (label: string, isVisible: boolean) => void;
+}
+
+export interface WithReferenceLinesOptions {
+  readonly lines: readonly ReferenceLine[];
 }
 
 export interface WithTitleOptions {

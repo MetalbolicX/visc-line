@@ -77,6 +77,41 @@ describe("createChart", () => {
       expect(container.querySelector("text.chart-title")).toBeNull();
     });
 
+    it("plan-026: unsorted input renders non-backtracking path", () => {
+      // Dates deliberately out of order
+      const unsortedData: TestData[] = [
+        { date: new Date("2023-01-03"), revenue: 90, cost: 12 },
+        { date: new Date("2023-01-01"), revenue: 100, cost: 10 },
+        { date: new Date("2023-01-04"), revenue: 150, cost: 20 },
+        { date: new Date("2023-01-02"), revenue: 120, cost: 15 },
+      ];
+
+      const unsortedConfig: ChartConfig<TestData> = {
+        data: unsortedData,
+        xSerie: { accessor: (d) => d.date, label: "Date" },
+        ySeries: [{ accessor: (d) => d.revenue, label: "Revenue" }],
+      };
+
+      createChart(container, unsortedConfig);
+      const linePath = container.querySelector("g.content path.chart-line") as SVGPathElement | null;
+      expect(linePath).not.toBeNull();
+
+      // Parse the path's 'd' attribute to extract x pixel coordinates from M and L commands
+      const d = linePath!.getAttribute("d") ?? "";
+      const coords: number[] = [];
+      // Match M (moveTo) and L (lineTo) commands with numbers
+      const cmdRe = /[ML]\s*([\d.]+),([\d.-]+)/g;
+      let m: RegExpExecArray | null;
+      while ((m = cmdRe.exec(d)) !== null) {
+        coords.push(parseFloat(m[1]));
+      }
+
+      // After sorting, x coords must be strictly non-decreasing (no backtracking)
+      for (let i = 1; i < coords.length; i++) {
+        expect(coords[i]).toBeGreaterThanOrEqual(coords[i - 1]);
+      }
+    });
+
     it("exposes allSeries and series with all visible by default", () => {
       const chart = createChart(container, config);
       expect(chart.allSeries.length).toBe(2);
@@ -699,5 +734,70 @@ describe("createChart", () => {
       // jsdom provides crypto.randomUUID — id should be visc-clip- + 8 hex chars
       expect(id).toMatch(/^visc-clip-[0-9a-f]{8}$/);
     });
+  });
+});
+
+describe("plan-025: gapPolicy", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    Object.defineProperty(container, "clientWidth", { value: 800 });
+    Object.defineProperty(container, "clientHeight", { value: 400 });
+    document.body.appendChild(container);
+    const SVGEl = (globalThis as unknown as Record<string, unknown>)["SVGElement"];
+    if (typeof SVGEl !== "undefined") {
+      Object.defineProperty((SVGEl as typeof SVGElement).prototype, "getTotalLength", {
+        configurable: true,
+        value: () => 100,
+        writable: true,
+      });
+    }
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+  });
+
+  it("default gapPolicy='break' — NaN-y row causes two M commands (break)", () => {
+    const gappedData = [
+      { date: new Date("2023-01-01"), revenue: 100, cost: 10 },
+      { date: new Date("2023-01-02"), revenue: NaN, cost: 15 },
+      { date: new Date("2023-01-03"), revenue: 90, cost: 12 },
+    ];
+    const cfg: ChartConfig<{ date: Date; revenue: number }> = {
+      data: gappedData,
+      xSerie: { accessor: (d) => d.date, label: "Date" },
+      ySeries: [{ accessor: (d) => d.revenue, label: "Revenue" }],
+    };
+    const chart = createChart(container, cfg);
+    const path = container.querySelector("path.chart-line--Revenue") as SVGPathElement;
+    expect(path).toBeTruthy();
+    const d = path.getAttribute("d") ?? "";
+    const moveToCount = (d.match(/M/g) ?? []).length;
+    // Default gapPolicy is "break" — NaN-y row produces a gap = two M commands
+    expect(moveToCount).toBe(2);
+    chart.dispose();
+  });
+
+  it("gapPolicy='bridge' — NaN-y row is silently bridged (single M command)", () => {
+    const gappedData = [
+      { date: new Date("2023-01-01"), revenue: 100, cost: 10 },
+      { date: new Date("2023-01-02"), revenue: NaN, cost: 15 },
+      { date: new Date("2023-01-03"), revenue: 90, cost: 12 },
+    ];
+    const cfg: ChartConfig<{ date: Date; revenue: number }> = {
+      data: gappedData,
+      xSerie: { accessor: (d) => d.date, label: "Date" },
+      ySeries: [{ accessor: (d) => d.revenue, label: "Revenue" }],
+    };
+    const chart = createChart(container, cfg, { gapPolicy: "bridge" });
+    const path = container.querySelector("path.chart-line--Revenue") as SVGPathElement;
+    expect(path).toBeTruthy();
+    const d = path.getAttribute("d") ?? "";
+    const moveToCount = (d.match(/M/g) ?? []).length;
+    // gapPolicy="bridge" reproduces old behavior — one continuous path
+    expect(moveToCount).toBe(1);
+    chart.dispose();
   });
 });

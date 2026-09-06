@@ -32,12 +32,18 @@ export const redrawLine: RedrawLine = <T,>(
   xScale: AnyScale,
   yScale: AnyScale,
 ): void => {
+  // Use ctx.lineSeries if provided (gapPolicy="break" path), otherwise fall back
+  // to ctx.state.currentSeries (gapPolicy="bridge" path).
+  // ctx.lineSeries is x-only filtered to preserve NaN-y rows for .defined() to break.
+  // ctx.state.currentSeries stays y-filtered for points/extents/tooltip.
+  const series = ctx.lineSeries ?? ctx.state.currentSeries;
+
   renderLine<T>(
     ctx.content as import("@/types/index.mjs").BoundsSelection,
-    ctx.state.currentSeries as import("@/types/index.mjs").ProcessedSeries<T>[],
+    series as import("@/types/index.mjs").ProcessedSeries<T>[],
     xScale,
     yScale,
     ctx.config.xSerie.accessor,
-    { curve: ctx.resolvedCurve, reducedMotion: ctx.reducedMotion },
+    { curve: ctx.resolvedCurve, defined: ctx.defined, reducedMotion: ctx.reducedMotion },
   );
 };

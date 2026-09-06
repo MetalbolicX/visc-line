@@ -16,6 +16,17 @@ export interface RenderLineOptions {
    */
   readonly curve?: CurveFactory | CurvePreset;
   /**
+   * Predicate applied to each data point to determine whether it is "defined"
+   * (has a valid y value for rendering). When omitted, every point is defined
+   * (existing behavior — continuous line). When provided, points for which this
+   * returns `false` cause the line to break at that point rather than bridging
+   * over the gap.
+   *
+   * Matches `d3.line.defined()` semantics: `false` = skip segment across
+   * this point, creating a visible gap in the line.
+   */
+  readonly defined?: <U>(serie: import("@/types/index.mjs").ProcessedSeries<U>) => (d: U) => boolean;
+  /**
    * When `true`, all stroke-dashoffset animations are skipped. When omitted
    * the function also checks `window.matchMedia("prefers-reduced-motion: reduce")`.
    */
@@ -60,6 +71,7 @@ export const renderLine = <T,>(
   xAccessor: (d: T) => unknown,
   {
     curve = "linear",
+    defined,
     reducedMotion: reducedMotionOption,
     transitionDuration = 1000,
   }: RenderLineOptions = {},
@@ -67,13 +79,25 @@ export const renderLine = <T,>(
   const curveFactory = resolveCurve(curve);
 
   /** Build a path `d` attribute for a series using the configured curve factory. */
-  const buildPath = (serie: ProcessedSeries<T>): null | string =>
-    line<T>()
+  const buildPath = (serie: ProcessedSeries<T>): null | string => {
+    const lineGenerator = line<T>()
       .curve(curveFactory)
       .x((d) => asScaleNumber(xScale)(xAccessor(d)))
-      .y((d) => asScaleNumber(yScale)(serie.accessor(d)))(
-      serie.data,
-    );
+      .y((d) => asScaleNumber(yScale)(serie.accessor(d)));
+    if (defined) {
+      // defined can be either:
+      // - A simple predicate (d) => boolean (legacy API)
+      // - A higher-order function (serie) => (d) => boolean (gap policy API)
+      // Detect which by checking if defined(serie) is a function.
+      const definedPredicate = defined(serie);
+      if (typeof definedPredicate === "function") {
+        lineGenerator.defined(definedPredicate as (d: T) => boolean);
+      } else {
+        lineGenerator.defined(defined as unknown as (d: T) => boolean);
+      }
+    }
+    return lineGenerator(serie.data);
+  };
 
   // eslint-disable-next-line @typescript-eslint/naming-convention -- accessibility preference flag
   const shouldReduceMotion: boolean =
