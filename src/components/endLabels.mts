@@ -6,6 +6,7 @@ import type { AnyScale, BoundsSelection, ProcessedSeries } from "@/types/index.m
 
 export interface RenderEndLabelsOptions {
   readonly collision?: "hide" | "legend" | "nudge";
+  readonly focusLabels?: ReadonlySet<string>;
   readonly format?: (label: string, lastValue: number) => string;
   readonly offset?: number;
 }
@@ -76,8 +77,13 @@ export const renderEndLabels = <T,>(
   xAccessor: (d: T) => unknown,
   options: RenderEndLabelsOptions,
 ): void => {
-  const { collision = "nudge", format, offset = 8 } = options;
-  const labelsPerSeries = series.map((serie) => {
+  const { collision = "nudge", focusLabels, format, offset = 8 } = options;
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- boolean comparison result
+  const isFilteringForFocus = focusLabels !== undefined && focusLabels.size > 0;
+  const visibleSeries = isFilteringForFocus
+    ? series.filter((serie) => focusLabels.has(serie.label))
+    : series;
+  const labelsPerSeries = visibleSeries.map((serie) => {
     let [last] = serie.data;
     let maxX = -Infinity;
     for (const datum of serie.data) {

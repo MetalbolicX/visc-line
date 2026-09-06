@@ -26,6 +26,41 @@ describe("renderEndLabels", () => {
     renderEndLabels(content, series, scaleLinear().domain([0, 1]).range([0, 100]), scaleLinear().domain([0, 20]).range([100, 0]), (datum: any) => datum.x, { format: (label, value) => `${label}: ${value}` });
     expect(content.select("text.end-label").text()).toBe("A: 20");
   });
+
+  it("renders labels only for focused series when focus is active", () => {
+    const content = select(document.body).append("svg").append("g") as any;
+    const series = [
+      { accessor: (datum: { x: number; y: number }) => datum.y, data: [{ x: 1, y: 10 }, { x: 2, y: 20 }], label: "A" },
+      { accessor: (datum: { x: number; y: number }) => datum.y, data: [{ x: 1, y: 30 }, { x: 2, y: 40 }], label: "B" },
+      { accessor: (datum: { x: number; y: number }) => datum.y, data: [{ x: 1, y: 50 }, { x: 2, y: 60 }], label: "C" },
+    ] as any;
+    renderEndLabels(
+      content, series,
+      scaleLinear().domain([0, 2]).range([0, 200]),
+      scaleLinear().domain([0, 60]).range([200, 0]),
+      (datum: any) => datum.x,
+      { focusLabels: new Set(["B"]) },
+    );
+    const labels = content.selectAll("text.end-label");
+    expect(labels.size()).toBe(1);
+    expect(labels.nodes().map((node: SVGTextElement) => node.textContent)).toEqual(["B"]);
+  });
+
+  it("renders all series labels when focus is an empty set (cleared)", () => {
+    const content = select(document.body).append("svg").append("g") as any;
+    const series = [
+      { accessor: (datum: { x: number; y: number }) => datum.y, data: [{ x: 1, y: 10 }], label: "A" },
+      { accessor: (datum: { x: number; y: number }) => datum.y, data: [{ x: 1, y: 30 }], label: "B" },
+    ] as any;
+    renderEndLabels(
+      content, series,
+      scaleLinear().domain([0, 1]).range([0, 100]),
+      scaleLinear().domain([0, 30]).range([100, 0]),
+      (datum: any) => datum.x,
+      { focusLabels: new Set() },
+    );
+    expect(content.selectAll("text.end-label").size()).toBe(2);
+  });
 });
 
 describe("resolveCollisions", () => {
