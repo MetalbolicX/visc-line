@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.1.0] — 2026-09-05
+
+### Added
+- `gapPolicy` option (`"break"` | `"bridge"`) for honest missing-data rendering via `line.defined` (plan 025)
+- `ariaLabel` and `xLabel` public options on `ChartOptions` — sets SVG `aria-label` and renders an x-axis label text element (plan 028)
+- `withFocus` series emphasis API — dims all series except the focused one (plan 029)
+- End-of-line direct labels (`endLabels`) with collision policies: `"nudge"` | `"hide"` | `"legend"` degradation (plan 030)
+- Reference lines and annotations features — data-anchored, follow zoom/pan, registered via `FeatureDefinition` (plans 022/027)
+- Time-series data contract: series sorted by x on ingest, duplicate and backtracking behaviour documented (plan 026)
+- E2e scenario G validating endLabels collision policies (plan 027)
+
+### Fixed
+- `ensureFiniteDomain` now accepts `Date` domains — previously rejected valid `[Date, Date]` domains and silently substituted `[now, now+24h]` (plan 024)
+
+### Changed
+- `pnpm test` now runs in `--run` mode (no watch hang); `check` script order: `type-check → test → build → lint`
+
+---
+
 ## [1.0.0] — 2026-04-27
 
 ### Added
