@@ -36,6 +36,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Coverage
+        run: pnpm exec vitest run --coverage
+
       - name: Build
         run: pnpm build
 
@@ -43,7 +46,6 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
 
     steps:
       - name: Checkout

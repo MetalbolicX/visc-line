@@ -45,7 +45,7 @@ starting, honor its STOP conditions, and update your row when done.
 | 028  | Public ariaLabel + xLabel on ChartOptions | P2 | S | — | DONE (`advisor/028-public-a11y`) |
 | 029  | Focus/emphasis API (withFocus) | P2 | M | — | DONE (`advisor/029-focus-api`) |
 | 030  | End-of-line direct labels with collision policy | P2 | M | 024 (soft 026) | DONE (`advisor/030-end-labels`) |
-| 031  | Release hygiene (vitest run, CI coverage, blocking lint) | P1 | S | last in round | BLOCKED on coverage thresholds (branches 65.95 vs 79; functions 88.09 vs 89; lines 85.26 vs 87) — needs owner decision: more tests vs lower thresholds |
+| 031  | Release hygiene (vitest run, CI coverage, blocking lint) | P1 | S | last in round | DONE (ratchet: 59/85/79) |
 
 ## Round 5 integration
 
@@ -155,8 +155,8 @@ live code, including a confirmed Date-domain defect with an exact call chain).
 - **RESOLVED (2026-09-04, plan 031)**: the earlier `.mjs`/`.mts`
   `ERR_LOAD_URL` failure is fixed by the `mjsToMtsPlugin` in
   `vitest.config.mts:7-20` — `pnpm exec vitest run` passes 429/429 at
-  `ca94562`. The watch-mode hang of bare `pnpm test` is fixed by plan 031
-  (`"test": "vitest run"`).
+  `ca94562`. The watch-mode hang of bare `pnpm test` is fixed by Step 1 of
+  plan 031 (`"test": "vitest run"`).
 - The browser e2e layer (`tests/e2e/`) remains a MANUAL verification suite
   driven by playwright-cli CDP attach to system Chromium (Alpine/musl
   constraint: playwright's own Chromium is glibc-only). It is intentionally
